@@ -1,0 +1,24 @@
+# Backend (Python / FastAPI)
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.pytest_cache/
+backend/*.pyc
+
+# UI
+ui/node_modules/
+ui/dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+*.pem
+application-local.yml
