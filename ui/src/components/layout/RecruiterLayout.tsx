@@ -1,13 +1,24 @@
-import { Outlet } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Outlet, useNavigate } from 'react-router-dom'
+import { getStoredUser, getToken } from '../../api/client'
 import { recruiterNav } from '../../config/navigation'
 import { Sidebar } from '../ui/Sidebar'
 
 export function RecruiterLayout() {
+  const navigate = useNavigate()
+  const user = getStoredUser()
+
+  useEffect(() => {
+    if (!getToken() || user?.role !== 'RECRUITER') {
+      navigate('/recruiter/login')
+    }
+  }, [navigate, user?.role])
+
   return (
     <div className="flex min-h-screen bg-surface">
       <Sidebar
         title="Recruiter Portal"
-        subtitle="Prepare, conduct & review"
+        subtitle="Prepare, conduct and review"
         items={recruiterNav}
         accent="teal"
         homePath="/recruiter"
@@ -16,10 +27,10 @@ export function RecruiterLayout() {
         <header className="flex items-center justify-between border-b border-border bg-surface-raised/80 px-6 py-4 backdrop-blur">
           <div>
             <p className="text-xs text-slate-500">Logged in as</p>
-            <p className="text-sm font-medium text-slate-200">Recruiter (demo)</p>
+            <p className="text-sm font-medium text-slate-200">{user?.full_name ?? 'Recruiter'}</p>
           </div>
           <span className="rounded-full bg-teal-500/10 px-3 py-1 text-xs font-medium text-teal-300 ring-1 ring-teal-500/20">
-            Demo mode
+            {user?.email ?? 'recruiter'}
           </span>
         </header>
         <main className="flex-1 overflow-y-auto px-6 py-8 lg:px-10">

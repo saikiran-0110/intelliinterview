@@ -1,4 +1,7 @@
-import { Link } from 'react-router-dom'
+import { type FormEvent, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { registerRecruiter, login } from '../../api/analysis'
+import { setAuth } from '../../api/client'
 import { Card } from '../../components/ui/Card'
 
 type LoginPageProps = {
@@ -6,9 +9,46 @@ type LoginPageProps = {
 }
 
 export function LoginPage({ role }: LoginPageProps) {
+  const navigate = useNavigate()
   const isRecruiter = role === 'recruiter'
   const portalPath = isRecruiter ? '/recruiter' : '/candidate'
-  const accent = isRecruiter ? 'teal' : 'violet'
+
+  const [email, setEmail] = useState(isRecruiter ? 'recruiter@example.com' : 'candidate@example.com')
+  const [password, setPassword] = useState('password123')
+  const [fullName, setFullName] = useState('Demo Recruiter')
+  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    setError(null)
+    setLoading(true)
+
+    try {
+      if (!isRecruiter) {
+        setError('Candidate login will be enabled in a later module. Use the recruiter portal for analysis.')
+        return
+      }
+
+      const response =
+        mode === 'register'
+          ? await registerRecruiter(email, password, fullName)
+          : await login(email, password)
+
+      setAuth(response.token, {
+        user_id: response.user_id,
+        email: response.email,
+        full_name: response.full_name,
+        role: response.role,
+      })
+      navigate(portalPath)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication failed')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-12">
@@ -31,52 +71,71 @@ export function LoginPage({ role }: LoginPageProps) {
           </p>
           <h1 className="mt-1 text-2xl font-bold text-white">Sign in to IntelliInterview</h1>
           <p className="mt-2 text-sm text-slate-400">
-            Authentication is not implemented yet. Use the button below to enter the portal.
+            {isRecruiter
+              ? 'Sign in to upload CVs, manage job specifications, and run gap analysis.'
+              : 'Candidate access for interview sessions.'}
           </p>
         </div>
 
-        <form className="mt-8 space-y-4" onSubmit={(e) => e.preventDefault()}>
+        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+          {mode === 'register' && isRecruiter && (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-slate-400">Full name</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-100"
+                required
+              />
+            </div>
+          )}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-400">Email</label>
             <input
               type="email"
-              placeholder={isRecruiter ? 'recruiter@company.com' : 'candidate@email.com'}
-              disabled
-              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-500"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-100"
+              required
             />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-400">Password</label>
             <input
               type="password"
-              placeholder="••••••••"
-              disabled
-              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-100"
+              required
+              minLength={8}
             />
           </div>
+
+          {error && <p className="text-sm text-rose-300">{error}</p>}
+
           <button
-            type="button"
-            disabled
-            className="w-full rounded-xl border border-border bg-surface-overlay py-2.5 text-sm font-medium text-slate-500"
+            type="submit"
+            disabled={loading || !isRecruiter}
+            className={`w-full rounded-xl py-2.5 text-sm font-semibold transition ${
+              isRecruiter
+                ? 'bg-teal-500 text-slate-950 hover:bg-teal-400 disabled:bg-teal-500/50'
+                : 'bg-violet-500/50 text-white'
+            }`}
           >
-            Sign in (coming soon)
+            {loading ? 'Please wait...' : mode === 'register' ? 'Create recruiter account' : 'Sign in'}
           </button>
         </form>
 
-        <Link
-          to={portalPath}
-          className={`mt-4 flex w-full items-center justify-center rounded-xl py-3 text-sm font-semibold transition ${
-            isRecruiter
-              ? 'bg-teal-500 text-slate-950 hover:bg-teal-400'
-              : 'bg-violet-500 text-white hover:bg-violet-400'
-          }`}
-        >
-          Enter {isRecruiter ? 'recruiter' : 'candidate'} portal
-        </Link>
-
-        <p className="mt-6 text-center text-xs text-slate-600">
-          JWT auth with role-based access ,  {accent} portal
-        </p>
+        {isRecruiter && (
+          <button
+            type="button"
+            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+            className="mt-4 w-full text-sm text-slate-400 hover:text-slate-200"
+          >
+            {mode === 'login' ? 'Need an account? Register as recruiter' : 'Already registered? Sign in'}
+          </button>
+        )}
       </Card>
     </div>
   )
