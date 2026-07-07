@@ -1,10 +1,10 @@
 import enum
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
-from sqlalchemy import DateTime, Enum, String, Text, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import DateTime, Enum, Float, ForeignKey, String, Text, func
+from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -48,6 +48,8 @@ class JobSpecification(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     extracted_text: Mapped[Optional[str]] = mapped_column(Text)
+    parsed_requirements: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -61,7 +63,29 @@ class CandidateCv(Base):
     candidate_name: Mapped[str] = mapped_column(String(120), nullable=False)
     original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
     extracted_text: Mapped[Optional[str]] = mapped_column(Text)
+    parsed_profile: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    uploaded_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class GapAnalysis(Base):
+    __tablename__ = "gap_analyses"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    cv_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("candidate_cvs.id"), nullable=False)
+    job_spec_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("job_specifications.id"), nullable=False
+    )
+    strong_matches: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    partial_matches: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    gaps: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    experience_analysis: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    qualifications_analysis: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    evidence_passages: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    narrative_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    match_score: Mapped[Optional[float]] = mapped_column(Float)
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
