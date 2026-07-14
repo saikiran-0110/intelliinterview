@@ -41,6 +41,15 @@ export class ApiError extends Error {
   }
 }
 
+function redirectToLogin() {
+  const path = window.location.pathname
+  if (path.startsWith('/recruiter') && !path.includes('/login')) {
+    window.location.assign('/recruiter/login')
+  } else if (path.startsWith('/candidate') && !path.includes('/login')) {
+    window.location.assign('/candidate/login')
+  }
+}
+
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken()
   const headers = new Headers(options.headers)
@@ -65,6 +74,12 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
     } catch {
       message = response.statusText || message
     }
+
+    if (response.status === 401 && !path.startsWith('/api/auth/login') && !path.startsWith('/api/auth/register')) {
+      clearAuth()
+      redirectToLogin()
+    }
+
     throw new ApiError(message, response.status)
   }
 

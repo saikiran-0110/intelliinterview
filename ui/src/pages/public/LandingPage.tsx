@@ -82,13 +82,13 @@ export function LandingPage() {
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
-              to="/recruiter"
+              to="/recruiter/login"
               className="rounded-xl bg-teal-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-teal-500/20 transition hover:bg-teal-400"
             >
               Recruiter portal
             </Link>
             <Link
-              to="/candidate"
+              to="/candidate/login"
               className="rounded-xl border border-border bg-surface-raised px-6 py-3 text-sm font-semibold text-slate-200 transition hover:border-violet-500/40 hover:bg-surface-overlay"
             >
               Candidate portal
@@ -121,7 +121,7 @@ export function LandingPage() {
                 ))}
               </ul>
               <Link
-                to="/recruiter"
+                to="/recruiter/login"
                 className="mt-5 inline-block text-sm font-semibold text-teal-300 hover:text-teal-200"
               >
                 Enter recruiter portal
@@ -140,7 +140,7 @@ export function LandingPage() {
                 ))}
               </ul>
               <Link
-                to="/candidate"
+                to="/candidate/login"
                 className="mt-5 inline-block text-sm font-semibold text-violet-300 hover:text-violet-200"
               >
                 Enter candidate portal
@@ -158,7 +158,7 @@ export function LandingPage() {
               structured evaluation reports - all from one dashboard.
             </p>
             <Link
-              to="/recruiter"
+              to="/recruiter/login"
               className="mt-5 inline-block text-sm font-semibold text-teal-300 hover:text-teal-200"
             >
               Open recruiter portal
@@ -173,7 +173,7 @@ export function LandingPage() {
               receive personalised feedback after completion.
             </p>
             <Link
-              to="/candidate"
+              to="/candidate/login"
               className="mt-5 inline-block text-sm font-semibold text-violet-300 hover:text-violet-200"
             >
               Open candidate portal

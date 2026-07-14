@@ -22,6 +22,6 @@ def create_access_token(user_id: UUID, email: str, role: UserRole) -> str:
         "sub": str(user_id),
         "email": email,
         "role": role.value,
-        "exp": expires,
+        "exp": int(expires.timestamp()),
     }
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
