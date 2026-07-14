@@ -193,7 +193,7 @@ export function GapAnalysisPage() {
       <Card className="mt-6">
         <h3 className="text-lg font-semibold text-white">Summary for recruiters</h3>
         <p className="mt-3 text-sm leading-relaxed text-slate-300">{analysis.narrative_summary}</p>
-        <Link to="/recruiter/questions" className="mt-5 inline-block text-sm font-semibold text-teal-300">
+        <Link to={`/recruiter/questions?analysisId=${analysis.id}`} className="mt-5 inline-block text-sm font-semibold text-teal-300">
           Continue to question planning
         </Link>
       </Card>
