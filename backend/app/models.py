@@ -27,6 +27,11 @@ class QuestionSource(str, enum.Enum):
     RECRUITER = "RECRUITER"
 
 
+class TurnRole(str, enum.Enum):
+    INTERVIEWER = "INTERVIEWER"
+    CANDIDATE = "CANDIDATE"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -127,3 +132,86 @@ class InterviewQuestion(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class InterviewSession(Base):
+    __tablename__ = "interview_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_plan_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("question_plans.id"), nullable=False, index=True
+    )
+    gap_analysis_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("gap_analyses.id"), nullable=False
+    )
+    cv_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("candidate_cvs.id"), nullable=False)
+    job_spec_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("job_specifications.id"), nullable=False
+    )
+    recruiter_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    candidate_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    status: Mapped[InterviewSessionStatus] = mapped_column(
+        Enum(InterviewSessionStatus, name="interview_session_status", native_enum=False),
+        nullable=False,
+        default=InterviewSessionStatus.SCHEDULED,
+    )
+    follow_up_limit: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    current_question_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    current_follow_up_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    current_plan_question_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_questions.id")
+    )
+    scheduled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class InterviewTurn(Base):
+    __tablename__ = "interview_turns"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_sessions.id"), nullable=False, index=True
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    role: Mapped[TurnRole] = mapped_column(
+        Enum(TurnRole, name="turn_role", native_enum=False), nullable=False
+    )
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    plan_question_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_questions.id")
+    )
+    is_follow_up: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    follow_up_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class InterviewTurnEvaluation(Base):
+    __tablename__ = "interview_turn_evaluations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_sessions.id"), nullable=False, index=True
+    )
+    turn_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_turns.id"), nullable=False, unique=True
+    )
+    plan_question_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_questions.id")
+    )
+    technical_score: Mapped[Optional[float]] = mapped_column(Float)
+    communication_score: Mapped[Optional[float]] = mapped_column(Float)
+    observations: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    evidence_quotes: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    strengths: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    weaknesses: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    should_follow_up: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    follow_up_question: Mapped[Optional[str]] = mapped_column(Text)
+    advance_question: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    model_version: Mapped[Optional[str]] = mapped_column(String(60))
+    raw_model_response: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
