@@ -1,0 +1,99 @@
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { getSession } from '../../api/sessions'
+import { Card } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import type { InterviewSession } from '../../types/sessions'
+
+export function SessionDetailPage() {
+  const { sessionId } = useParams()
+  const [session, setSession] = useState<InterviewSession | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!sessionId) return
+    async function load() {
+      try {
+        const data = await getSession(sessionId!)
+        setSession(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load session')
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [sessionId])
+
+  if (loading) return <p className="text-sm text-slate-400">Loading session...</p>
+  if (error || !session) {
+    return (
+      <Card>
+        <p className="text-sm text-rose-300">{error ?? 'Session not found'}</p>
+        <Link to="/recruiter/sessions" className="mt-3 inline-block text-sm font-semibold text-teal-300">
+          Back to sessions
+        </Link>
+      </Card>
+    )
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Session detail"
+        description={`${session.candidate_name} interviewing for ${session.job_title}`}
+      />
+
+      <div className="mb-6 grid gap-3 sm:grid-cols-3">
+        <Card>
+          <p className="text-xs text-slate-500">Status</p>
+          <p className="mt-1 text-lg font-semibold text-white">{session.status}</p>
+        </Card>
+        <Card>
+          <p className="text-xs text-slate-500">Progress</p>
+          <p className="mt-1 text-lg font-semibold text-teal-300">
+            {session.progress.index} / {session.progress.total}
+          </p>
+        </Card>
+        <Card>
+          <p className="text-xs text-slate-500">Follow-up limit</p>
+          <p className="mt-1 text-lg font-semibold text-white">{session.follow_up_limit}</p>
+        </Card>
+      </div>
+
+      <Card>
+        <h3 className="text-lg font-semibold text-white">Transcript and evidence</h3>
+        <div className="mt-4 space-y-3">
+          {session.turns.length === 0 ? (
+            <p className="text-sm text-slate-500">No turns yet. Waiting for candidate to start.</p>
+          ) : (
+            session.turns.map((turn) => (
+              <div key={turn.id} className="rounded-xl border border-border bg-surface/60 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  {turn.role}
+                  {turn.is_follow_up ? ' (follow-up)' : ''}
+                </p>
+                <p className="mt-2 text-sm text-slate-200">{turn.content}</p>
+                {turn.evaluation && (
+                  <div className="mt-3 rounded-lg border border-border bg-surface p-3 text-xs text-slate-400">
+                    <p>
+                      Scores: technical {turn.evaluation.technical_score ?? '-'} / communication{' '}
+                      {turn.evaluation.communication_score ?? '-'}
+                    </p>
+                    {turn.evaluation.observations.length > 0 && (
+                      <p className="mt-1">Observations: {turn.evaluation.observations.join(' ')}</p>
+                    )}
+                    {turn.evaluation.evidence_quotes.length > 0 && (
+                      <p className="mt-1">Evidence: {turn.evaluation.evidence_quotes.join(' | ')}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+    </div>
+  )
+}

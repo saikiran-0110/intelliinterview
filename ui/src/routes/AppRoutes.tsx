@@ -25,6 +25,7 @@ import { ReportDetailPage } from '../pages/recruiter/ReportDetailPage'
 import { ReportsPage } from '../pages/recruiter/ReportsPage'
 import { RecruiterDashboard } from '../pages/recruiter/RecruiterDashboard'
 import { SchedulingPage } from '../pages/recruiter/SchedulingPage'
+import { SessionDetailPage } from '../pages/recruiter/SessionDetailPage'
 
 export function AppRoutes() {
   return (
@@ -42,6 +43,7 @@ export function AppRoutes() {
         <Route path="questions" element={<QuestionPlanningPage />} />
         <Route path="sessions" element={<InterviewSessionsPage />} />
         <Route path="sessions/new" element={<NewSessionPage />} />
+        <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="reports/sample" element={<ReportDetailPage />} />
         <Route path="scheduling" element={<SchedulingPage />} />
