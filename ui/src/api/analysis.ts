@@ -20,6 +20,18 @@ export function registerRecruiter(email: string, password: string, fullName: str
   })
 }
 
+export function registerCandidate(email: string, password: string, fullName: string) {
+  return apiRequest<AuthResponse>('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({
+      email,
+      password,
+      full_name: fullName,
+      role: 'CANDIDATE',
+    }),
+  })
+}
+
 export function listCvs() {
   return apiRequest<CandidateCv[]>('/api/cvs')
 }

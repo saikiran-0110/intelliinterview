@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { registerRecruiter, login } from '../../api/analysis'
+import { login, registerCandidate, registerRecruiter } from '../../api/analysis'
 import { setAuth } from '../../api/client'
 import { Card } from '../../components/ui/Card'
 
@@ -15,7 +15,7 @@ export function LoginPage({ role }: LoginPageProps) {
 
   const [email, setEmail] = useState(isRecruiter ? 'recruiter@example.com' : 'candidate@example.com')
   const [password, setPassword] = useState('password123')
-  const [fullName, setFullName] = useState('Demo Recruiter')
+  const [fullName, setFullName] = useState(isRecruiter ? 'Demo Recruiter' : 'Demo Candidate')
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -26,15 +26,19 @@ export function LoginPage({ role }: LoginPageProps) {
     setLoading(true)
 
     try {
-      if (!isRecruiter) {
-        setError('Candidate login will be enabled in a later module. Use the recruiter portal for analysis.')
-        return
-      }
-
       const response =
         mode === 'register'
-          ? await registerRecruiter(email, password, fullName)
+          ? isRecruiter
+            ? await registerRecruiter(email, password, fullName)
+            : await registerCandidate(email, password, fullName)
           : await login(email, password)
+
+      if (isRecruiter && response.role !== 'RECRUITER') {
+        throw new Error('This account is not a recruiter account.')
+      }
+      if (!isRecruiter && response.role !== 'CANDIDATE') {
+        throw new Error('This account is not a candidate account.')
+      }
 
       setAuth(response.token, {
         user_id: response.user_id,
@@ -72,13 +76,13 @@ export function LoginPage({ role }: LoginPageProps) {
           <h1 className="mt-1 text-2xl font-bold text-white">Sign in to IntelliInterview</h1>
           <p className="mt-2 text-sm text-slate-400">
             {isRecruiter
-              ? 'Sign in to upload CVs, manage job specifications, and run gap analysis.'
-              : 'Candidate access for interview sessions.'}
+              ? 'Sign in to prepare interviews, generate questions, and launch AI sessions.'
+              : 'Sign in to access scheduled AI interview sessions and submit responses.'}
           </p>
         </div>
 
         <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-          {mode === 'register' && isRecruiter && (
+          {mode === 'register' && (
             <div>
               <label className="mb-1.5 block text-xs font-medium text-slate-400">Full name</label>
               <input
@@ -116,26 +120,26 @@ export function LoginPage({ role }: LoginPageProps) {
 
           <button
             type="submit"
-            disabled={loading || !isRecruiter}
+            disabled={loading}
             className={`w-full rounded-xl py-2.5 text-sm font-semibold transition ${
               isRecruiter
                 ? 'bg-teal-500 text-slate-950 hover:bg-teal-400 disabled:bg-teal-500/50'
-                : 'bg-violet-500/50 text-white'
+                : 'bg-violet-500 text-white hover:bg-violet-400 disabled:bg-violet-500/50'
             }`}
           >
-            {loading ? 'Please wait...' : mode === 'register' ? 'Create recruiter account' : 'Sign in'}
+            {loading ? 'Please wait...' : mode === 'register' ? `Create ${isRecruiter ? 'recruiter' : 'candidate'} account` : 'Sign in'}
           </button>
         </form>
 
-        {isRecruiter && (
-          <button
-            type="button"
-            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-            className="mt-4 w-full text-sm text-slate-400 hover:text-slate-200"
-          >
-            {mode === 'login' ? 'Need an account? Register as recruiter' : 'Already registered? Sign in'}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+          className="mt-4 w-full text-sm text-slate-400 hover:text-slate-200"
+        >
+          {mode === 'login'
+            ? `Need an account? Register as ${isRecruiter ? 'recruiter' : 'candidate'}`
+            : 'Already registered? Sign in'}
+        </button>
       </Card>
     </div>
   )
