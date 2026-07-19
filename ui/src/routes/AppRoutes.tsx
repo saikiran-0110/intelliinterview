@@ -45,7 +45,7 @@ export function AppRoutes() {
         <Route path="sessions/new" element={<NewSessionPage />} />
         <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
         <Route path="reports" element={<ReportsPage />} />
-        <Route path="reports/sample" element={<ReportDetailPage />} />
+        <Route path="reports/:reportId" element={<ReportDetailPage />} />
         <Route path="scheduling" element={<SchedulingPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
         <Route path="bias" element={<BiasDetectionPage />} />
@@ -58,6 +58,7 @@ export function AppRoutes() {
         <Route index element={<CandidateDashboard />} />
         <Route path="sessions" element={<MySessionsPage />} />
         <Route path="interview" element={<LiveInterviewPage />} />
+        <Route path="interview/:sessionId" element={<LiveInterviewPage />} />
         <Route path="feedback" element={<CandidateFeedbackPage />} />
         <Route path="preparation" element={<PreparationPage />} />
         <Route path="applications" element={<ApplicationsPage />} />

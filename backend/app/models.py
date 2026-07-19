@@ -27,6 +27,13 @@ class QuestionSource(str, enum.Enum):
     RECRUITER = "RECRUITER"
 
 
+class HiringRecommendation(str, enum.Enum):
+    STRONG_HIRE = "STRONG_HIRE"
+    HIRE = "HIRE"
+    HOLD = "HOLD"
+    NO_HIRE = "NO_HIRE"
+
+
 class TurnRole(str, enum.Enum):
     INTERVIEWER = "INTERVIEWER"
     CANDIDATE = "CANDIDATE"
@@ -214,4 +221,36 @@ class InterviewTurnEvaluation(Base):
     advance_question: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     model_version: Mapped[Optional[str]] = mapped_column(String(60))
     raw_model_response: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class InterviewReport(Base):
+    __tablename__ = "interview_reports"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_sessions.id"), nullable=False, unique=True, index=True
+    )
+    recruiter_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    candidate_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    cv_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("candidate_cvs.id"), nullable=False)
+    job_spec_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("job_specifications.id"), nullable=False
+    )
+    technical_fit_score: Mapped[float] = mapped_column(Float, nullable=False)
+    communication_score: Mapped[float] = mapped_column(Float, nullable=False)
+    problem_solving_score: Mapped[float] = mapped_column(Float, nullable=False)
+    role_alignment_score: Mapped[float] = mapped_column(Float, nullable=False)
+    overall_score: Mapped[float] = mapped_column(Float, nullable=False)
+    recommendation: Mapped[HiringRecommendation] = mapped_column(
+        Enum(HiringRecommendation, name="hiring_recommendation", native_enum=False),
+        nullable=False,
+    )
+    recommendation_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    strengths: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    weaknesses: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    evidence_items: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    dimension_notes: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    model_version: Mapped[Optional[str]] = mapped_column(String(60))
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

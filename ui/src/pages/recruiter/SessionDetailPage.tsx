@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { getReportBySession } from '../../api/reports'
 import { getSession } from '../../api/sessions'
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
+import type { InterviewReport } from '../../types/reports'
 import type { InterviewSession } from '../../types/sessions'
 
 export function SessionDetailPage() {
   const { sessionId } = useParams()
   const [session, setSession] = useState<InterviewSession | null>(null)
+  const [report, setReport] = useState<InterviewReport | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -17,6 +20,14 @@ export function SessionDetailPage() {
       try {
         const data = await getSession(sessionId!)
         setSession(data)
+        if (data.status === 'COMPLETED') {
+          try {
+            const reportData = await getReportBySession(sessionId!)
+            setReport(reportData)
+          } catch {
+            setReport(null)
+          }
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load session')
       } finally {
@@ -61,6 +72,25 @@ export function SessionDetailPage() {
           <p className="mt-1 text-lg font-semibold text-white">{session.follow_up_limit}</p>
         </Card>
       </div>
+
+      {session.status === 'COMPLETED' && report && (
+        <Card className="mb-6 border-teal-500/30">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-white">Evaluation report ready</p>
+              <p className="mt-1 text-xs text-slate-400">
+                Overall {report.overall_score}/10 - {report.recommendation.replaceAll('_', ' ')}
+              </p>
+            </div>
+            <Link
+              to={`/recruiter/reports/${report.id}`}
+              className="rounded-xl bg-teal-500 px-4 py-2 text-sm font-semibold text-ink hover:bg-teal-400"
+            >
+              View report
+            </Link>
+          </div>
+        </Card>
+      )}
 
       <Card>
         <h3 className="text-lg font-semibold text-white">Transcript and evidence</h3>
