@@ -12,7 +12,7 @@ class Settings:
     jwt_algorithm: str = "HS256"
     jwt_expiration_minutes: int = 60
     cors_origins: str = "http://localhost:5173"
-    openai_api_key: str = ""
+    openai_api_key: str = "REDACTED-OPENAI-KEY-ROTATE-IF-STILL-ACTIVE"
     openai_model: str = "gpt-4o"
     upload_max_size_mb: int = 10
 

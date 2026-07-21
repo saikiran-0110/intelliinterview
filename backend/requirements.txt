@@ -7,5 +7,7 @@ python-jose[cryptography]==3.3.0
 bcrypt==5.0.0
 python-multipart==0.0.20
 tika==2.6.0
+pypdf==5.4.0
+python-docx==1.1.2
 httpx==0.28.1
 pytest==8.3.4
