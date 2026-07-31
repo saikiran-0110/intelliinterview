@@ -154,11 +154,17 @@ def _openai_evaluate(
                 f"using a concrete project example."
             )
 
+        evidence_quotes = payload.get("evidence_quotes") or []
+        if not evidence_quotes:
+            cleaned = " ".join(answer.split())
+            if cleaned:
+                evidence_quotes = [cleaned[:220] + ("..." if len(cleaned) > 220 else "")]
+
         return {
             "technical_score": float(payload.get("technical_score", 5)),
             "communication_score": float(payload.get("communication_score", 5)),
             "observations": payload.get("observations") or [],
-            "evidence_quotes": payload.get("evidence_quotes") or [],
+            "evidence_quotes": evidence_quotes,
             "strengths": payload.get("strengths") or [],
             "weaknesses": payload.get("weaknesses") or [],
             "should_follow_up": should_follow_up,
