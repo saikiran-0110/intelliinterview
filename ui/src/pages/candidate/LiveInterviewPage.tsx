@@ -1,8 +1,13 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { getSession, listSessions, startSession, submitAnswer } from '../../api/sessions'
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
+import {
+  isSpeechSynthesisSupported,
+  speakText,
+  stopSpeaking,
+} from '../../lib/speech'
 import type { InterviewSession, SessionSummary } from '../../types/sessions'
 
 export function LiveInterviewPage() {
@@ -18,6 +23,10 @@ export function LiveInterviewPage() {
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [ttsEnabled, setTtsEnabled] = useState(true)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const lastSpokenTurnId = useRef<string | null>(null)
+  const ttsSupported = useMemo(() => isSpeechSynthesisSupported(), [])
 
   useEffect(() => {
     async function loadList() {
@@ -54,6 +63,52 @@ export function LiveInterviewPage() {
     loadSession()
   }, [sessionId])
 
+  const latestInterviewerTurn = useMemo(() => {
+    if (!session) return null
+    const interviewerTurns = session.turns.filter((turn) => turn.role === 'INTERVIEWER')
+    return interviewerTurns.length > 0 ? interviewerTurns[interviewerTurns.length - 1] : null
+  }, [session])
+
+  useEffect(() => {
+    if (!session || !ttsEnabled || !ttsSupported || !latestInterviewerTurn) return
+    if (session.status !== 'IN_PROGRESS') return
+    if (lastSpokenTurnId.current === latestInterviewerTurn.id) return
+
+    lastSpokenTurnId.current = latestInterviewerTurn.id
+    setIsSpeaking(true)
+    speakText(latestInterviewerTurn.content, {
+      onEnd: () => setIsSpeaking(false),
+      onError: (message) => {
+        setIsSpeaking(false)
+        setStatus(message)
+      },
+    })
+  }, [latestInterviewerTurn, session, ttsEnabled, ttsSupported])
+
+  useEffect(() => {
+    return () => {
+      stopSpeaking()
+    }
+  }, [])
+
+  function handleSpeakLatest() {
+    if (!latestInterviewerTurn || !ttsSupported) return
+    setIsSpeaking(true)
+    lastSpokenTurnId.current = latestInterviewerTurn.id
+    speakText(latestInterviewerTurn.content, {
+      onEnd: () => setIsSpeaking(false),
+      onError: (message) => {
+        setIsSpeaking(false)
+        setStatus(message)
+      },
+    })
+  }
+
+  function handleStopSpeaking() {
+    stopSpeaking()
+    setIsSpeaking(false)
+  }
+
   async function handleStart() {
     if (!sessionId) return
     setLoading(true)
@@ -75,9 +130,11 @@ export function LiveInterviewPage() {
     event.preventDefault()
     if (!sessionId || !answer.trim()) return
 
+    stopSpeaking()
+    setIsSpeaking(false)
     setLoading(true)
     setError(null)
-    setStatus('Evaluating your answer...')
+    setStatus('Evaluating your answer with GPT-4o...')
 
     try {
       const data = await submitAnswer(sessionId, answer.trim())
@@ -85,7 +142,7 @@ export function LiveInterviewPage() {
       setAnswer('')
       setStatus(
         data.status === 'COMPLETED'
-          ? 'Interview completed. Thank you.'
+          ? 'Interview completed. Evidence saved for the recruiter report.'
           : 'Answer recorded. Next question ready.',
       )
     } catch (err) {
@@ -150,6 +207,9 @@ export function LiveInterviewPage() {
 
   const canAnswer = session.status === 'IN_PROGRESS'
   const canStart = session.status === 'SCHEDULED'
+  const latestEvaluation = [...session.turns]
+    .reverse()
+    .find((turn) => turn.role === 'CANDIDATE' && turn.evaluation)?.evaluation
 
   return (
     <div>
@@ -177,6 +237,38 @@ export function LiveInterviewPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          {latestInterviewerTurn && session.status === 'IN_PROGRESS' && (
+            <Card className="border-violet-500/30">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                    Current AI question
+                    {latestInterviewerTurn.is_follow_up ? ' (follow-up)' : ''}
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-100">{latestInterviewerTurn.content}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSpeakLatest}
+                    disabled={!ttsSupported || isSpeaking}
+                    className="rounded-xl border border-border px-3 py-2 text-xs font-semibold text-violet-200 hover:border-violet-400/40 disabled:opacity-50"
+                  >
+                    {isSpeaking ? 'Speaking...' : 'Listen'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleStopSpeaking}
+                    disabled={!isSpeaking}
+                    className="rounded-xl border border-border px-3 py-2 text-xs font-semibold text-slate-300 hover:border-slate-400/40 disabled:opacity-50"
+                  >
+                    Stop
+                  </button>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card>
             <div className="mb-4 flex items-center justify-between">
               <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Conversation</p>
@@ -202,6 +294,14 @@ export function LiveInterviewPage() {
                       {turn.is_follow_up ? ' - follow-up' : ''}
                     </p>
                     <p className="mt-2 text-sm leading-relaxed text-slate-200">{turn.content}</p>
+                    {turn.evaluation && (
+                      <p className="mt-2 text-xs text-slate-500">
+                        Evidence saved for report
+                        {turn.evaluation.evidence_quotes[0]
+                          ? `: "${turn.evaluation.evidence_quotes[0].slice(0, 80)}..."`
+                          : ''}
+                      </p>
+                    )}
                   </div>
                 ))
               )}
@@ -210,6 +310,30 @@ export function LiveInterviewPage() {
         </div>
 
         <div className="space-y-6">
+          <Card>
+            <h3 className="text-lg font-semibold text-white">Voice settings</h3>
+            <label className="mt-3 flex items-center gap-3 text-sm text-slate-300">
+              <input
+                type="checkbox"
+                checked={ttsEnabled}
+                onChange={(e) => {
+                  setTtsEnabled(e.target.checked)
+                  if (!e.target.checked) {
+                    handleStopSpeaking()
+                  }
+                }}
+                disabled={!ttsSupported}
+                className="h-4 w-4 rounded border-border"
+              />
+              Read AI questions aloud (text-to-speech)
+            </label>
+            {!ttsSupported && (
+              <p className="mt-2 text-xs text-amber-300">
+                Text-to-speech is unavailable in this browser. Questions remain readable as text.
+              </p>
+            )}
+          </Card>
+
           {canStart && (
             <Card>
               <h3 className="text-lg font-semibold text-white">Ready to begin?</h3>
@@ -247,6 +371,19 @@ export function LiveInterviewPage() {
                   {loading ? 'Submitting...' : 'Submit answer'}
                 </button>
               </form>
+            </Card>
+          )}
+
+          {latestEvaluation && (
+            <Card>
+              <h3 className="text-sm font-semibold text-white">Latest evaluation snapshot</h3>
+              <p className="mt-2 text-xs text-slate-400">
+                Technical {latestEvaluation.technical_score ?? '-'} / Communication{' '}
+                {latestEvaluation.communication_score ?? '-'}
+              </p>
+              {latestEvaluation.observations[0] && (
+                <p className="mt-2 text-xs text-slate-500">{latestEvaluation.observations[0]}</p>
+              )}
             </Card>
           )}
 
