@@ -4,9 +4,12 @@ import { getSession, listSessions, startSession, submitAnswer } from '../../api/
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
 import {
+  createSpeechRecognition,
+  isSpeechRecognitionSupported,
   isSpeechSynthesisSupported,
   speakText,
   stopSpeaking,
+  type SpeechRecognitionController,
 } from '../../lib/speech'
 import type { InterviewSession, SessionSummary } from '../../types/sessions'
 
@@ -20,13 +23,18 @@ export function LiveInterviewPage() {
   const [sessions, setSessions] = useState<SessionSummary[]>([])
   const [session, setSession] = useState<InterviewSession | null>(null)
   const [answer, setAnswer] = useState('')
+  const [interimTranscript, setInterimTranscript] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [ttsEnabled, setTtsEnabled] = useState(true)
+  const [sttEnabled, setSttEnabled] = useState(true)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [isListening, setIsListening] = useState(false)
   const lastSpokenTurnId = useRef<string | null>(null)
+  const recognitionRef = useRef<SpeechRecognitionController | null>(null)
   const ttsSupported = useMemo(() => isSpeechSynthesisSupported(), [])
+  const sttSupported = useMemo(() => isSpeechRecognitionSupported(), [])
 
   useEffect(() => {
     async function loadList() {
@@ -86,7 +94,29 @@ export function LiveInterviewPage() {
   }, [latestInterviewerTurn, session, ttsEnabled, ttsSupported])
 
   useEffect(() => {
+    recognitionRef.current = createSpeechRecognition({
+      continuous: true,
+      interimResults: true,
+      onResult: (transcript, isFinal) => {
+        if (isFinal) {
+          setAnswer((prev) => `${prev} ${transcript}`.trim())
+          setInterimTranscript('')
+        } else {
+          setInterimTranscript(transcript)
+        }
+      },
+      onError: (message) => {
+        setIsListening(false)
+        setStatus(message)
+      },
+      onEnd: () => {
+        setIsListening(false)
+        setInterimTranscript('')
+      },
+    })
+
     return () => {
+      recognitionRef.current?.stop()
       stopSpeaking()
     }
   }, [])
@@ -107,6 +137,24 @@ export function LiveInterviewPage() {
   function handleStopSpeaking() {
     stopSpeaking()
     setIsSpeaking(false)
+  }
+
+  function handleToggleListening() {
+    if (!sttSupported || !sttEnabled) return
+
+    if (isListening) {
+      recognitionRef.current?.stop()
+      setIsListening(false)
+      setInterimTranscript('')
+      setStatus('Voice capture stopped. Review and edit your answer before submitting.')
+      return
+    }
+
+    handleStopSpeaking()
+    setInterimTranscript('')
+    setIsListening(true)
+    setStatus('Listening... speak your answer. You can edit the transcript before submit.')
+    recognitionRef.current?.start()
   }
 
   async function handleStart() {
@@ -130,6 +178,9 @@ export function LiveInterviewPage() {
     event.preventDefault()
     if (!sessionId || !answer.trim()) return
 
+    recognitionRef.current?.stop()
+    setIsListening(false)
+    setInterimTranscript('')
     stopSpeaking()
     setIsSpeaking(false)
     setLoading(true)
@@ -210,6 +261,9 @@ export function LiveInterviewPage() {
   const latestEvaluation = [...session.turns]
     .reverse()
     .find((turn) => turn.role === 'CANDIDATE' && turn.evaluation)?.evaluation
+  const displayAnswer = interimTranscript
+    ? `${answer}${answer ? ' ' : ''}${interimTranscript}`
+    : answer
 
   return (
     <div>
@@ -327,9 +381,31 @@ export function LiveInterviewPage() {
               />
               Read AI questions aloud (text-to-speech)
             </label>
+            <label className="mt-3 flex items-center gap-3 text-sm text-slate-300">
+              <input
+                type="checkbox"
+                checked={sttEnabled}
+                onChange={(e) => {
+                  setSttEnabled(e.target.checked)
+                  if (!e.target.checked && isListening) {
+                    recognitionRef.current?.stop()
+                    setIsListening(false)
+                    setInterimTranscript('')
+                  }
+                }}
+                disabled={!sttSupported}
+                className="h-4 w-4 rounded border-border"
+              />
+              Enable voice answers (speech-to-text)
+            </label>
             {!ttsSupported && (
               <p className="mt-2 text-xs text-amber-300">
                 Text-to-speech is unavailable in this browser. Questions remain readable as text.
+              </p>
+            )}
+            {!sttSupported && (
+              <p className="mt-2 text-xs text-amber-300">
+                Speech-to-text is unavailable in this browser. Typed answers still work.
               </p>
             )}
           </Card>
@@ -354,22 +430,42 @@ export function LiveInterviewPage() {
           {canAnswer && (
             <Card>
               <h3 className="text-lg font-semibold text-white">Your response</h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Type or dictate your answer. Review the transcript before submitting.
+              </p>
               <form className="mt-3 space-y-3" onSubmit={handleSubmit}>
                 <textarea
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
+                  value={displayAnswer}
+                  onChange={(e) => {
+                    setAnswer(e.target.value)
+                    setInterimTranscript('')
+                  }}
                   rows={8}
-                  placeholder="Type your answer..."
+                  placeholder="Type your answer, or use the microphone..."
                   className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-slate-100"
                   required
                 />
-                <button
-                  type="submit"
-                  disabled={loading || !answer.trim()}
-                  className="w-full rounded-xl bg-violet-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-400 disabled:opacity-50"
-                >
-                  {loading ? 'Submitting...' : 'Submit answer'}
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleToggleListening}
+                    disabled={!sttSupported || !sttEnabled || loading}
+                    className={`rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50 ${
+                      isListening
+                        ? 'bg-rose-500 text-white hover:bg-rose-400'
+                        : 'border border-border text-violet-200 hover:border-violet-400/40'
+                    }`}
+                  >
+                    {isListening ? 'Stop mic' : 'Start mic'}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading || !answer.trim()}
+                    className="rounded-xl bg-violet-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-400 disabled:opacity-50"
+                  >
+                    {loading ? 'Submitting...' : 'Submit answer'}
+                  </button>
+                </div>
               </form>
             </Card>
           )}
