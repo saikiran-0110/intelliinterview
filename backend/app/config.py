@@ -15,6 +15,14 @@ class Settings:
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
     upload_max_size_mb: int = 10
+    frontend_base_url: str = "http://localhost:5173"
+    # Leave smtp_host empty to log emails instead of sending (dev-friendly).
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = "noreply@intelliinterview.local"
+    smtp_use_tls: bool = True
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -39,6 +39,34 @@ class TurnRole(str, enum.Enum):
     CANDIDATE = "CANDIDATE"
 
 
+class ScheduleConfirmationStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    CONFIRMED = "CONFIRMED"
+    RESCHEDULE_REQUESTED = "RESCHEDULE_REQUESTED"
+    DECLINED = "DECLINED"
+
+
+class PipelineStage(str, enum.Enum):
+    APPLIED = "APPLIED"
+    SCREENING = "SCREENING"
+    SHORTLISTED = "SHORTLISTED"
+    INTERVIEW = "INTERVIEW"
+    OFFER = "OFFER"
+    HIRED = "HIRED"
+    REJECTED = "REJECTED"
+
+
+class NotificationChannel(str, enum.Enum):
+    IN_APP = "IN_APP"
+    EMAIL = "EMAIL"
+
+
+class BiasAlertSeverity(str, enum.Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -171,10 +199,114 @@ class InterviewSession(Base):
     scheduled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    confirmation_status: Mapped[ScheduleConfirmationStatus] = mapped_column(
+        Enum(ScheduleConfirmationStatus, name="schedule_confirmation_status", native_enum=False),
+        nullable=False,
+        default=ScheduleConfirmationStatus.PENDING,
+    )
+    duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=45)
+    timezone: Mapped[str] = mapped_column(String(64), nullable=False, default="UTC")
+    confirmed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    candidate_note: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class InterviewSlotSuggestion(Base):
+    __tablename__ = "interview_slot_suggestions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_sessions.id"), nullable=False, index=True
+    )
+    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    ends_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    proposed_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    is_selected: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    channel: Mapped[NotificationChannel] = mapped_column(
+        Enum(NotificationChannel, name="notification_channel", native_enum=False),
+        nullable=False,
+        default=NotificationChannel.IN_APP,
+    )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    link: Mapped[Optional[str]] = mapped_column(String(255))
+    related_session_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_sessions.id")
+    )
+    is_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    email_sent: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class JobApplication(Base):
+    __tablename__ = "job_applications"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    job_spec_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("job_specifications.id"), nullable=False, index=True
+    )
+    candidate_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    cv_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("candidate_cvs.id"))
+    gap_analysis_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("gap_analyses.id"))
+    recruiter_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    stage: Mapped[PipelineStage] = mapped_column(
+        Enum(PipelineStage, name="pipeline_stage", native_enum=False),
+        nullable=False,
+        default=PipelineStage.APPLIED,
+    )
+    match_score: Mapped[Optional[float]] = mapped_column(Float)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class CandidateFeedback(Base):
+    __tablename__ = "candidate_feedbacks"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_sessions.id"), nullable=False, unique=True, index=True
+    )
+    candidate_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    report_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("interview_reports.id"))
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    strong_answers: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    improvement_areas: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    focus_tips: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    model_version: Mapped[Optional[str]] = mapped_column(String(60))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class BiasAlert(Base):
+    __tablename__ = "bias_alerts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    recruiter_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    alert_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    severity: Mapped[BiasAlertSeverity] = mapped_column(
+        Enum(BiasAlertSeverity, name="bias_alert_severity", native_enum=False),
+        nullable=False,
+        default=BiasAlertSeverity.MEDIUM,
+    )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    metric_payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    acknowledged: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    acknowledged_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class InterviewTurn(Base):
