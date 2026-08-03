@@ -1,0 +1,69 @@
+import { apiRequest } from './client'
+import type {
+  AnalyticsOverview,
+  AppNotification,
+  BiasOverview,
+  CandidateFeedback,
+  CandidateFeedbackSummary,
+  ScheduleItem,
+} from '../types/desirable'
+
+export function listScheduleItems() {
+  return apiRequest<ScheduleItem[]>('/api/scheduling/sessions')
+}
+
+export function proposeSlots(sessionId: string, slotCount = 5, durationMinutes = 45) {
+  return apiRequest<ScheduleItem>('/api/scheduling/propose', {
+    method: 'POST',
+    body: JSON.stringify({
+      session_id: sessionId,
+      slot_count: slotCount,
+      duration_minutes: durationMinutes,
+      timezone: 'UTC',
+    }),
+  })
+}
+
+export function confirmSlot(sessionId: string, slotId: string, candidateNote?: string) {
+  return apiRequest<ScheduleItem>(`/api/scheduling/${sessionId}/confirm`, {
+    method: 'POST',
+    body: JSON.stringify({ slot_id: slotId, candidate_note: candidateNote || null }),
+  })
+}
+
+export function requestReschedule(sessionId: string, candidateNote?: string) {
+  return apiRequest<ScheduleItem>(`/api/scheduling/${sessionId}/reschedule`, {
+    method: 'POST',
+    body: JSON.stringify({ candidate_note: candidateNote || null }),
+  })
+}
+
+export function listNotifications() {
+  return apiRequest<AppNotification[]>('/api/scheduling/notifications')
+}
+
+export function markNotificationRead(notificationId: string) {
+  return apiRequest<AppNotification>(`/api/scheduling/notifications/${notificationId}/read`, {
+    method: 'POST',
+  })
+}
+
+export function getAnalyticsOverview() {
+  return apiRequest<AnalyticsOverview>('/api/analytics/overview')
+}
+
+export function listMyFeedback() {
+  return apiRequest<CandidateFeedbackSummary[]>('/api/feedback/me')
+}
+
+export function getFeedbackBySession(sessionId: string) {
+  return apiRequest<CandidateFeedback>(`/api/feedback/by-session/${sessionId}`)
+}
+
+export function getBiasOverview() {
+  return apiRequest<BiasOverview>('/api/bias/overview')
+}
+
+export function acknowledgeBiasAlert(alertId: string) {
+  return apiRequest(`/api/bias/alerts/${alertId}/acknowledge`, { method: 'POST' })
+}
