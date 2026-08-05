@@ -28,12 +28,14 @@ from app.session_schemas import (
     SubmitAnswerRequest,
     TurnEvaluationResponse,
 )
+from app.services.candidate_feedback import CandidateFeedbackService
 from app.services.interview_agent import InterviewAgentService
 from app.services.report_generation import ReportGenerationService
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 agent = InterviewAgentService()
 report_service = ReportGenerationService()
+feedback_service = CandidateFeedbackService()
 
 
 def _approved_questions(db: Session, plan_id: UUID) -> list[InterviewQuestion]:
@@ -414,6 +416,7 @@ def submit_answer(
     db.refresh(session)
 
     if session.status == InterviewSessionStatus.COMPLETED:
-        report_service.generate_for_session(db, session)
+        report = report_service.generate_for_session(db, session)
+        feedback_service.generate_for_report(db, report)
 
     return _session_response(db, session)
