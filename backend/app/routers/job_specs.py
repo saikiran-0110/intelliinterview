@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.dependencies import require_role
+from app.dependencies import get_current_user, require_role
 from app.models import JobSpecification, User, UserRole
 from app.analysis_schemas import (
     JobSpecificationCreateRequest,
@@ -14,9 +14,14 @@ from app.analysis_schemas import (
 )
 from app.services.document_parser import DocumentParserService
 from app.services.skill_catalog import parse_job_requirements
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/job-specs", tags=["job-specs"])
 document_parser = DocumentParserService()
+
+
+class JobSpecVisibilityRequest(BaseModel):
+    is_open: bool
 
 
 @router.get("", response_model=list[JobSpecificationResponse])
@@ -27,6 +32,20 @@ def list_job_specs(
     specs = (
         db.query(JobSpecification)
         .filter(JobSpecification.created_by == current_user.id)
+        .order_by(JobSpecification.created_at.desc())
+        .all()
+    )
+    return [to_job_spec_response(spec) for spec in specs]
+
+
+@router.get("/open", response_model=list[JobSpecificationResponse])
+def list_open_job_specs(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[JobSpecificationResponse]:
+    specs = (
+        db.query(JobSpecification)
+        .filter(JobSpecification.is_open.is_(True))
         .order_by(JobSpecification.created_at.desc())
         .all()
     )
@@ -57,6 +76,7 @@ def create_job_spec(
         description=request.description.strip(),
         extracted_text=request.description.strip(),
         parsed_requirements=parsed_requirements,
+        is_open=request.is_open,
         created_by=current_user.id,
     )
     db.add(job_spec)
@@ -99,8 +119,26 @@ async def upload_job_spec(
         description=extracted_text,
         extracted_text=extracted_text,
         parsed_requirements=parsed_requirements,
+        is_open=True,
         created_by=current_user.id,
     )
+    db.add(job_spec)
+    db.commit()
+    db.refresh(job_spec)
+    return to_job_spec_response(job_spec)
+
+
+@router.patch("/{job_spec_id}/visibility", response_model=JobSpecificationResponse)
+def set_job_visibility(
+    job_spec_id: UUID,
+    request: JobSpecVisibilityRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.RECRUITER)),
+) -> JobSpecificationResponse:
+    job_spec = db.get(JobSpecification, job_spec_id)
+    if job_spec is None or job_spec.created_by != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job specification not found")
+    job_spec.is_open = request.is_open
     db.add(job_spec)
     db.commit()
     db.refresh(job_spec)

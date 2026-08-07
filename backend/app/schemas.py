@@ -26,6 +26,10 @@ class AuthResponse(BaseModel):
     token: str
 
 
+class UpdateProfileRequest(BaseModel):
+    full_name: str = Field(min_length=1, max_length=120)
+
+
 class HealthResponse(BaseModel):
     status: str
     application: str

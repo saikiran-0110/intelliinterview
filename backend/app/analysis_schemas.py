@@ -33,6 +33,7 @@ class CandidateCvResponse(BaseModel):
 class JobSpecificationCreateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     description: str = Field(min_length=1)
+    is_open: bool = True
 
 
 class JobSpecificationResponse(BaseModel):
@@ -41,6 +42,7 @@ class JobSpecificationResponse(BaseModel):
     description: str
     extracted_text: str | None
     parsed_requirements: ParsedRequirementsResponse | None
+    is_open: bool = True
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -125,6 +127,7 @@ def to_job_spec_response(job_spec: Any) -> JobSpecificationResponse:
         description=job_spec.description,
         extracted_text=job_spec.extracted_text,
         parsed_requirements=requirements,
+        is_open=bool(getattr(job_spec, "is_open", True)),
         created_at=job_spec.created_at,
     )
 

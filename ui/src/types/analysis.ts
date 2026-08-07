@@ -27,6 +27,7 @@ export type JobSpecification = {
   description: string
   extracted_text: string | null
   parsed_requirements: ParsedRequirements | null
+  is_open?: boolean
   created_at: string
 }
 
