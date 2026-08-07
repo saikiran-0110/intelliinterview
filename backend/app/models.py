@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, LargeBinary, String, Text, func
 from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -89,6 +89,7 @@ class JobSpecification(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     extracted_text: Mapped[Optional[str]] = mapped_column(Text)
     parsed_requirements: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    is_open: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
@@ -104,6 +105,8 @@ class CandidateCv(Base):
     original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
     extracted_text: Mapped[Optional[str]] = mapped_column(Text)
     parsed_profile: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    file_data: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
+    content_type: Mapped[Optional[str]] = mapped_column(String(120))
     uploaded_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
@@ -385,4 +388,20 @@ class InterviewReport(Base):
     dimension_notes: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
     model_version: Mapped[Optional[str]] = mapped_column(String(60))
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PreparationPack(Base):
+    __tablename__ = "preparation_packs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    candidate_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    cv_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("candidate_cvs.id"), nullable=False)
+    job_spec_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("job_specifications.id"), nullable=False
+    )
+    practice_questions: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    guidance: Mapped[str] = mapped_column(Text, nullable=False)
+    focus_areas: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    model_version: Mapped[Optional[str]] = mapped_column(String(60))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
