@@ -5,6 +5,7 @@ from app.config import settings
 from app.routers import (
     analysis,
     analytics,
+    applications,
     auth,
     bias,
     cvs,
@@ -43,3 +44,4 @@ app.include_router(scheduling.router)
 app.include_router(analytics.router)
 app.include_router(feedback.router)
 app.include_router(bias.router)
+app.include_router(applications.router)

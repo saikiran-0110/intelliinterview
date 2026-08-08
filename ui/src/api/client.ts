@@ -50,19 +50,23 @@ function redirectToLogin() {
   }
 }
 
-export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  options: RequestInit & { raw?: boolean } = {},
+): Promise<T> {
   const token = getToken()
   const headers = new Headers(options.headers)
+  const { raw, ...fetchOptions } = options
 
   if (token) {
     headers.set('Authorization', `Bearer ${token}`)
   }
 
-  if (!(options.body instanceof FormData) && !headers.has('Content-Type') && options.body) {
+  if (!(fetchOptions.body instanceof FormData) && !headers.has('Content-Type') && fetchOptions.body) {
     headers.set('Content-Type', 'application/json')
   }
 
-  const response = await fetch(path, { ...options, headers })
+  const response = await fetch(path, { ...fetchOptions, headers })
   if (!response.ok) {
     let message = 'Request failed'
     try {
@@ -85,6 +89,10 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
 
   if (response.status === 204) {
     return undefined as T
+  }
+
+  if (raw) {
+    return (await response.blob()) as T
   }
 
   return response.json() as Promise<T>
