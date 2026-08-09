@@ -13,6 +13,7 @@ from app.routers import (
     health,
     job_specs,
     questions,
+    preparation,
     ranking,
     reports,
     scheduling,
@@ -47,3 +48,4 @@ app.include_router(feedback.router)
 app.include_router(bias.router)
 app.include_router(applications.router)
 app.include_router(ranking.router)
+app.include_router(preparation.router)
