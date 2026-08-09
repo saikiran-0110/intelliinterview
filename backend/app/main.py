@@ -6,6 +6,7 @@ from app.routers import (
     analysis,
     analytics,
     applications,
+    assistant,
     auth,
     bias,
     cvs,
@@ -49,3 +50,4 @@ app.include_router(bias.router)
 app.include_router(applications.router)
 app.include_router(ranking.router)
 app.include_router(preparation.router)
+app.include_router(assistant.router)
