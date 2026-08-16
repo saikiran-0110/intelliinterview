@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 from app.models import PipelineStage
 
@@ -9,6 +9,31 @@ from app.models import PipelineStage
 class ApplicationCreateRequest(BaseModel):
     job_spec_id: UUID
     cv_id: UUID | None = None
+    contact_full_name: str = Field(min_length=1, max_length=120)
+    contact_email: EmailStr
+    contact_phone: str = Field(min_length=7, max_length=40)
+    contact_linkedin: str | None = Field(default=None, max_length=255)
+    current_location: str | None = Field(default=None, max_length=255)
+    expected_salary_gbp: float | None = Field(default=None, ge=0)
+    right_to_work_uk: bool = True
+    cover_note: str | None = Field(default=None, max_length=4000)
+
+
+class MatchPreviewRequest(BaseModel):
+    job_spec_id: UUID
+    cv_id: UUID | None = None
+
+
+class MatchPreviewResponse(BaseModel):
+    job_spec_id: UUID
+    job_title: str
+    cv_id: UUID
+    match_score: float
+    strong_matches: list[str] = Field(default_factory=list)
+    partial_matches: list[str] = Field(default_factory=list)
+    gaps: list[str] = Field(default_factory=list)
+    plain_language_breakdown: str
+    narrative_summary: str
 
 
 class ApplicationStageUpdateRequest(BaseModel):
@@ -29,6 +54,14 @@ class ApplicationResponse(BaseModel):
     stage: PipelineStage
     match_score: float | None
     notes: str | None
+    contact_full_name: str | None = None
+    contact_email: str | None = None
+    contact_phone: str | None = None
+    contact_linkedin: str | None = None
+    current_location: str | None = None
+    expected_salary_gbp: float | None = None
+    right_to_work_uk: bool | None = None
+    cover_note: str | None = None
     created_at: datetime
     updated_at: datetime
 

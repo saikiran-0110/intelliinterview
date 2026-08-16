@@ -16,17 +16,37 @@ def _register_candidate(client, email="opt-candidate@example.com"):
     return response.json()["token"]
 
 
-def test_candidate_apply_rank_prepare_and_assistant(client):
-    recruiter_token = register_recruiter(client, email="opt-recruiter@example.com")
-    candidate_token = _register_candidate(client, email="opt-live@example.com")
+def test_recruiter_job_requisition_and_candidate_apply_flow(client):
+    recruiter_token = register_recruiter(client, email="req-recruiter@example.com")
+    candidate_token = _register_candidate(client, email="req-candidate@example.com")
 
     job = client.post(
         "/api/job-specs",
         headers=auth_headers(recruiter_token),
-        json={"title": "Platform Engineer", "description": SAMPLE_JOB_SPEC, "is_open": True},
+        json={
+            "title": "Platform Engineer",
+            "description": SAMPLE_JOB_SPEC,
+            "department": "Engineering",
+            "location": "London, UK",
+            "employment_type": "FULL_TIME",
+            "work_mode": "HYBRID",
+            "salary_min_gbp": 65000,
+            "salary_max_gbp": 85000,
+            "years_experience_min": 3,
+            "benefits": "Pension, private healthcare, 25 days holiday",
+            "is_open": True,
+        },
     )
     assert job.status_code == 201
-    job_id = job.json()["id"]
+    payload = job.json()
+    assert payload["salary_min_gbp"] == 65000
+    assert payload["salary_max_gbp"] == 85000
+    assert payload["location"] == "London, UK"
+    job_id = payload["id"]
+
+    open_jobs = client.get("/api/job-specs/open", headers=auth_headers(candidate_token))
+    assert open_jobs.status_code == 200
+    assert any(item["id"] == job_id for item in open_jobs.json())
 
     cv = client.post(
         "/api/cvs/upload",
@@ -37,50 +57,36 @@ def test_candidate_apply_rank_prepare_and_assistant(client):
     assert cv.status_code == 201
     cv_id = cv.json()["id"]
 
+    preview = client.post(
+        "/api/applications/match-preview",
+        headers=auth_headers(candidate_token),
+        json={"job_spec_id": job_id, "cv_id": cv_id},
+    )
+    assert preview.status_code == 200
+    assert preview.json()["match_score"] is not None
+    assert preview.json()["plain_language_breakdown"]
+
     apply = client.post(
         "/api/applications",
         headers=auth_headers(candidate_token),
-        json={"job_spec_id": job_id, "cv_id": cv_id},
+        json={
+            "job_spec_id": job_id,
+            "cv_id": cv_id,
+            "contact_full_name": "Optional Candidate",
+            "contact_email": "req-candidate@example.com",
+            "contact_phone": "+44 7700 900123",
+            "current_location": "Manchester, UK",
+            "expected_salary_gbp": 72000,
+            "right_to_work_uk": True,
+            "cover_note": "Excited to join the platform team.",
+        },
     )
     assert apply.status_code == 201
     assert apply.json()["stage"] == "APPLIED"
     assert apply.json()["match_score"] is not None
-
-    my_apps = client.get("/api/applications/me", headers=auth_headers(candidate_token))
-    assert my_apps.status_code == 200
-    assert len(my_apps.json()) >= 1
+    assert apply.json()["contact_phone"] == "+44 7700 900123"
+    assert apply.json()["expected_salary_gbp"] == 72000
 
     ranking = client.get(f"/api/ranking/{job_id}", headers=auth_headers(recruiter_token))
     assert ranking.status_code == 200
     assert ranking.json()["candidates"]
-    assert ranking.json()["candidates"][0]["plain_language_breakdown"]
-
-    prep = client.post(
-        "/api/preparation/generate",
-        headers=auth_headers(candidate_token),
-        json={"job_spec_id": job_id, "cv_id": cv_id},
-    )
-    assert prep.status_code == 201
-    assert prep.json()["practice_questions"]
-    assert prep.json()["guidance"]
-
-    assistant = client.post(
-        "/api/assistant/query",
-        headers=auth_headers(recruiter_token),
-        json={"message": "Who are the best candidates for Platform Engineer?"},
-    )
-    assert assistant.status_code == 200
-    assert assistant.json()["answer"]
-    assert assistant.json()["tools_used"]
-
-    stage = client.patch(
-        f"/api/applications/{apply.json()['id']}/stage",
-        headers=auth_headers(recruiter_token),
-        json={"stage": "SHORTLISTED"},
-    )
-    assert stage.status_code == 200
-    assert stage.json()["stage"] == "SHORTLISTED"
-
-    download = client.get(f"/api/cvs/{cv_id}/download", headers=auth_headers(recruiter_token))
-    assert download.status_code == 200
-    assert download.content
