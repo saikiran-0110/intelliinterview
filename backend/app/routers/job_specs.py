@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user, require_role
-from app.models import JobSpecification, User, UserRole
+from app.models import EmploymentType, JobSpecification, User, UserRole, WorkMode
 from app.analysis_schemas import (
     JobSpecificationCreateRequest,
     JobSpecificationResponse,
@@ -22,6 +22,42 @@ document_parser = DocumentParserService()
 
 class JobSpecVisibilityRequest(BaseModel):
     is_open: bool
+
+
+def _build_job_spec(
+    *,
+    title: str,
+    description: str,
+    created_by,
+    is_open: bool = True,
+    department: str | None = None,
+    location: str | None = None,
+    employment_type: EmploymentType = EmploymentType.FULL_TIME,
+    work_mode: WorkMode = WorkMode.HYBRID,
+    salary_min_gbp: float | None = None,
+    salary_max_gbp: float | None = None,
+    years_experience_min: int | None = None,
+    closing_date=None,
+    benefits: str | None = None,
+) -> JobSpecification:
+    text = description.strip()
+    return JobSpecification(
+        title=title.strip(),
+        description=text,
+        extracted_text=text,
+        parsed_requirements=parse_job_requirements(text),
+        department=(department or "").strip() or None,
+        location=(location or "").strip() or None,
+        employment_type=employment_type,
+        work_mode=work_mode,
+        salary_min_gbp=salary_min_gbp,
+        salary_max_gbp=salary_max_gbp,
+        years_experience_min=years_experience_min,
+        closing_date=closing_date,
+        benefits=(benefits or "").strip() or None,
+        is_open=is_open,
+        created_by=created_by,
+    )
 
 
 @router.get("", response_model=list[JobSpecificationResponse])
@@ -70,14 +106,20 @@ def create_job_spec(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.RECRUITER)),
 ) -> JobSpecificationResponse:
-    parsed_requirements = parse_job_requirements(request.description)
-    job_spec = JobSpecification(
-        title=request.title.strip(),
-        description=request.description.strip(),
-        extracted_text=request.description.strip(),
-        parsed_requirements=parsed_requirements,
-        is_open=request.is_open,
+    job_spec = _build_job_spec(
+        title=request.title,
+        description=request.description,
         created_by=current_user.id,
+        is_open=request.is_open,
+        department=request.department,
+        location=request.location,
+        employment_type=request.employment_type,
+        work_mode=request.work_mode,
+        salary_min_gbp=request.salary_min_gbp,
+        salary_max_gbp=request.salary_max_gbp,
+        years_experience_min=request.years_experience_min,
+        closing_date=request.closing_date,
+        benefits=request.benefits,
     )
     db.add(job_spec)
     db.commit()
@@ -114,14 +156,14 @@ async def upload_job_spec(
         ) from exc
 
     parsed_requirements = parse_job_requirements(extracted_text)
-    job_spec = JobSpecification(
-        title=title.strip(),
+    job_spec = _build_job_spec(
+        title=title,
         description=extracted_text,
-        extracted_text=extracted_text,
-        parsed_requirements=parsed_requirements,
-        is_open=True,
         created_by=current_user.id,
+        is_open=True,
     )
+    job_spec.parsed_requirements = parsed_requirements
+    job_spec.extracted_text = extracted_text
     db.add(job_spec)
     db.commit()
     db.refresh(job_spec)

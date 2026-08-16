@@ -1,7 +1,10 @@
 import { apiRequest } from './client'
 import type {
+  ApplicationContactInput,
   ApplicationItem,
   AssistantResponse,
+  JobRequisitionInput,
+  MatchPreview,
   OpenJob,
   PipelineStage,
   PreparationPack,
@@ -44,10 +47,21 @@ export function listRecruiterApplications(jobSpecId?: string) {
   return apiRequest<ApplicationItem[]>(`/api/applications${suffix}`)
 }
 
-export function applyForJob(jobSpecId: string, cvId?: string) {
-  return apiRequest<ApplicationItem>('/api/applications', {
+export function previewJobMatch(jobSpecId: string, cvId?: string) {
+  return apiRequest<MatchPreview>('/api/applications/match-preview', {
     method: 'POST',
     body: JSON.stringify({ job_spec_id: jobSpecId, cv_id: cvId || null }),
+  })
+}
+
+export function applyForJob(jobSpecId: string, contact: ApplicationContactInput, cvId?: string) {
+  return apiRequest<ApplicationItem>('/api/applications', {
+    method: 'POST',
+    body: JSON.stringify({
+      job_spec_id: jobSpecId,
+      cv_id: cvId || null,
+      ...contact,
+    }),
   })
 }
 
@@ -65,10 +79,15 @@ export function setJobVisibility(jobSpecId: string, isOpen: boolean) {
   })
 }
 
-export function createJobSpec(title: string, description: string, isOpen = true) {
+export function createJobSpec(input: JobRequisitionInput) {
   return apiRequest<JobSpecification>('/api/job-specs', {
     method: 'POST',
-    body: JSON.stringify({ title, description, is_open: isOpen }),
+    body: JSON.stringify({
+      is_open: true,
+      employment_type: 'FULL_TIME',
+      work_mode: 'HYBRID',
+      ...input,
+    }),
   })
 }
 
@@ -92,4 +111,17 @@ export function queryAssistant(message: string) {
     method: 'POST',
     body: JSON.stringify({ message }),
   })
+}
+
+export function formatSalaryGbp(min?: number | null, max?: number | null) {
+  const fmt = (value: number) =>
+    new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: 'GBP',
+      maximumFractionDigits: 0,
+    }).format(value)
+  if (min != null && max != null) return `${fmt(min)} – ${fmt(max)}`
+  if (min != null) return `From ${fmt(min)}`
+  if (max != null) return `Up to ${fmt(max)}`
+  return 'Salary on request'
 }

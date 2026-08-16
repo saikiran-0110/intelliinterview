@@ -27,6 +27,15 @@ export type JobSpecification = {
   description: string
   extracted_text: string | null
   parsed_requirements: ParsedRequirements | null
+  department?: string | null
+  location?: string | null
+  employment_type?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP'
+  work_mode?: 'ONSITE' | 'HYBRID' | 'REMOTE'
+  salary_min_gbp?: number | null
+  salary_max_gbp?: number | null
+  years_experience_min?: number | null
+  closing_date?: string | null
+  benefits?: string | null
   is_open?: boolean
   created_at: string
 }

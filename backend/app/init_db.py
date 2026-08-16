@@ -40,6 +40,79 @@ JOB_SPEC_COLUMN_UPGRADES = [
         "ALTER TABLE job_specifications "
         "ADD COLUMN IF NOT EXISTS is_open BOOLEAN NOT NULL DEFAULT TRUE",
     ),
+    (
+        "department",
+        "ALTER TABLE job_specifications ADD COLUMN IF NOT EXISTS department VARCHAR(120)",
+    ),
+    (
+        "location",
+        "ALTER TABLE job_specifications ADD COLUMN IF NOT EXISTS location VARCHAR(255)",
+    ),
+    (
+        "employment_type",
+        "ALTER TABLE job_specifications "
+        "ADD COLUMN IF NOT EXISTS employment_type VARCHAR(40) NOT NULL DEFAULT 'FULL_TIME'",
+    ),
+    (
+        "work_mode",
+        "ALTER TABLE job_specifications "
+        "ADD COLUMN IF NOT EXISTS work_mode VARCHAR(40) NOT NULL DEFAULT 'HYBRID'",
+    ),
+    (
+        "salary_min_gbp",
+        "ALTER TABLE job_specifications ADD COLUMN IF NOT EXISTS salary_min_gbp DOUBLE PRECISION",
+    ),
+    (
+        "salary_max_gbp",
+        "ALTER TABLE job_specifications ADD COLUMN IF NOT EXISTS salary_max_gbp DOUBLE PRECISION",
+    ),
+    (
+        "years_experience_min",
+        "ALTER TABLE job_specifications ADD COLUMN IF NOT EXISTS years_experience_min INTEGER",
+    ),
+    (
+        "closing_date",
+        "ALTER TABLE job_specifications ADD COLUMN IF NOT EXISTS closing_date DATE",
+    ),
+    (
+        "benefits",
+        "ALTER TABLE job_specifications ADD COLUMN IF NOT EXISTS benefits TEXT",
+    ),
+]
+
+APPLICATION_COLUMN_UPGRADES = [
+    (
+        "contact_full_name",
+        "ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS contact_full_name VARCHAR(120)",
+    ),
+    (
+        "contact_email",
+        "ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS contact_email VARCHAR(255)",
+    ),
+    (
+        "contact_phone",
+        "ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS contact_phone VARCHAR(40)",
+    ),
+    (
+        "contact_linkedin",
+        "ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS contact_linkedin VARCHAR(255)",
+    ),
+    (
+        "current_location",
+        "ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS current_location VARCHAR(255)",
+    ),
+    (
+        "expected_salary_gbp",
+        "ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS expected_salary_gbp DOUBLE PRECISION",
+    ),
+    (
+        "right_to_work_uk",
+        "ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS right_to_work_uk BOOLEAN",
+    ),
+    (
+        "cover_note",
+        "ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS cover_note TEXT",
+    ),
 ]
 
 CV_COLUMN_UPGRADES = [
@@ -70,6 +143,7 @@ def _upgrade_existing_tables() -> None:
     _add_missing_columns("interview_sessions", SESSION_COLUMN_UPGRADES)
     _add_missing_columns("job_specifications", JOB_SPEC_COLUMN_UPGRADES)
     _add_missing_columns("candidate_cvs", CV_COLUMN_UPGRADES)
+    _add_missing_columns("job_applications", APPLICATION_COLUMN_UPGRADES)
 
 
 def main() -> None:

@@ -1,9 +1,9 @@
 import enum
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Optional
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, LargeBinary, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Enum, Float, ForeignKey, Integer, LargeBinary, String, Text, func
 from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -67,6 +67,19 @@ class BiasAlertSeverity(str, enum.Enum):
     HIGH = "HIGH"
 
 
+class EmploymentType(str, enum.Enum):
+    FULL_TIME = "FULL_TIME"
+    PART_TIME = "PART_TIME"
+    CONTRACT = "CONTRACT"
+    INTERNSHIP = "INTERNSHIP"
+
+
+class WorkMode(str, enum.Enum):
+    ONSITE = "ONSITE"
+    HYBRID = "HYBRID"
+    REMOTE = "REMOTE"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -89,6 +102,23 @@ class JobSpecification(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     extracted_text: Mapped[Optional[str]] = mapped_column(Text)
     parsed_requirements: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    department: Mapped[Optional[str]] = mapped_column(String(120))
+    location: Mapped[Optional[str]] = mapped_column(String(255))
+    employment_type: Mapped[EmploymentType] = mapped_column(
+        Enum(EmploymentType, name="employment_type", native_enum=False),
+        nullable=False,
+        default=EmploymentType.FULL_TIME,
+    )
+    work_mode: Mapped[WorkMode] = mapped_column(
+        Enum(WorkMode, name="work_mode", native_enum=False),
+        nullable=False,
+        default=WorkMode.HYBRID,
+    )
+    salary_min_gbp: Mapped[Optional[float]] = mapped_column(Float)
+    salary_max_gbp: Mapped[Optional[float]] = mapped_column(Float)
+    years_experience_min: Mapped[Optional[int]] = mapped_column(Integer)
+    closing_date: Mapped[Optional[date]] = mapped_column(Date)
+    benefits: Mapped[Optional[str]] = mapped_column(Text)
     is_open: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -270,6 +300,14 @@ class JobApplication(Base):
     )
     match_score: Mapped[Optional[float]] = mapped_column(Float)
     notes: Mapped[Optional[str]] = mapped_column(Text)
+    contact_full_name: Mapped[Optional[str]] = mapped_column(String(120))
+    contact_email: Mapped[Optional[str]] = mapped_column(String(255))
+    contact_phone: Mapped[Optional[str]] = mapped_column(String(40))
+    contact_linkedin: Mapped[Optional[str]] = mapped_column(String(255))
+    current_location: Mapped[Optional[str]] = mapped_column(String(255))
+    expected_salary_gbp: Mapped[Optional[float]] = mapped_column(Float)
+    right_to_work_uk: Mapped[Optional[bool]] = mapped_column(Boolean)
+    cover_note: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

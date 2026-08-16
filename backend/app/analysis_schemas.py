@@ -1,8 +1,10 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from app.models import EmploymentType, WorkMode
 
 
 class ParsedProfileResponse(BaseModel):
@@ -33,7 +35,24 @@ class CandidateCvResponse(BaseModel):
 class JobSpecificationCreateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     description: str = Field(min_length=1)
+    department: str | None = Field(default=None, max_length=120)
+    location: str | None = Field(default=None, max_length=255)
+    employment_type: EmploymentType = EmploymentType.FULL_TIME
+    work_mode: WorkMode = WorkMode.HYBRID
+    salary_min_gbp: float | None = Field(default=None, ge=0)
+    salary_max_gbp: float | None = Field(default=None, ge=0)
+    years_experience_min: int | None = Field(default=None, ge=0, le=50)
+    closing_date: date | None = None
+    benefits: str | None = None
     is_open: bool = True
+
+    @field_validator("salary_max_gbp")
+    @classmethod
+    def validate_salary_range(cls, value: float | None, info) -> float | None:
+        minimum = info.data.get("salary_min_gbp")
+        if value is not None and minimum is not None and value < minimum:
+            raise ValueError("salary_max_gbp must be greater than or equal to salary_min_gbp")
+        return value
 
 
 class JobSpecificationResponse(BaseModel):
@@ -42,6 +61,15 @@ class JobSpecificationResponse(BaseModel):
     description: str
     extracted_text: str | None
     parsed_requirements: ParsedRequirementsResponse | None
+    department: str | None = None
+    location: str | None = None
+    employment_type: EmploymentType = EmploymentType.FULL_TIME
+    work_mode: WorkMode = WorkMode.HYBRID
+    salary_min_gbp: float | None = None
+    salary_max_gbp: float | None = None
+    years_experience_min: int | None = None
+    closing_date: date | None = None
+    benefits: str | None = None
     is_open: bool = True
     created_at: datetime
 
@@ -121,12 +149,27 @@ def to_job_spec_response(job_spec: Any) -> JobSpecificationResponse:
     requirements = None
     if job_spec.parsed_requirements:
         requirements = ParsedRequirementsResponse(**job_spec.parsed_requirements)
+    employment_type = getattr(job_spec, "employment_type", None) or EmploymentType.FULL_TIME
+    work_mode = getattr(job_spec, "work_mode", None) or WorkMode.HYBRID
+    if isinstance(employment_type, str):
+        employment_type = EmploymentType(employment_type)
+    if isinstance(work_mode, str):
+        work_mode = WorkMode(work_mode)
     return JobSpecificationResponse(
         id=job_spec.id,
         title=job_spec.title,
         description=job_spec.description,
         extracted_text=job_spec.extracted_text,
         parsed_requirements=requirements,
+        department=getattr(job_spec, "department", None),
+        location=getattr(job_spec, "location", None),
+        employment_type=employment_type,
+        work_mode=work_mode,
+        salary_min_gbp=getattr(job_spec, "salary_min_gbp", None),
+        salary_max_gbp=getattr(job_spec, "salary_max_gbp", None),
+        years_experience_min=getattr(job_spec, "years_experience_min", None),
+        closing_date=getattr(job_spec, "closing_date", None),
+        benefits=getattr(job_spec, "benefits", None),
         is_open=bool(getattr(job_spec, "is_open", True)),
         created_at=job_spec.created_at,
     )
