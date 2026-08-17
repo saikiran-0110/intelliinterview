@@ -39,13 +39,13 @@ export function InterviewSessionsPage() {
         }
       />
 
-      {loading && <p className="text-sm text-slate-400">Loading sessions...</p>}
-      {error && <p className="text-sm text-rose-300">{error}</p>}
+      {loading && <p className="text-sm text-muted">Loading sessions...</p>}
+      {error && <p className="text-sm text-rose-600">{error}</p>}
 
       {!loading && sessions.length === 0 ? (
         <Card>
-          <p className="text-sm text-slate-400">No sessions yet.</p>
-          <Link to="/recruiter/sessions/new" className="mt-3 inline-block text-sm font-semibold text-teal-300">
+          <p className="text-sm text-muted">No sessions yet.</p>
+          <Link to="/recruiter/sessions/new" className="mt-3 inline-block text-sm font-semibold text-teal-700">
             Create your first session
           </Link>
         </Card>
@@ -55,10 +55,10 @@ export function InterviewSessionsPage() {
             <Card key={session.id}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="font-semibold text-white">
+                  <p className="font-semibold text-ink">
                     {session.candidate_name} - {session.job_title}
                   </p>
-                  <p className="mt-1 text-sm text-slate-400">{session.plan_title}</p>
+                  <p className="mt-1 text-sm text-muted">{session.plan_title}</p>
                   <p className="mt-1 text-xs text-slate-500">
                     Status: {session.status} | Progress: {Math.min(session.current_question_index + 1, session.total_questions)}/
                     {session.total_questions}
@@ -66,7 +66,7 @@ export function InterviewSessionsPage() {
                 </div>
                 <Link
                   to={`/recruiter/sessions/${session.id}`}
-                  className="text-sm font-semibold text-teal-300 hover:text-teal-200"
+                  className="text-sm font-semibold text-teal-700 hover:text-teal-700"
                 >
                   View session
                 </Link>

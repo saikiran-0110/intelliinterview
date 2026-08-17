@@ -8,7 +8,18 @@ from app.analysis_schemas import CandidateCvResponse, to_cv_response
 from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user, require_role
-from app.models import CandidateCv, User, UserRole
+
+from app.models import (
+    CandidateCv,
+    GapAnalysis,
+    InterviewReport,
+    InterviewSession,
+    JobApplication,
+    PreparationPack,
+    QuestionPlan,
+    User,
+    UserRole,
+)
 from app.services.document_parser import DocumentParserService
 from app.services.skill_catalog import parse_cv_profile
 
@@ -82,6 +93,50 @@ def download_cv(
         media_type="text/plain; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{cv.original_filename}.txt"'},
     )
+
+
+@router.delete("/{cv_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_cv(
+    cv_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.CANDIDATE)),
+) -> None:
+    cv = db.get(CandidateCv, cv_id)
+    if cv is None or cv.uploaded_by != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="CV not found")
+
+    if db.query(InterviewSession).filter(InterviewSession.cv_id == cv.id).first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete a resume linked to interview sessions",
+        )
+    if db.query(InterviewReport).filter(InterviewReport.cv_id == cv.id).first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete a resume linked to interview reports",
+        )
+
+    gap_ids = [row.id for row in db.query(GapAnalysis.id).filter(GapAnalysis.cv_id == cv.id).all()]
+    if gap_ids and db.query(QuestionPlan).filter(QuestionPlan.gap_analysis_id.in_(gap_ids)).first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete a resume linked to interview question plans",
+        )
+
+    db.query(PreparationPack).filter(PreparationPack.cv_id == cv.id).delete(synchronize_session=False)
+    for application in db.query(JobApplication).filter(JobApplication.cv_id == cv.id).all():
+        application.cv_id = None
+        db.add(application)
+    if gap_ids:
+        for application in (
+            db.query(JobApplication).filter(JobApplication.gap_analysis_id.in_(gap_ids)).all()
+        ):
+            application.gap_analysis_id = None
+            db.add(application)
+        db.query(GapAnalysis).filter(GapAnalysis.id.in_(gap_ids)).delete(synchronize_session=False)
+
+    db.delete(cv)
+    db.commit()
 
 
 @router.post("/upload", response_model=CandidateCvResponse, status_code=status.HTTP_201_CREATED)

@@ -112,6 +112,25 @@ def generate_report(
         )
 
     report = report_service.generate_for_session(db, session)
+    from app.services.notifications import NotificationService
+
+    NotificationService().notify(
+        db,
+        user_id=current_user.id,
+        title="Evaluation report ready",
+        body=f"An evaluation report is ready for session {session_id}.",
+        link=f"/recruiter/reports",
+        related_session_id=session.id,
+    )
+    if session.candidate_user_id:
+        NotificationService().notify(
+            db,
+            user_id=session.candidate_user_id,
+            title="Interview evaluation completed",
+            body="Your interview evaluation is complete. Feedback may now be available in your portal.",
+            link="/candidate/feedback",
+            related_session_id=session.id,
+        )
     return _to_response(db, report)
 
 

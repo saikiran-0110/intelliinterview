@@ -8,16 +8,20 @@ from app.database import get_db
 from app.dependencies import get_current_user, require_role
 from app.models import EmploymentType, JobSpecification, User, UserRole, WorkMode
 from app.analysis_schemas import (
+    JobAiDraftRequest,
+    JobAiDraftResponse,
     JobSpecificationCreateRequest,
     JobSpecificationResponse,
     to_job_spec_response,
 )
 from app.services.document_parser import DocumentParserService
+from app.services.job_drafting import JobDraftingService
 from app.services.skill_catalog import parse_job_requirements
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/job-specs", tags=["job-specs"])
 document_parser = DocumentParserService()
+job_drafting = JobDraftingService()
 
 
 class JobSpecVisibilityRequest(BaseModel):
@@ -88,6 +92,15 @@ def list_open_job_specs(
     return [to_job_spec_response(spec) for spec in specs]
 
 
+@router.post("/ai-draft", response_model=JobAiDraftResponse)
+def ai_draft_job_spec(
+    request: JobAiDraftRequest,
+    current_user: User = Depends(require_role(UserRole.RECRUITER)),
+) -> JobAiDraftResponse:
+    draft = job_drafting.draft(request.prompt)
+    return JobAiDraftResponse(**draft)
+
+
 @router.get("/{job_spec_id}", response_model=JobSpecificationResponse)
 def get_job_spec(
     job_spec_id: UUID,
@@ -124,6 +137,17 @@ def create_job_spec(
     db.add(job_spec)
     db.commit()
     db.refresh(job_spec)
+    from app.services.email import EmailService
+
+    EmailService().send(
+        current_user.email,
+        f"Role published: {job_spec.title}",
+        (
+            f"Hi {current_user.full_name},\n\n"
+            f"Your recruitment request '{job_spec.title}' is now live on the Hiring Board "
+            f"and open for candidate applications.\n"
+        ),
+    )
     return to_job_spec_response(job_spec)
 
 

@@ -29,12 +29,24 @@ export function RecruiterLayout() {
           email: me.email,
           full_name: me.full_name,
           role: me.role,
+          phone: me.phone,
+          company: me.company,
+          job_title: me.job_title,
+          location: me.location,
+          linkedin_url: me.linkedin_url,
+          email_verified: me.email_verified,
         })
         setUser({
           user_id: me.user_id,
           email: me.email,
           full_name: me.full_name,
           role: me.role,
+          phone: me.phone,
+          company: me.company,
+          job_title: me.job_title,
+          location: me.location,
+          linkedin_url: me.linkedin_url,
+          email_verified: me.email_verified,
         })
       } catch {
         clearAuth()
@@ -55,36 +67,32 @@ export function RecruiterLayout() {
 
   if (checking) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface text-sm text-slate-400">
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted">
         Checking session...
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen bg-surface">
+    <div className="flex min-h-screen">
       <Sidebar
         title="Recruiter Portal"
-        subtitle="Prepare, conduct and review"
+        subtitle="Hire end to end"
         items={recruiterNav}
         accent="teal"
-        homePath="/recruiter"
+        homePath="/recruiter/jobs"
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-border bg-surface-raised/80 px-6 py-4 backdrop-blur">
+        <header className="flex items-center justify-between border-b border-teal-200/70 bg-teal-50/70 px-6 py-4 backdrop-blur">
           <div>
-            <p className="text-xs text-slate-500">Logged in as</p>
-            <p className="text-sm font-medium text-slate-200">{user?.full_name ?? 'Recruiter'}</p>
+            <p className="text-sm text-muted">Logged in as</p>
+            <p className="text-base font-bold text-ink">{user?.full_name ?? 'Recruiter'}</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="rounded-full bg-teal-500/10 px-3 py-1 text-xs font-medium text-teal-300 ring-1 ring-teal-500/20">
+            <span className="rounded-full bg-teal-100 px-3 py-1.5 text-sm font-semibold text-teal-900 ring-1 ring-teal-300">
               {user?.email ?? 'recruiter'}
             </span>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-surface-overlay"
-            >
+            <button type="button" onClick={handleLogout} className="btn-secondary !px-3.5 !py-2 !text-sm">
               Log out
             </button>
           </div>

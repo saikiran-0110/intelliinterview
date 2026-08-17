@@ -29,21 +29,21 @@ export function ReportDetailPage() {
   if (!reportId) {
     return (
       <Card>
-        <p className="text-sm text-slate-400">Select a report from the reports list.</p>
-        <Link to="/recruiter/reports" className="mt-3 inline-block text-sm font-semibold text-teal-300">
+        <p className="text-sm text-muted">Select a report from the reports list.</p>
+        <Link to="/recruiter/reports" className="mt-3 inline-block text-sm font-semibold text-teal-700">
           Back to reports
         </Link>
       </Card>
     )
   }
 
-  if (loading) return <p className="text-sm text-slate-400">Loading report...</p>
+  if (loading) return <p className="text-sm text-muted">Loading report...</p>
 
   if (error || !report) {
     return (
       <Card>
-        <p className="text-sm text-rose-300">{error ?? 'Report not found'}</p>
-        <Link to="/recruiter/reports" className="mt-3 inline-block text-sm font-semibold text-teal-300">
+        <p className="text-sm text-rose-600">{error ?? 'Report not found'}</p>
+        <Link to="/recruiter/reports" className="mt-3 inline-block text-sm font-semibold text-teal-700">
           Back to reports
         </Link>
       </Card>
@@ -65,7 +65,7 @@ export function ReportDetailPage() {
         action={
           <div className="rounded-xl border border-border bg-surface-raised px-4 py-2 text-right">
             <p className="text-xs text-slate-500">Overall</p>
-            <p className="text-2xl font-bold text-teal-300">{report.overall_score}/10</p>
+            <p className="text-2xl font-bold text-teal-700">{report.overall_score}/10</p>
           </div>
         }
       />
@@ -74,26 +74,26 @@ export function ReportDetailPage() {
         {dimensions.map((dim) => (
           <div key={dim.name} className="rounded-2xl border border-border bg-surface-raised p-5">
             <p className="text-xs text-slate-500">{dim.name}</p>
-            <p className="mt-1 text-2xl font-bold text-teal-300">{dim.score}/10</p>
+            <p className="mt-1 text-2xl font-bold text-teal-700">{dim.score}/10</p>
           </div>
         ))}
       </div>
 
-      <div className="mb-6 rounded-2xl border border-teal-500/20 bg-teal-500/5 p-5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-teal-300">Recommendation</p>
-        <p className="mt-1 text-lg font-semibold text-white">{report.recommendation.replaceAll('_', ' ')}</p>
-        <p className="mt-2 text-sm leading-relaxed text-slate-300">{report.recommendation_summary}</p>
+      <div className="mb-6 rounded-2xl border border-teal-200 bg-teal-50 p-5">
+        <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">Recommendation</p>
+        <p className="mt-1 text-lg font-semibold text-ink">{report.recommendation.replaceAll('_', ' ')}</p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-700">{report.recommendation_summary}</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h3 className="text-lg font-semibold text-white">Strengths</h3>
+          <h3 className="text-lg font-semibold text-ink">Strengths</h3>
           {report.strengths.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">No strengths recorded.</p>
           ) : (
             <ul className="mt-3 space-y-2">
               {report.strengths.map((item) => (
-                <li key={item} className="text-sm text-slate-300">
+                <li key={item} className="text-sm text-slate-700">
                   {item}
                 </li>
               ))}
@@ -101,13 +101,13 @@ export function ReportDetailPage() {
           )}
         </Card>
         <Card>
-          <h3 className="text-lg font-semibold text-white">Areas for improvement</h3>
+          <h3 className="text-lg font-semibold text-ink">Areas for improvement</h3>
           {report.weaknesses.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">No weaknesses recorded.</p>
           ) : (
             <ul className="mt-3 space-y-2">
               {report.weaknesses.map((item) => (
-                <li key={item} className="text-sm text-slate-300">
+                <li key={item} className="text-sm text-slate-700">
                   {item}
                 </li>
               ))}
@@ -117,8 +117,8 @@ export function ReportDetailPage() {
       </div>
 
       <Card className="mt-6">
-        <h3 className="text-lg font-semibold text-white">Evidence by answer</h3>
-        <p className="mt-1 text-sm text-slate-400">Observations linked to specific interview responses.</p>
+        <h3 className="text-lg font-semibold text-ink">Evidence by answer</h3>
+        <p className="mt-1 text-sm text-muted">Observations linked to specific interview responses.</p>
         <div className="mt-4 space-y-3">
           {report.evidence_items.length === 0 ? (
             <p className="text-sm text-slate-500">No evidence items available.</p>
@@ -129,12 +129,12 @@ export function ReportDetailPage() {
                   {item.topic ?? 'Question'} | Tech {item.technical_score ?? '-'} | Comm{' '}
                   {item.communication_score ?? '-'}
                 </p>
-                {item.question_text && <p className="mt-2 text-sm text-slate-300">{item.question_text}</p>}
+                {item.question_text && <p className="mt-2 text-sm text-slate-700">{item.question_text}</p>}
                 {item.answer_excerpt && (
-                  <p className="mt-2 text-sm text-slate-400">Answer: {item.answer_excerpt}</p>
+                  <p className="mt-2 text-sm text-muted">Answer: {item.answer_excerpt}</p>
                 )}
                 {item.evidence_quotes.length > 0 && (
-                  <p className="mt-2 text-xs text-teal-300">Quotes: {item.evidence_quotes.join(' | ')}</p>
+                  <p className="mt-2 text-xs text-teal-700">Quotes: {item.evidence_quotes.join(' | ')}</p>
                 )}
                 {item.observations.length > 0 && (
                   <p className="mt-1 text-xs text-slate-500">{item.observations.join(' ')}</p>
@@ -146,7 +146,7 @@ export function ReportDetailPage() {
       </Card>
 
       <p className="mt-4 text-sm text-slate-500">
-        <Link to={`/recruiter/sessions/${report.session_id}`} className="text-teal-300 hover:text-teal-200">
+        <Link to={`/recruiter/sessions/${report.session_id}`} className="text-teal-700 hover:text-teal-700">
           View session transcript
         </Link>
       </p>

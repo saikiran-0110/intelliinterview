@@ -1,4 +1,4 @@
-"""Application settings — edit values here directly (no .env file)."""
+"""Application settings - edit values here directly (no .env file)."""
 
 
 class Settings:

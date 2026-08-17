@@ -23,8 +23,8 @@ export function PlaceholderPanel({
   return (
     <Card>
       <div className="mb-5">
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
-        {description && <p className="mt-1 text-sm text-slate-400">{description}</p>}
+        <h3 className="text-lg font-semibold text-ink">{title}</h3>
+        {description && <p className="mt-1 text-sm text-muted">{description}</p>}
       </div>
 
       {items.length > 0 ? (
@@ -34,7 +34,7 @@ export function PlaceholderPanel({
               key={item.label}
               className="rounded-xl border border-dashed border-border bg-surface/60 p-4"
             >
-              <p className="text-sm font-medium text-slate-200">{item.label}</p>
+              <p className="text-sm font-medium text-ink">{item.label}</p>
               {item.hint && <p className="mt-1 text-xs text-slate-500">{item.hint}</p>}
               <div className="mt-3 h-8 rounded-lg bg-surface-overlay/80" />
             </div>

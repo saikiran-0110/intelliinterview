@@ -29,6 +29,12 @@ export function CandidateLayout() {
           email: me.email,
           full_name: me.full_name,
           role: me.role,
+          phone: me.phone,
+          company: me.company,
+          job_title: me.job_title,
+          location: me.location,
+          linkedin_url: me.linkedin_url,
+          email_verified: me.email_verified,
         }
         setAuth(me.token, nextUser)
         setUser(nextUser)
@@ -51,36 +57,32 @@ export function CandidateLayout() {
 
   if (checking) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface text-sm text-slate-400">
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted">
         Checking session...
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen bg-surface">
+    <div className="flex min-h-screen">
       <Sidebar
         title="Candidate Portal"
-        subtitle="Sessions and interviews"
+        subtitle="Apply and interview"
         items={candidateNav}
-        accent="violet"
-        homePath="/candidate"
+        accent="sky"
+        homePath="/candidate/applications"
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-border bg-surface-raised/80 px-6 py-4 backdrop-blur">
+        <header className="flex items-center justify-between border-b border-sky-200/70 bg-sky-50/70 px-6 py-4 backdrop-blur">
           <div>
-            <p className="text-xs text-slate-500">Logged in as</p>
-            <p className="text-sm font-medium text-slate-200">{user?.full_name ?? 'Candidate'}</p>
+            <p className="text-sm text-muted">Logged in as</p>
+            <p className="text-base font-bold text-ink">{user?.full_name ?? 'Candidate'}</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="rounded-full bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300 ring-1 ring-violet-500/20">
+            <span className="rounded-full bg-sky-100 px-3 py-1.5 text-sm font-semibold text-sky-900 ring-1 ring-sky-300">
               {user?.email ?? 'candidate'}
             </span>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-surface-overlay"
-            >
+            <button type="button" onClick={handleLogout} className="btn-secondary !px-3.5 !py-2 !text-sm">
               Log out
             </button>
           </div>

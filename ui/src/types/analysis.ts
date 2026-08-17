@@ -96,4 +96,28 @@ export type AuthResponse = {
   full_name: string
   role: 'RECRUITER' | 'CANDIDATE'
   token: string
+  phone?: string | null
+  company?: string | null
+  job_title?: string | null
+  location?: string | null
+  linkedin_url?: string | null
+  email_verified?: boolean
+}
+
+export type OtpStartResponse = {
+  message: string
+  email: string
+  purpose: 'REGISTER' | 'LOGIN'
+  expires_in_minutes: number
+}
+
+export type RegisterProfileInput = {
+  email: string
+  password: string
+  full_name: string
+  phone: string
+  company?: string
+  job_title?: string
+  location?: string
+  linkedin_url?: string
 }

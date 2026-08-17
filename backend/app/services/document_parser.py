@@ -57,7 +57,7 @@ class DocumentParserService:
             parts = [(page.extract_text() or "") for page in reader.pages]
             text = " ".join(parts).strip()
             return self._normalize(text) if text else None
-        except Exception as exc:  # noqa: BLE001 — surface parser failures as extract errors
+        except Exception as exc:  # noqa: BLE001 - surface parser failures as extract errors
             errors.append(f"PDF parser failed: {exc}")
             return None
 
@@ -90,6 +90,6 @@ class DocumentParserService:
                 errors.append("Apache Tika returned no content")
                 return None
             return self._normalize(content)
-        except Exception as exc:  # noqa: BLE001 — network/JAR download failures are common
+        except Exception as exc:  # noqa: BLE001 - network/JAR download failures are common
             errors.append(f"Apache Tika unavailable: {exc}")
             return None

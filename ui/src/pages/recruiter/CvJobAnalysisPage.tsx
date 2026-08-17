@@ -27,7 +27,7 @@ export function CvJobAnalysisPage() {
   const [uploadedCv, setUploadedCv] = useState<CandidateCv | null>(null)
 
   const [jobMode, setJobMode] = useState<JobMode>('text')
-  const [jobTitle, setJobTitle] = useState('Senior Full Stack Engineer')
+  const [jobTitle, setJobTitle] = useState('')
   const [jobDescription, setJobDescription] = useState(
     `We are hiring a senior full stack engineer.
 
@@ -155,8 +155,8 @@ Requirements:
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h3 className="text-lg font-semibold text-white">Upload candidate CV</h3>
-          <p className="mt-1 text-sm text-slate-400">Supported formats: PDF, DOCX, DOC, TXT</p>
+          <h3 className="text-lg font-semibold text-ink">Upload candidate CV</h3>
+          <p className="mt-1 text-sm text-muted">Supported formats: PDF, DOCX, DOC, TXT</p>
 
           <div className="mt-4 space-y-3">
             <input
@@ -164,13 +164,13 @@ Requirements:
               value={candidateName}
               onChange={(e) => setCandidateName(e.target.value)}
               placeholder="Candidate name"
-              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-100"
+              className="input-field"
             />
             <input
               type="file"
               accept=".pdf,.doc,.docx,.txt"
               onChange={(e) => setCvFile(e.target.files?.[0] ?? null)}
-              className="w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-teal-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-950"
+              className="w-full text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-teal-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-950"
             />
             <button
               type="button"
@@ -191,7 +191,7 @@ Requirements:
                   setSelectedCvId(e.target.value)
                   setUploadedCv(null)
                 }}
-                className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-100"
+                className="input-field"
               >
                 {cvs.map((cv) => (
                   <option key={cv.id} value={cv.id}>
@@ -205,17 +205,17 @@ Requirements:
           {activeCv?.parsed_profile && (
             <div className="mt-5 rounded-xl border border-border bg-surface/60 p-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Extracted profile</p>
-              <p className="mt-2 text-sm text-slate-300">
-                <span className="font-medium text-white">Skills:</span>{' '}
+              <p className="mt-2 text-sm text-slate-700">
+                <span className="font-medium text-ink">Skills:</span>{' '}
                 {activeCv.parsed_profile.skills.join(', ') || 'None detected'}
               </p>
-              <p className="mt-2 text-sm text-slate-300">
-                <span className="font-medium text-white">Experience:</span>{' '}
+              <p className="mt-2 text-sm text-slate-700">
+                <span className="font-medium text-ink">Experience:</span>{' '}
                 {activeCv.parsed_profile.years_experience ?? 'Not detected'} years
                 {activeCv.parsed_profile.seniority ? ` (${activeCv.parsed_profile.seniority})` : ''}
               </p>
-              <p className="mt-2 text-sm text-slate-300">
-                <span className="font-medium text-white">Qualifications:</span>{' '}
+              <p className="mt-2 text-sm text-slate-700">
+                <span className="font-medium text-ink">Qualifications:</span>{' '}
                 {activeCv.parsed_profile.qualifications.join(', ') || 'None detected'}
               </p>
             </div>
@@ -223,8 +223,8 @@ Requirements:
         </Card>
 
         <Card>
-          <h3 className="text-lg font-semibold text-white">Job specification</h3>
-          <p className="mt-1 text-sm text-slate-400">Create a new role or select an existing job specification.</p>
+          <h3 className="text-lg font-semibold text-ink">Job specification</h3>
+          <p className="mt-1 text-sm text-muted">Create a new role or select an existing job specification.</p>
 
           <div className="mt-4 flex flex-wrap gap-2">
             {(['text', 'file', 'existing'] as JobMode[]).map((mode) => (
@@ -235,7 +235,7 @@ Requirements:
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
                   jobMode === mode
                     ? 'bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-500/30'
-                    : 'bg-surface text-slate-400 ring-1 ring-border'
+                    : 'bg-surface text-muted ring-1 ring-border'
                 }`}
               >
                 {mode === 'text' ? 'Paste description' : mode === 'file' ? 'Upload file' : 'Use existing'}
@@ -251,7 +251,7 @@ Requirements:
                   setSelectedJobSpecId(e.target.value)
                   setCreatedJobSpec(null)
                 }}
-                className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-100"
+                className="input-field"
               >
                 {jobSpecs.length === 0 ? (
                   <option value="">No saved job specifications yet</option>
@@ -271,28 +271,28 @@ Requirements:
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 placeholder="Job title"
-                className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-100"
+                className="input-field"
               />
               {jobMode === 'text' ? (
                 <textarea
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
                   rows={10}
-                  className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-slate-100"
+                  className="input-field"
                 />
               ) : (
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx,.txt"
                   onChange={(e) => setJobFile(e.target.files?.[0] ?? null)}
-                  className="w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+                  className="w-full text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-ink"
                 />
               )}
               <button
                 type="button"
                 onClick={handleJobSpecSave}
                 disabled={loading}
-                className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-surface-overlay disabled:opacity-50"
+                className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-overlay disabled:opacity-50"
               >
                 Save job specification
               </button>
@@ -302,12 +302,12 @@ Requirements:
           {activeJobSpec?.parsed_requirements && (
             <div className="mt-5 rounded-xl border border-border bg-surface/60 p-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Parsed requirements</p>
-              <p className="mt-2 text-sm text-slate-300">
-                <span className="font-medium text-white">Required skills:</span>{' '}
+              <p className="mt-2 text-sm text-slate-700">
+                <span className="font-medium text-ink">Required skills:</span>{' '}
                 {activeJobSpec.parsed_requirements.required_skills.join(', ') || 'None detected'}
               </p>
-              <p className="mt-2 text-sm text-slate-300">
-                <span className="font-medium text-white">Experience:</span>{' '}
+              <p className="mt-2 text-sm text-slate-700">
+                <span className="font-medium text-ink">Experience:</span>{' '}
                 {activeJobSpec.parsed_requirements.years_experience_required ?? 'Not specified'} years
                 {activeJobSpec.parsed_requirements.seniority_required
                   ? ` (${activeJobSpec.parsed_requirements.seniority_required})`
@@ -321,8 +321,8 @@ Requirements:
       <Card className="mt-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-white">Run gap analysis</h3>
-            <p className="mt-1 text-sm text-slate-400">
+            <h3 className="text-lg font-semibold text-ink">Run gap analysis</h3>
+            <p className="mt-1 text-sm text-muted">
               Compare the selected CV and job specification to identify strong matches, partial matches, and gaps.
             </p>
           </div>
@@ -336,8 +336,8 @@ Requirements:
           </button>
         </div>
 
-        {status && <p className="mt-4 text-sm text-teal-300">{status}</p>}
-        {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}
+        {status && <p className="mt-4 text-sm text-teal-700">{status}</p>}
+        {error && <p className="mt-4 text-sm text-rose-600">{error}</p>}
       </Card>
     </div>
   )

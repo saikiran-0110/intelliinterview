@@ -122,7 +122,7 @@ class BiasDetectionService:
                     title="Not enough data for strong bias signals",
                     description=(
                         "Continue collecting shortlisting and interview outcomes. "
-                        "Bias monitoring uses role/match/score patterns only — no demographic inference."
+                        "Bias monitoring uses role/match/score patterns only - no demographic inference."
                     ),
                     payload={"applications": len(applications), "reports": len(reports)},
                 )

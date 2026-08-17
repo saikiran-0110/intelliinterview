@@ -3,7 +3,7 @@
 from sqlalchemy import inspect, text
 
 from app.database import Base, engine
-import app.models  # noqa: F401 — register models with SQLAlchemy metadata
+import app.models  # noqa: F401 - register models with SQLAlchemy metadata
 
 
 SESSION_COLUMN_UPGRADES = [
@@ -115,6 +115,18 @@ APPLICATION_COLUMN_UPGRADES = [
     ),
 ]
 
+USER_COLUMN_UPGRADES = [
+    ("phone", "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(40)"),
+    ("company", "ALTER TABLE users ADD COLUMN IF NOT EXISTS company VARCHAR(120)"),
+    ("job_title", "ALTER TABLE users ADD COLUMN IF NOT EXISTS job_title VARCHAR(120)"),
+    ("location", "ALTER TABLE users ADD COLUMN IF NOT EXISTS location VARCHAR(255)"),
+    ("linkedin_url", "ALTER TABLE users ADD COLUMN IF NOT EXISTS linkedin_url VARCHAR(255)"),
+    (
+        "email_verified",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE",
+    ),
+]
+
 CV_COLUMN_UPGRADES = [
     (
         "file_data",
@@ -123,6 +135,21 @@ CV_COLUMN_UPGRADES = [
     (
         "content_type",
         "ALTER TABLE candidate_cvs ADD COLUMN IF NOT EXISTS content_type VARCHAR(120)",
+    ),
+]
+
+PREPARATION_COLUMN_UPGRADES = [
+    (
+        "study_modules",
+        "ALTER TABLE preparation_packs ADD COLUMN IF NOT EXISTS study_modules JSON",
+    ),
+    (
+        "checklist_items",
+        "ALTER TABLE preparation_packs ADD COLUMN IF NOT EXISTS checklist_items JSON",
+    ),
+    (
+        "completed_item_ids",
+        "ALTER TABLE preparation_packs ADD COLUMN IF NOT EXISTS completed_item_ids JSON",
     ),
 ]
 
@@ -144,6 +171,8 @@ def _upgrade_existing_tables() -> None:
     _add_missing_columns("job_specifications", JOB_SPEC_COLUMN_UPGRADES)
     _add_missing_columns("candidate_cvs", CV_COLUMN_UPGRADES)
     _add_missing_columns("job_applications", APPLICATION_COLUMN_UPGRADES)
+    _add_missing_columns("users", USER_COLUMN_UPGRADES)
+    _add_missing_columns("preparation_packs", PREPARATION_COLUMN_UPGRADES)
 
 
 def main() -> None:

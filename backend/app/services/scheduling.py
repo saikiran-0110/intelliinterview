@@ -136,11 +136,15 @@ class SchedulingService:
 
         job = db.get(JobSpecification, session.job_spec_id)
         role = job.title if job else "the role"
+        note = candidate_note or "No note provided."
         self.notifications.notify(
             db,
             user_id=session.recruiter_id,
             title=f"Candidate confirmed interview for {role}",
-            body=f"The candidate confirmed the slot starting at {slot.starts_at.isoformat()}.",
+            body=(
+                f"The candidate confirmed the slot starting at {slot.starts_at.isoformat()}. "
+                f"Note: {note}"
+            ),
             link=f"{settings.frontend_base_url}/recruiter/scheduling",
             related_session_id=session.id,
             send_email=True,
@@ -171,6 +175,33 @@ class SchedulingService:
             user_id=session.recruiter_id,
             title=f"Reschedule requested for {role}",
             body=f"The candidate requested a new interview slot. Note: {note}",
+            link=f"{settings.frontend_base_url}/recruiter/scheduling",
+            related_session_id=session.id,
+            send_email=True,
+        )
+        return session
+
+    def send_candidate_message(
+        self,
+        db: Session,
+        session: InterviewSession,
+        candidate_note: str,
+    ) -> InterviewSession:
+        note = candidate_note.strip()
+        if not note:
+            raise ValueError("Message cannot be empty")
+        session.candidate_note = note
+        db.add(session)
+        db.commit()
+        db.refresh(session)
+
+        job = db.get(JobSpecification, session.job_spec_id)
+        role = job.title if job else "the role"
+        self.notifications.notify(
+            db,
+            user_id=session.recruiter_id,
+            title=f"Message from candidate about {role}",
+            body=note,
             link=f"{settings.frontend_base_url}/recruiter/scheduling",
             related_session_id=session.id,
             send_email=True,

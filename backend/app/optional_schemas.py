@@ -93,14 +93,48 @@ class PreparationGenerateRequest(BaseModel):
     cv_id: UUID | None = None
 
 
+class PreparationProgressUpdateRequest(BaseModel):
+    item_id: str = Field(min_length=1, max_length=120)
+    completed: bool = True
+
+
+class PreparationQuestionItem(BaseModel):
+    id: str
+    question: str
+    difficulty: str = "intermediate"
+    topic: str = "general"
+    talking_points: list[str] = Field(default_factory=list)
+    technical_context: str = ""
+
+
+class PreparationStudyModule(BaseModel):
+    id: str
+    title: str
+    summary: str
+    technical_details: str
+    topic: str = "general"
+    estimated_minutes: int = 30
+
+
+class PreparationChecklistItem(BaseModel):
+    id: str
+    label: str
+    category: str = "practice"
+    technical_hint: str = ""
+
+
 class PreparationPackResponse(BaseModel):
     id: UUID
     job_spec_id: UUID
     job_title: str
     cv_id: UUID
-    practice_questions: list[str]
+    practice_questions: list[PreparationQuestionItem]
     guidance: str
     focus_areas: list[str]
+    study_modules: list[PreparationStudyModule] = Field(default_factory=list)
+    checklist_items: list[PreparationChecklistItem] = Field(default_factory=list)
+    completed_item_ids: list[str] = Field(default_factory=list)
+    progress_percent: int = 0
     model_version: str | None
     created_at: datetime
 

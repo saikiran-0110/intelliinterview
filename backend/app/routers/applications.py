@@ -14,10 +14,14 @@ from app.optional_schemas import (
     MatchPreviewResponse,
 )
 from app.services.gap_analysis import GapAnalysisService
+from app.services.hiring_bridge import HiringBridgeService
+from app.services.notifications import NotificationService
 from app.services.ranking import _plain_language, _skill_names
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
 gap_service = GapAnalysisService()
+notifications = NotificationService()
+hiring_bridge = HiringBridgeService()
 
 
 def _to_response(db: Session, app: JobApplication) -> ApplicationResponse:
@@ -179,6 +183,28 @@ def apply_for_job(
     db.add(application)
     db.commit()
     db.refresh(application)
+
+    score_text = f"{application.match_score:.0f}/100" if application.match_score is not None else "n/a"
+    notifications.notify(
+        db,
+        user_id=job.created_by,
+        title=f"New application: {job.title}",
+        body=(
+            f"{application.contact_full_name} applied for {job.title} "
+            f"(match {score_text}). Review them on the Hiring Board."
+        ),
+        link="/recruiter/jobs",
+    )
+    notifications.notify(
+        db,
+        user_id=current_user.id,
+        title=f"Application submitted: {job.title}",
+        body=(
+            f"We received your application for {job.title}. "
+            f"Current match score: {score_text}. You will be notified when the stage changes."
+        ),
+        link="/candidate/applications",
+    )
     return _to_response(db, application)
 
 
@@ -198,4 +224,31 @@ def update_application_stage(
     db.add(application)
     db.commit()
     db.refresh(application)
+
+    session = None
+    if request.stage == PipelineStage.SHORTLISTED:
+        try:
+            session = hiring_bridge.ensure_session_for_application(db, application, current_user.id)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Shortlisted, but could not prepare interview session: {exc}",
+            ) from exc
+
+    job = db.get(JobSpecification, application.job_spec_id)
+    job_title = job.title if job else "the role"
+    body = (
+        f"Your application for {job_title} moved to {request.stage.value.replace('_', ' ').title()}."
+        + (f" Note: {request.notes}" if request.notes else "")
+    )
+    if session is not None:
+        body += " An interview session was prepared — your recruiter will propose available slots next."
+    notifications.notify(
+        db,
+        user_id=application.candidate_user_id,
+        title=f"Application update: {job_title}",
+        body=body,
+        link="/candidate/applications" if session is None else "/candidate/sessions",
+        related_session_id=session.id if session else None,
+    )
     return _to_response(db, application)

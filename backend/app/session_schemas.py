@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.models import InterviewSessionStatus, TurnRole
+from app.models import InterviewSessionStatus, ScheduleConfirmationStatus, TurnRole
 
 
 class SessionCreateRequest(BaseModel):
@@ -65,7 +65,9 @@ class InterviewSessionResponse(BaseModel):
     job_title: str
     plan_title: str
     status: InterviewSessionStatus
+    confirmation_status: ScheduleConfirmationStatus
     follow_up_limit: int
+    duration_minutes: int = 45
     current_question_index: int
     current_follow_up_count: int
     current_plan_question_id: UUID | None
@@ -80,12 +82,15 @@ class InterviewSessionResponse(BaseModel):
 class SessionSummaryResponse(BaseModel):
     id: UUID
     status: InterviewSessionStatus
+    confirmation_status: ScheduleConfirmationStatus
     candidate_name: str
     candidate_email: str
     job_title: str
     plan_title: str
     current_question_index: int
     total_questions: int
+    duration_minutes: int = 45
     created_at: datetime
     started_at: datetime | None
     completed_at: datetime | None
+    scheduled_at: datetime | None = None

@@ -6,7 +6,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.models import CandidateCv, GapAnalysis, JobApplication, JobSpecification, User
+from app.models import CandidateCv, GapAnalysis, JobApplication, JobSpecification, PipelineStage, User
 from app.services.gap_analysis import GapAnalysisService
 
 
@@ -37,6 +37,9 @@ def _plain_language(score: float, strong: list[str], gaps: list[str]) -> str:
     )
 
 
+READY_TO_SHORTLIST = {PipelineStage.APPLIED, PipelineStage.SCREENING}
+
+
 class RankingService:
     def __init__(self) -> None:
         self.gap_service = GapAnalysisService()
@@ -51,6 +54,9 @@ class RankingService:
 
         for application in applications:
             if application.cv_id is None:
+                continue
+            # Keep ranking focused on candidates still awaiting shortlist decisions.
+            if application.stage not in READY_TO_SHORTLIST:
                 continue
             cv = db.get(CandidateCv, application.cv_id)
             if cv is None:

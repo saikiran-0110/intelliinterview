@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -15,6 +15,7 @@ from app.models import (
     InterviewTurnEvaluation,
     JobSpecification,
     QuestionPlan,
+    ScheduleConfirmationStatus,
     TurnRole,
     User,
     UserRole,
@@ -36,6 +37,56 @@ router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 agent = InterviewAgentService()
 report_service = ReportGenerationService()
 feedback_service = CandidateFeedbackService()
+
+EARLY_JOIN_MINUTES = 5
+
+
+def _ensure_aware(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
+
+
+def _interview_window(session: InterviewSession) -> tuple[datetime, datetime] | None:
+    if session.scheduled_at is None:
+        return None
+    start = _ensure_aware(session.scheduled_at) - timedelta(minutes=EARLY_JOIN_MINUTES)
+    end = _ensure_aware(session.scheduled_at) + timedelta(minutes=max(session.duration_minutes or 45, 15))
+    return start, end
+
+
+def _assert_within_interview_window(session: InterviewSession) -> None:
+    if session.confirmation_status != ScheduleConfirmationStatus.CONFIRMED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Confirm an interview slot on My Sessions before starting the interview",
+        )
+    if session.scheduled_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No confirmed interview time is set for this session",
+        )
+    window = _interview_window(session)
+    if window is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No confirmed interview time is set for this session",
+        )
+    now = datetime.now(timezone.utc)
+    opens_at, closes_at = window
+    if now < opens_at:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Interview opens 5 minutes before your confirmed slot "
+                f"({_ensure_aware(session.scheduled_at).isoformat()})"
+            ),
+        )
+    if now > closes_at:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This interview slot has ended. Ask your recruiter to reschedule.",
+        )
 
 
 def _approved_questions(db: Session, plan_id: UUID) -> list[InterviewQuestion]:
@@ -122,7 +173,9 @@ def _session_response(db: Session, session: InterviewSession) -> InterviewSessio
         job_title=job_spec.title if job_spec else "Unknown role",
         plan_title=plan.title if plan else "Interview plan",
         status=session.status,
+        confirmation_status=session.confirmation_status,
         follow_up_limit=session.follow_up_limit,
+        duration_minutes=session.duration_minutes,
         current_question_index=session.current_question_index,
         current_follow_up_count=session.current_follow_up_count,
         current_plan_question_id=session.current_plan_question_id,
@@ -149,15 +202,18 @@ def _summary(db: Session, session: InterviewSession) -> SessionSummaryResponse:
     return SessionSummaryResponse(
         id=session.id,
         status=session.status,
+        confirmation_status=session.confirmation_status,
         candidate_name=candidate.full_name if candidate else "Unknown",
         candidate_email=candidate.email if candidate else "",
         job_title=job_spec.title if job_spec else "Unknown role",
         plan_title=plan.title if plan else "Interview plan",
         current_question_index=session.current_question_index,
         total_questions=total,
+        duration_minutes=session.duration_minutes,
         created_at=session.created_at,
         started_at=session.started_at,
         completed_at=session.completed_at,
+        scheduled_at=session.scheduled_at,
     )
 
 
@@ -262,6 +318,18 @@ def start_session(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Session already completed")
     if session.status == InterviewSessionStatus.CANCELLED:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Session was cancelled")
+
+    if (
+        session.status == InterviewSessionStatus.SCHEDULED
+        and session.confirmation_status != ScheduleConfirmationStatus.CONFIRMED
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Confirm an interview slot on My Sessions before starting the interview",
+        )
+
+    if session.status == InterviewSessionStatus.SCHEDULED:
+        _assert_within_interview_window(session)
 
     questions = _approved_questions(db, session.question_plan_id)
     if not questions:

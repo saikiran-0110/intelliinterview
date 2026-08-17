@@ -31,8 +31,8 @@ export function AnalyticsPage() {
         description="Visual summary of hiring activity: applications per role, candidates at each pipeline stage, and open position progress."
       />
 
-      {loading && <p className="text-sm text-slate-400">Loading analytics...</p>}
-      {error && <p className="text-sm text-rose-300">{error}</p>}
+      {loading && <p className="text-sm text-muted">Loading analytics...</p>}
+      {error && <p className="text-sm text-rose-600">{error}</p>}
 
       {data && (
         <>
@@ -45,7 +45,7 @@ export function AnalyticsPage() {
 
           <div className="mb-6 grid gap-6 lg:grid-cols-2">
             <Card>
-              <h3 className="text-lg font-semibold text-white">Applications per role</h3>
+              <h3 className="text-lg font-semibold text-ink">Applications per role</h3>
               <div className="mt-4 space-y-3">
                 {data.applications_per_role.length === 0 ? (
                   <p className="text-sm text-slate-500">No roles yet.</p>
@@ -53,8 +53,8 @@ export function AnalyticsPage() {
                   data.applications_per_role.map((item) => (
                     <div key={item.job_title}>
                       <div className="mb-1 flex justify-between text-sm">
-                        <span className="text-slate-300">{item.job_title}</span>
-                        <span className="text-teal-300">{item.count}</span>
+                        <span className="text-slate-700">{item.job_title}</span>
+                        <span className="text-teal-700">{item.count}</span>
                       </div>
                       <div className="h-2 rounded-full bg-surface">
                         <div
@@ -71,14 +71,14 @@ export function AnalyticsPage() {
             </Card>
 
             <Card>
-              <h3 className="text-lg font-semibold text-white">Pipeline stages</h3>
+              <h3 className="text-lg font-semibold text-ink">Pipeline stages</h3>
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 {data.pipeline_stages.map((item) => (
                   <div key={item.stage} className="rounded-xl border border-border bg-surface/60 p-3">
                     <p className="text-xs uppercase tracking-wider text-slate-500">
                       {item.stage.replaceAll('_', ' ')}
                     </p>
-                    <p className="mt-1 text-2xl font-bold text-white">{item.count}</p>
+                    <p className="mt-1 text-2xl font-bold text-ink">{item.count}</p>
                   </div>
                 ))}
               </div>
@@ -86,7 +86,7 @@ export function AnalyticsPage() {
           </div>
 
           <Card>
-            <h3 className="text-lg font-semibold text-white">Open positions progress</h3>
+            <h3 className="text-lg font-semibold text-ink">Open positions progress</h3>
             <div className="mt-4 space-y-4">
               {data.open_positions.length === 0 ? (
                 <p className="text-sm text-slate-500">No open positions.</p>
@@ -94,7 +94,7 @@ export function AnalyticsPage() {
                 data.open_positions.map((item) => (
                   <div key={item.job_spec_id}>
                     <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-sm">
-                      <span className="font-medium text-white">{item.job_title}</span>
+                      <span className="font-medium text-ink">{item.job_title}</span>
                       <span className="text-xs text-slate-500">
                         Apps {item.applications} · Interviews {item.interviews} · Done{' '}
                         {item.completed_interviews} · Hired {item.hired}
@@ -102,7 +102,7 @@ export function AnalyticsPage() {
                     </div>
                     <div className="h-2.5 rounded-full bg-surface">
                       <div
-                        className="h-2.5 rounded-full bg-violet-500"
+                        className="h-2.5 rounded-full bg-sky-600"
                         style={{ width: `${item.progress_percent}%` }}
                       />
                     </div>

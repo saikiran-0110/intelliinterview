@@ -76,6 +76,24 @@ class JobSpecificationResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class JobAiDraftRequest(BaseModel):
+    prompt: str = Field(min_length=10, max_length=4000)
+
+
+class JobAiDraftResponse(BaseModel):
+    title: str
+    description: str
+    department: str | None = None
+    location: str | None = None
+    employment_type: EmploymentType = EmploymentType.FULL_TIME
+    work_mode: WorkMode = WorkMode.HYBRID
+    salary_min_gbp: float | None = None
+    salary_max_gbp: float | None = None
+    years_experience_min: int | None = None
+    benefits: str | None = None
+    model_version: str | None = None
+
+
 class SkillMatchItem(BaseModel):
     name: str
     category: str = "skill"

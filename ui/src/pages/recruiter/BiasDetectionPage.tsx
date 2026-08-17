@@ -5,9 +5,9 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import type { BiasOverview } from '../../types/desirable'
 
 const severityColor: Record<string, string> = {
-  LOW: 'text-slate-300 border-slate-500/30',
+  LOW: 'text-slate-700 border-slate-500/30',
   MEDIUM: 'text-amber-300 border-amber-500/30',
-  HIGH: 'text-rose-300 border-rose-500/30',
+  HIGH: 'text-rose-600 border-rose-500/30',
 }
 
 export function BiasDetectionPage() {
@@ -47,15 +47,15 @@ export function BiasDetectionPage() {
         description="Monitor shortlisting and interview scoring patterns over time. Alerts are advisory and do not use demographic inference from CV text."
       />
 
-      {loading && <p className="text-sm text-slate-400">Analysing patterns...</p>}
-      {error && <p className="mb-4 text-sm text-rose-300">{error}</p>}
+      {loading && <p className="text-sm text-muted">Analysing patterns...</p>}
+      {error && <p className="mb-4 text-sm text-rose-600">{error}</p>}
 
       {data && (
         <>
           <div className="mb-6 grid gap-4 sm:grid-cols-2">
             <Card>
               <p className="text-xs text-slate-500">Total alerts</p>
-              <p className="mt-1 text-3xl font-bold text-white">{data.alert_count}</p>
+              <p className="mt-1 text-3xl font-bold text-ink">{data.alert_count}</p>
             </Card>
             <Card>
               <p className="text-xs text-slate-500">Unacknowledged</p>
@@ -64,8 +64,8 @@ export function BiasDetectionPage() {
           </div>
 
           <Card className="mb-6">
-            <h3 className="text-sm font-semibold text-white">Monitoring notes</h3>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-400">
+            <h3 className="text-sm font-semibold text-ink">Monitoring notes</h3>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted">
               {data.notes.map((note) => (
                 <li key={note}>{note}</li>
               ))}
@@ -78,8 +78,8 @@ export function BiasDetectionPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-wider text-slate-500">{alert.severity}</p>
-                    <h3 className="mt-1 text-lg font-semibold text-white">{alert.title}</h3>
-                    <p className="mt-2 text-sm text-slate-300">{alert.description}</p>
+                    <h3 className="mt-1 text-lg font-semibold text-ink">{alert.title}</h3>
+                    <p className="mt-2 text-sm text-slate-700">{alert.description}</p>
                     <p className="mt-2 text-xs text-slate-500">
                       Metrics: {JSON.stringify(alert.metric_payload)}
                     </p>
@@ -88,7 +88,7 @@ export function BiasDetectionPage() {
                     <button
                       type="button"
                       onClick={() => handleAcknowledge(alert.id)}
-                      className="rounded-xl border border-border px-3 py-2 text-xs font-semibold text-slate-200 hover:border-teal-400/40"
+                      className="rounded-xl border border-border px-3 py-2 text-xs font-semibold text-ink hover:border-teal-400/40"
                     >
                       Acknowledge
                     </button>

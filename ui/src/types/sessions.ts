@@ -1,4 +1,9 @@
 export type InterviewSessionStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
+export type ScheduleConfirmationStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'RESCHEDULE_REQUESTED'
+  | 'DECLINED'
 export type TurnRole = 'INTERVIEWER' | 'CANDIDATE'
 
 export type TurnEvaluation = {
@@ -47,7 +52,9 @@ export type InterviewSession = {
   job_title: string
   plan_title: string
   status: InterviewSessionStatus
+  confirmation_status: ScheduleConfirmationStatus
   follow_up_limit: number
+  duration_minutes?: number
   current_question_index: number
   current_follow_up_count: number
   current_plan_question_id: string | null
@@ -62,13 +69,16 @@ export type InterviewSession = {
 export type SessionSummary = {
   id: string
   status: InterviewSessionStatus
+  confirmation_status: ScheduleConfirmationStatus
   candidate_name: string
   candidate_email: string
   job_title: string
   plan_title: string
   current_question_index: number
   total_questions: number
+  duration_minutes?: number
   created_at: string
   started_at: string | null
   completed_at: string | null
+  scheduled_at?: string | null
 }

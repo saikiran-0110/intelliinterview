@@ -94,4 +94,14 @@ def generate_feedback(
             detail="Completed interview report not found for feedback generation",
         )
     feedback = feedback_service.generate_for_report(db, report)
+    from app.services.notifications import NotificationService
+
+    NotificationService().notify(
+        db,
+        user_id=current_user.id,
+        title="Interview feedback ready",
+        body="Your personalised interview feedback summary is ready to review.",
+        link="/candidate/feedback",
+        related_session_id=session_id,
+    )
     return _to_response(db, feedback)

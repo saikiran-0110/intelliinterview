@@ -3,12 +3,14 @@ import type {
   ApplicationContactInput,
   ApplicationItem,
   AssistantResponse,
+  EmploymentType,
   JobRequisitionInput,
   MatchPreview,
   OpenJob,
   PipelineStage,
   PreparationPack,
   RankingResponse,
+  WorkMode,
 } from '../types/optional'
 import type { CandidateCv, JobSpecification } from '../types/analysis'
 
@@ -31,10 +33,21 @@ export function downloadCv(cvId: string) {
   return apiRequest<Blob>(`/api/cvs/${cvId}/download`, { raw: true })
 }
 
-export function updateProfile(fullName: string) {
+export function deleteMyCv(cvId: string) {
+  return apiRequest<void>(`/api/cvs/${cvId}`, { method: 'DELETE' })
+}
+
+export function updateProfile(payload: {
+  full_name: string
+  phone?: string
+  company?: string
+  job_title?: string
+  location?: string
+  linkedin_url?: string
+}) {
   return apiRequest('/api/auth/me', {
     method: 'PATCH',
-    body: JSON.stringify({ full_name: fullName }),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -91,6 +104,27 @@ export function createJobSpec(input: JobRequisitionInput) {
   })
 }
 
+export type JobAiDraft = {
+  title: string
+  description: string
+  department?: string | null
+  location?: string | null
+  employment_type: EmploymentType
+  work_mode: WorkMode
+  salary_min_gbp?: number | null
+  salary_max_gbp?: number | null
+  years_experience_min?: number | null
+  benefits?: string | null
+  model_version?: string | null
+}
+
+export function aiDraftJobSpec(prompt: string) {
+  return apiRequest<JobAiDraft>('/api/job-specs/ai-draft', {
+    method: 'POST',
+    body: JSON.stringify({ prompt }),
+  })
+}
+
 export function rankCandidates(jobSpecId: string) {
   return apiRequest<RankingResponse>(`/api/ranking/${jobSpecId}`)
 }
@@ -104,6 +138,17 @@ export function generatePreparation(jobSpecId: string, cvId?: string) {
     method: 'POST',
     body: JSON.stringify({ job_spec_id: jobSpecId, cv_id: cvId || null }),
   })
+}
+
+export function updatePreparationProgress(packId: string, itemId: string, completed: boolean) {
+  return apiRequest<PreparationPack>(`/api/preparation/${packId}/progress`, {
+    method: 'PATCH',
+    body: JSON.stringify({ item_id: itemId, completed }),
+  })
+}
+
+export function deletePreparationPack(packId: string) {
+  return apiRequest<void>(`/api/preparation/${packId}`, { method: 'DELETE' })
 }
 
 export function queryAssistant(message: string) {

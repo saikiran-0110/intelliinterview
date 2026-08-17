@@ -15,14 +15,14 @@ function MatchList({
   tone: 'teal' | 'amber' | 'rose'
 }) {
   const toneClasses = {
-    teal: 'border-teal-500/20 bg-teal-500/5 text-teal-200',
+    teal: 'border-teal-200 bg-teal-50 text-teal-700',
     amber: 'border-amber-500/20 bg-amber-500/5 text-amber-200',
     rose: 'border-rose-500/20 bg-rose-500/5 text-rose-200',
   }
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <h3 className="text-lg font-semibold text-ink">{title}</h3>
       {items.length === 0 ? (
         <p className="mt-3 text-sm text-slate-500">None identified.</p>
       ) : (
@@ -82,8 +82,8 @@ export function GapAnalysisPage() {
           description="Run an analysis from the CV and job specification page to view structured match results here."
         />
         <Card>
-          <p className="text-sm text-slate-400">No analysis selected yet.</p>
-          <Link to="/recruiter/analysis" className="mt-4 inline-block text-sm font-semibold text-teal-300">
+          <p className="text-sm text-muted">No analysis selected yet.</p>
+          <Link to="/recruiter/analysis" className="mt-4 inline-block text-sm font-semibold text-teal-700">
             Go to CV and job analysis
           </Link>
         </Card>
@@ -92,7 +92,7 @@ export function GapAnalysisPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-slate-400">Loading gap analysis...</p>
+    return <p className="text-sm text-muted">Loading gap analysis...</p>
   }
 
   if (error || !analysis) {
@@ -100,8 +100,8 @@ export function GapAnalysisPage() {
       <div>
         <PageHeader title="Gap Analysis" description="Structured comparison results." />
         <Card>
-          <p className="text-sm text-rose-300">{error ?? 'Analysis not found.'}</p>
-          <Link to="/recruiter/analysis" className="mt-4 inline-block text-sm font-semibold text-teal-300">
+          <p className="text-sm text-rose-600">{error ?? 'Analysis not found.'}</p>
+          <Link to="/recruiter/analysis" className="mt-4 inline-block text-sm font-semibold text-teal-700">
             Back to analysis
           </Link>
         </Card>
@@ -117,16 +117,16 @@ export function GapAnalysisPage() {
         action={
           <div className="rounded-xl border border-border bg-surface-raised px-4 py-2 text-right">
             <p className="text-xs text-slate-500">Match score</p>
-            <p className="text-2xl font-bold text-teal-300">{analysis.match_score ?? '-'}%</p>
+            <p className="text-2xl font-bold text-teal-700">{analysis.match_score ?? '-'}%</p>
           </div>
         }
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         {[
-          { label: 'Strong match', value: analysis.strong_match_count, tone: 'text-teal-300' },
+          { label: 'Strong match', value: analysis.strong_match_count, tone: 'text-teal-700' },
           { label: 'Partial match', value: analysis.partial_match_count, tone: 'text-amber-300' },
-          { label: 'Gap identified', value: analysis.gap_count, tone: 'text-rose-300' },
+          { label: 'Gap identified', value: analysis.gap_count, tone: 'text-rose-600' },
         ].map((stat) => (
           <div key={stat.label} className="rounded-2xl border border-border bg-surface-raised p-5 text-center">
             <p className="text-xs uppercase tracking-wider text-slate-500">{stat.label}</p>
@@ -143,13 +143,13 @@ export function GapAnalysisPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>
-          <h3 className="text-lg font-semibold text-white">Experience alignment</h3>
-          <p className="mt-2 text-sm capitalize text-slate-300">
-            Alignment: <span className="font-medium text-white">{analysis.experience_analysis.alignment}</span>
+          <h3 className="text-lg font-semibold text-ink">Experience alignment</h3>
+          <p className="mt-2 text-sm capitalize text-slate-700">
+            Alignment: <span className="font-medium text-ink">{analysis.experience_analysis.alignment}</span>
           </p>
           <ul className="mt-4 space-y-2">
             {analysis.experience_analysis.notes.map((note) => (
-              <li key={note} className="text-sm text-slate-400">
+              <li key={note} className="text-sm text-muted">
                 {note}
               </li>
             ))}
@@ -157,23 +157,23 @@ export function GapAnalysisPage() {
         </Card>
 
         <Card>
-          <h3 className="text-lg font-semibold text-white">Qualifications</h3>
-          <p className="mt-2 text-sm capitalize text-slate-300">
+          <h3 className="text-lg font-semibold text-ink">Qualifications</h3>
+          <p className="mt-2 text-sm capitalize text-slate-700">
             Alignment:{' '}
-            <span className="font-medium text-white">{analysis.qualifications_analysis.alignment}</span>
+            <span className="font-medium text-ink">{analysis.qualifications_analysis.alignment}</span>
           </p>
-          <p className="mt-3 text-sm text-slate-400">
+          <p className="mt-3 text-sm text-muted">
             Matched: {analysis.qualifications_analysis.matched_qualifications.join(', ') || 'None'}
           </p>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-muted">
             Missing: {analysis.qualifications_analysis.missing_qualifications.join(', ') || 'None'}
           </p>
         </Card>
       </div>
 
       <Card className="mt-6">
-        <h3 className="text-lg font-semibold text-white">Evidence passages</h3>
-        <p className="mt-1 text-sm text-slate-400">CV excerpts linked to matched or missing skills.</p>
+        <h3 className="text-lg font-semibold text-ink">Evidence passages</h3>
+        <p className="mt-1 text-sm text-muted">CV excerpts linked to matched or missing skills.</p>
         {analysis.evidence_passages.length === 0 ? (
           <p className="mt-4 text-sm text-slate-500">No evidence passages available.</p>
         ) : (
@@ -183,7 +183,7 @@ export function GapAnalysisPage() {
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   {item.skill} ({item.match_type})
                 </p>
-                <p className="mt-2 text-sm text-slate-300">{item.passage}</p>
+                <p className="mt-2 text-sm text-slate-700">{item.passage}</p>
               </div>
             ))}
           </div>
@@ -191,9 +191,9 @@ export function GapAnalysisPage() {
       </Card>
 
       <Card className="mt-6">
-        <h3 className="text-lg font-semibold text-white">Summary for recruiters</h3>
-        <p className="mt-3 text-sm leading-relaxed text-slate-300">{analysis.narrative_summary}</p>
-        <Link to={`/recruiter/questions?analysisId=${analysis.id}`} className="mt-5 inline-block text-sm font-semibold text-teal-300">
+        <h3 className="text-lg font-semibold text-ink">Summary for recruiters</h3>
+        <p className="mt-3 text-sm leading-relaxed text-slate-700">{analysis.narrative_summary}</p>
+        <Link to={`/recruiter/questions?analysisId=${analysis.id}`} className="mt-5 inline-block text-sm font-semibold text-teal-700">
           Continue to question planning
         </Link>
       </Card>

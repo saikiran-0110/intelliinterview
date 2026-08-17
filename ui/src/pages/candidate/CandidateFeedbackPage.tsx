@@ -45,19 +45,19 @@ export function CandidateFeedbackPage() {
         description="AI-written feedback after completed interviews: strong answers, improvement areas, and focus tips for future interviews."
       />
 
-      {loading && <p className="text-sm text-slate-400">Loading feedback...</p>}
-      {error && <p className="mb-4 text-sm text-rose-300">{error}</p>}
+      {loading && <p className="text-sm text-muted">Loading feedback...</p>}
+      {error && <p className="mb-4 text-sm text-rose-600">{error}</p>}
 
       {!loading && items.length === 0 ? (
         <Card>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted">
             No feedback yet. Complete an AI interview session to receive your summary.
           </p>
         </Card>
       ) : (
         <div className="grid gap-6 lg:grid-cols-3">
           <Card className="lg:col-span-1">
-            <h3 className="text-sm font-semibold text-white">Completed interviews</h3>
+            <h3 className="text-sm font-semibold text-ink">Completed interviews</h3>
             <div className="mt-3 space-y-2">
               {items.map((item) => (
                 <button
@@ -66,11 +66,11 @@ export function CandidateFeedbackPage() {
                   onClick={() => openFeedback(item.session_id)}
                   className={`block w-full rounded-xl border p-3 text-left ${
                     selected?.session_id === item.session_id
-                      ? 'border-violet-500/40 bg-violet-500/10'
+                      ? 'border-sky-300 bg-sky-100'
                       : 'border-border bg-surface/60'
                   }`}
                 >
-                  <p className="text-sm font-medium text-white">{item.job_title}</p>
+                  <p className="text-sm font-medium text-ink">{item.job_title}</p>
                   <p className="mt-1 text-xs text-slate-500">{new Date(item.created_at).toLocaleString()}</p>
                 </button>
               ))}
@@ -80,13 +80,13 @@ export function CandidateFeedbackPage() {
           {selected && (
             <div className="space-y-4 lg:col-span-2">
               <Card>
-                <h3 className="text-lg font-semibold text-white">{selected.job_title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-300">{selected.summary}</p>
+                <h3 className="text-lg font-semibold text-ink">{selected.job_title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-700">{selected.summary}</p>
               </Card>
               <div className="grid gap-4 sm:grid-cols-3">
                 <Card>
-                  <h4 className="text-sm font-semibold text-teal-300">Strong answers</h4>
-                  <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-400">
+                  <h4 className="text-sm font-semibold text-teal-700">Strong answers</h4>
+                  <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted">
                     {selected.strong_answers.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
@@ -94,15 +94,15 @@ export function CandidateFeedbackPage() {
                 </Card>
                 <Card>
                   <h4 className="text-sm font-semibold text-amber-300">Improve</h4>
-                  <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-400">
+                  <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted">
                     {selected.improvement_areas.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
                   </ul>
                 </Card>
                 <Card>
-                  <h4 className="text-sm font-semibold text-violet-300">Focus next</h4>
-                  <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-400">
+                  <h4 className="text-sm font-semibold text-sky-700">Focus next</h4>
+                  <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted">
                     {selected.focus_tips.map((item) => (
                       <li key={item}>{item}</li>
                     ))}

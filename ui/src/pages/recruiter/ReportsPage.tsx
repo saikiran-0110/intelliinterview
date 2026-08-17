@@ -35,15 +35,15 @@ export function ReportsPage() {
         description="Detailed post-interview assessments covering technical fit, communication, problem-solving, and role alignment with evidence-linked observations."
       />
 
-      {loading && <p className="text-sm text-slate-400">Loading reports...</p>}
-      {error && <p className="text-sm text-rose-300">{error}</p>}
+      {loading && <p className="text-sm text-muted">Loading reports...</p>}
+      {error && <p className="text-sm text-rose-600">{error}</p>}
 
       {!loading && reports.length === 0 ? (
         <Card>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted">
             No reports yet. Complete an AI interview session to generate an evaluation report.
           </p>
-          <Link to="/recruiter/sessions" className="mt-3 inline-block text-sm font-semibold text-teal-300">
+          <Link to="/recruiter/sessions" className="mt-3 inline-block text-sm font-semibold text-teal-700">
             Go to interview sessions
           </Link>
         </Card>
@@ -52,11 +52,11 @@ export function ReportsPage() {
           {reports.map((report) => (
             <Card key={report.id} hover>
               <p className="text-xs uppercase tracking-wider text-slate-500">{report.job_title}</p>
-              <h3 className="mt-1 text-lg font-semibold text-white">{report.candidate_name}</h3>
-              <p className="mt-2 text-sm text-slate-400">
+              <h3 className="mt-1 text-lg font-semibold text-ink">{report.candidate_name}</h3>
+              <p className="mt-2 text-sm text-muted">
                 Overall {report.overall_score}/10 - {recommendationLabel(report.recommendation)}
               </p>
-              <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-400">
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted">
                 <span>Tech {report.technical_fit_score}</span>
                 <span>Comm {report.communication_score}</span>
                 <span>Solve {report.problem_solving_score}</span>
@@ -64,7 +64,7 @@ export function ReportsPage() {
               </div>
               <Link
                 to={`/recruiter/reports/${report.id}`}
-                className="mt-4 inline-block text-sm font-semibold text-teal-300 hover:text-teal-200"
+                className="mt-4 inline-block text-sm font-semibold text-teal-700 hover:text-teal-700"
               >
                 View full report
               </Link>

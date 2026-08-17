@@ -15,6 +15,7 @@ from app.models import (
     UserRole,
 )
 from app.scheduling_schemas import (
+    CandidateMessageRequest,
     ConfirmSlotRequest,
     NotificationResponse,
     ProposeSlotsRequest,
@@ -149,6 +150,23 @@ def request_reschedule(
     if session is None or session.candidate_user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
     scheduling.request_reschedule(db, session, request.candidate_note)
+    return _schedule_item(db, session)
+
+
+@router.post("/{session_id}/message", response_model=ScheduleItemResponse)
+def send_candidate_message(
+    session_id: UUID,
+    request: CandidateMessageRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.CANDIDATE)),
+) -> ScheduleItemResponse:
+    session = db.get(InterviewSession, session_id)
+    if session is None or session.candidate_user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    try:
+        scheduling.send_candidate_message(db, session, request.candidate_note)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return _schedule_item(db, session)
 
 

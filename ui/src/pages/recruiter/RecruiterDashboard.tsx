@@ -67,20 +67,20 @@ export function RecruiterDashboard() {
         {quickActions.map((action) => (
           <Link key={action.path} to={action.path}>
             <Card hover className="h-full">
-              <p className="text-sm font-semibold text-white">{action.label}</p>
+              <p className="text-sm font-semibold text-ink">{action.label}</p>
               <p className="mt-2 text-xs text-slate-500">Open page</p>
             </Card>
           </Link>
         ))}
       </div>
 
-      {error && <p className="mb-4 text-sm text-rose-300">{error}</p>}
+      {error && <p className="mb-4 text-sm text-rose-600">{error}</p>}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Recent interview sessions</h3>
-            <Link to="/recruiter/sessions" className="text-xs font-semibold text-teal-300">
+            <h3 className="text-lg font-semibold text-ink">Recent interview sessions</h3>
+            <Link to="/recruiter/sessions" className="text-xs font-semibold text-teal-700">
               View all
             </Link>
           </div>
@@ -92,9 +92,9 @@ export function RecruiterDashboard() {
                 <Link
                   key={session.id}
                   to={`/recruiter/sessions/${session.id}`}
-                  className="block rounded-xl border border-border bg-surface/60 p-3 hover:border-teal-500/30"
+                  className="block rounded-xl border border-border bg-surface/60 p-3 hover:border-teal-200"
                 >
-                  <p className="text-sm font-medium text-white">
+                  <p className="text-sm font-medium text-ink">
                     {session.candidate_name} - {session.job_title}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">{session.status}</p>
@@ -106,8 +106,8 @@ export function RecruiterDashboard() {
 
         <Card>
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Latest evaluation reports</h3>
-            <Link to="/recruiter/reports" className="text-xs font-semibold text-teal-300">
+            <h3 className="text-lg font-semibold text-ink">Latest evaluation reports</h3>
+            <Link to="/recruiter/reports" className="text-xs font-semibold text-teal-700">
               View all
             </Link>
           </div>
@@ -119,9 +119,9 @@ export function RecruiterDashboard() {
                 <Link
                   key={report.id}
                   to={`/recruiter/reports/${report.id}`}
-                  className="block rounded-xl border border-border bg-surface/60 p-3 hover:border-teal-500/30"
+                  className="block rounded-xl border border-border bg-surface/60 p-3 hover:border-teal-200"
                 >
-                  <p className="text-sm font-medium text-white">
+                  <p className="text-sm font-medium text-ink">
                     {report.candidate_name} - {report.job_title}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">

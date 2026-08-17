@@ -27,8 +27,8 @@ function QuestionCard({
 }) {
   const sourceTone =
     question.source === 'AI'
-      ? 'bg-teal-500/15 text-teal-300 ring-teal-500/25'
-      : 'bg-indigo-500/15 text-indigo-300 ring-indigo-500/25'
+      ? 'bg-teal-50 text-teal-700 ring-teal-500/25'
+      : 'bg-indigo-500/15 text-sky-700 ring-indigo-500/25'
 
   return (
     <div className="rounded-xl border border-border bg-surface/60 p-4">
@@ -36,24 +36,24 @@ function QuestionCard({
         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${sourceTone}`}>
           {question.source}
         </span>
-        <span className="rounded-full bg-slate-500/15 px-2.5 py-0.5 text-xs text-slate-300 ring-1 ring-inset ring-slate-500/25">
+        <span className="rounded-full bg-slate-500/15 px-2.5 py-0.5 text-xs text-slate-700 ring-1 ring-inset ring-slate-500/25">
           {question.topic}
         </span>
-        <span className="rounded-full bg-slate-500/10 px-2.5 py-0.5 text-xs text-slate-400">
+        <span className="rounded-full bg-slate-500/10 px-2.5 py-0.5 text-xs text-muted">
           {question.question_type}
         </span>
         {!question.approved && (
           <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs text-amber-300">Pending</span>
         )}
       </div>
-      <p className="text-sm leading-relaxed text-slate-200">{question.text}</p>
+      <p className="text-sm leading-relaxed text-ink">{question.text}</p>
       {question.rationale && <p className="mt-2 text-xs text-slate-500">{question.rationale}</p>}
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
           disabled={busy}
           onClick={() => onToggleApproved(question)}
-          className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-surface-overlay disabled:opacity-50"
+          className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-surface-overlay disabled:opacity-50"
         >
           {question.approved ? 'Unapprove' : 'Approve'}
         </button>
@@ -61,7 +61,7 @@ function QuestionCard({
           type="button"
           disabled={busy}
           onClick={() => onDelete(question)}
-          className="rounded-lg border border-rose-500/30 px-3 py-1.5 text-xs font-medium text-rose-300 hover:bg-rose-500/10 disabled:opacity-50"
+          className="rounded-lg border border-rose-500/30 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-500/10 disabled:opacity-50"
         >
           Remove
         </button>
@@ -242,15 +242,15 @@ export function QuestionPlanningPage() {
       />
 
       <Card className="mb-6">
-        <h3 className="text-lg font-semibold text-white">Gap analysis context</h3>
-        <p className="mt-1 text-sm text-slate-400">
+        <h3 className="text-lg font-semibold text-ink">Gap analysis context</h3>
+        <p className="mt-1 text-sm text-muted">
           Questions are generated from strong matches, partial matches, and gaps in the selected analysis.
         </p>
 
         {analyses.length === 0 ? (
           <div className="mt-4">
-            <p className="text-sm text-slate-400">No gap analyses found yet.</p>
-            <Link to="/recruiter/analysis" className="mt-3 inline-block text-sm font-semibold text-teal-300">
+            <p className="text-sm text-muted">No gap analyses found yet.</p>
+            <Link to="/recruiter/analysis" className="mt-3 inline-block text-sm font-semibold text-teal-700">
               Run CV and job analysis first
             </Link>
           </div>
@@ -260,7 +260,7 @@ export function QuestionPlanningPage() {
             <select
               value={selectedAnalysisId}
               onChange={(e) => selectAnalysis(e.target.value)}
-              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-100"
+              className="input-field"
             >
               {analyses.map((item) => (
                 <option key={item.id} value={item.id}>
@@ -275,7 +275,7 @@ export function QuestionPlanningPage() {
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-border bg-surface/60 p-3">
               <p className="text-xs text-slate-500">Strong matches</p>
-              <p className="mt-1 text-xl font-bold text-teal-300">{analysis.strong_match_count}</p>
+              <p className="mt-1 text-xl font-bold text-teal-700">{analysis.strong_match_count}</p>
             </div>
             <div className="rounded-xl border border-border bg-surface/60 p-3">
               <p className="text-xs text-slate-500">Partial matches</p>
@@ -283,24 +283,24 @@ export function QuestionPlanningPage() {
             </div>
             <div className="rounded-xl border border-border bg-surface/60 p-3">
               <p className="text-xs text-slate-500">Gaps</p>
-              <p className="mt-1 text-xl font-bold text-rose-300">{analysis.gap_count}</p>
+              <p className="mt-1 text-xl font-bold text-rose-600">{analysis.gap_count}</p>
             </div>
           </div>
         )}
       </Card>
 
-      {status && <p className="mb-4 text-sm text-teal-300">{status}</p>}
-      {error && <p className="mb-4 text-sm text-rose-300">{error}</p>}
+      {status && <p className="mb-4 text-sm text-teal-700">{status}</p>}
+      {error && <p className="mb-4 text-sm text-rose-600">{error}</p>}
 
       {!plan ? (
         <Card>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted">
             No question plan yet for this analysis. Click Generate AI questions to create a tailored set.
           </p>
         </Card>
       ) : (
         <>
-          <div className="mb-4 flex flex-wrap gap-3 text-sm text-slate-400">
+          <div className="mb-4 flex flex-wrap gap-3 text-sm text-muted">
             <span>{plan.title}</span>
             <span>AI: {plan.ai_question_count}</span>
             <span>Recruiter: {plan.recruiter_question_count}</span>
@@ -309,8 +309,8 @@ export function QuestionPlanningPage() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>
-              <h3 className="text-lg font-semibold text-white">AI-generated questions</h3>
-              <p className="mt-1 text-sm text-slate-400">
+              <h3 className="text-lg font-semibold text-ink">AI-generated questions</h3>
+              <p className="mt-1 text-sm text-muted">
                 Built from gap analysis for {plan.candidate_name} and {plan.job_title}.
               </p>
               <div className="mt-4 space-y-3">
@@ -331,8 +331,8 @@ export function QuestionPlanningPage() {
             </Card>
 
             <Card>
-              <h3 className="text-lg font-semibold text-white">Recruiter custom questions</h3>
-              <p className="mt-1 text-sm text-slate-400">Add your own questions alongside the AI set.</p>
+              <h3 className="text-lg font-semibold text-ink">Recruiter custom questions</h3>
+              <p className="mt-1 text-sm text-muted">Add your own questions alongside the AI set.</p>
 
               <form className="mt-4 space-y-3" onSubmit={handleAddCustom}>
                 <input
@@ -340,19 +340,19 @@ export function QuestionPlanningPage() {
                   value={customTopic}
                   onChange={(e) => setCustomTopic(e.target.value)}
                   placeholder="Topic"
-                  className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-100"
+                  className="input-field"
                 />
                 <textarea
                   value={customText}
                   onChange={(e) => setCustomText(e.target.value)}
                   rows={4}
                   placeholder="Enter a custom interview question"
-                  className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-slate-100"
+                  className="input-field"
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-surface-overlay disabled:opacity-50"
+                  className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-overlay disabled:opacity-50"
                 >
                   Add custom question
                 </button>
@@ -377,8 +377,8 @@ export function QuestionPlanningPage() {
           </div>
 
           <Card className="mt-6">
-            <h3 className="text-lg font-semibold text-white">Combined session plan</h3>
-            <p className="mt-1 text-sm text-slate-400">
+            <h3 className="text-lg font-semibold text-ink">Combined session plan</h3>
+            <p className="mt-1 text-sm text-muted">
               Approved questions in interview order. Use this plan when creating a session.
             </p>
             <div className="mt-4 space-y-3">
@@ -390,14 +390,14 @@ export function QuestionPlanningPage() {
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Question {index + 1} - {question.source} - {question.topic}
                     </p>
-                    <p className="mt-2 text-sm text-slate-200">{question.text}</p>
+                    <p className="mt-2 text-sm text-ink">{question.text}</p>
                   </div>
                 ))
               )}
             </div>
             <Link
               to="/recruiter/sessions/new"
-              className="mt-5 inline-block text-sm font-semibold text-teal-300 hover:text-teal-200"
+              className="mt-5 inline-block text-sm font-semibold text-teal-700 hover:text-teal-700"
             >
               Continue to create interview session
             </Link>

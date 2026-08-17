@@ -1,6 +1,8 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { listJobSpecs } from '../../api/analysis'
 import {
+  aiDraftJobSpec,
   createJobSpec,
   downloadCv,
   formatSalaryGbp,
@@ -37,14 +39,15 @@ const emptyForm = {
   benefits: '',
 }
 
-const inputClass =
-  'w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-slate-100'
+const inputClass = 'input-field'
 
 export function JobsPipelinePage() {
   const [jobs, setJobs] = useState<JobSpecification[]>([])
   const [apps, setApps] = useState<ApplicationItem[]>([])
   const [selectedJobId, setSelectedJobId] = useState('')
   const [form, setForm] = useState(emptyForm)
+  const [aiPrompt, setAiPrompt] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
 
@@ -70,6 +73,41 @@ export function JobsPipelinePage() {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
+  async function handleAiDraft() {
+    if (aiPrompt.trim().length < 10) {
+      setError('Add a short hiring brief (at least 10 characters) for AI drafting.')
+      return
+    }
+    setError(null)
+    setAiLoading(true)
+    try {
+      const draft = await aiDraftJobSpec(aiPrompt.trim())
+      setForm({
+        title: draft.title || '',
+        description: draft.description || '',
+        department: draft.department || '',
+        location: draft.location || '',
+        employment_type: draft.employment_type || 'FULL_TIME',
+        work_mode: draft.work_mode || 'HYBRID',
+        salary_min_gbp: draft.salary_min_gbp != null ? String(Math.round(draft.salary_min_gbp)) : '',
+        salary_max_gbp: draft.salary_max_gbp != null ? String(Math.round(draft.salary_max_gbp)) : '',
+        years_experience_min:
+          draft.years_experience_min != null ? String(draft.years_experience_min) : '',
+        closing_date: '',
+        benefits: draft.benefits || '',
+      })
+      setStatus(
+        draft.model_version === 'baseline'
+          ? 'Draft filled from your brief. Review and publish when ready.'
+          : `AI enhanced draft ready (${draft.model_version}). Review and publish when ready.`,
+      )
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'AI drafting failed')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
   async function handleCreate(event: FormEvent) {
     event.preventDefault()
     setError(null)
@@ -89,6 +127,7 @@ export function JobsPipelinePage() {
         is_open: true,
       })
       setForm(emptyForm)
+      setAiPrompt('')
       setStatus('Recruitment request published and open for applications.')
       await load()
     } catch (err) {
@@ -99,6 +138,9 @@ export function JobsPipelinePage() {
   async function handleStage(appId: string, stage: PipelineStage) {
     try {
       await updateApplicationStage(appId, stage)
+      if (stage === 'SHORTLISTED') {
+        setStatus('Candidate shortlisted and interview session prepared. Next: propose slots on Scheduling.')
+      }
       await load(selectedJobId || undefined)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update stage')
@@ -124,16 +166,76 @@ export function JobsPipelinePage() {
   return (
     <div>
       <PageHeader
-        title="Jobs & Pipeline"
-        description="Open a recruitment request with salary and role details, then manage applicants through the hiring pipeline."
+        title="Hiring Board"
+        description="Start here: publish open roles with salary in £, then manage applicants through your hiring stages."
       />
-      {error && <p className="mb-4 text-sm text-rose-300">{error}</p>}
-      {status && <p className="mb-4 text-sm text-teal-300">{status}</p>}
+      <div className="animate-fade-up-delay-1 mb-6 grid gap-2 sm:grid-cols-4">
+        {[
+          { label: '1. Open role', to: null },
+          { label: '2. Rank applicants', to: '/recruiter/ranking' },
+          { label: '3. Shortlist', to: '/recruiter/ranking' },
+          { label: '4. Schedule interview', to: '/recruiter/scheduling' },
+        ].map((step) =>
+          step.to ? (
+            <Link
+              key={step.label}
+              to={step.to}
+              className="rounded-xl border border-teal-200 bg-teal-100/80 px-3 py-2 text-xs font-semibold text-teal-900 hover:bg-teal-200/80"
+            >
+              {step.label}
+            </Link>
+          ) : (
+            <div
+              key={step.label}
+              className="rounded-xl border border-teal-200 bg-teal-100/80 px-3 py-2 text-xs font-semibold text-teal-900"
+            >
+              {step.label}
+            </div>
+          ),
+        )}
+      </div>
+      {error && <p className="mb-4 text-sm text-rose-600">{error}</p>}
+      {status && (
+        <p className="mb-4 text-sm text-teal-700">
+          {status}
+          {status.includes('Scheduling') && (
+            <>
+              {' '}
+              <Link to="/recruiter/scheduling" className="font-semibold underline">
+                Open Scheduling
+              </Link>
+            </>
+          )}
+        </p>
+      )}
 
       <div className="mb-6 grid gap-6 xl:grid-cols-2">
         <Card>
-          <h3 className="text-lg font-semibold text-white">Open recruitment request</h3>
-          <form className="mt-3 space-y-3" onSubmit={handleCreate}>
+          <h3 className="text-lg font-semibold text-ink">Open recruitment request</h3>
+
+          <div className="mt-3 rounded-2xl border border-teal-200 bg-teal-50/60 p-4">
+            <p className="text-sm font-bold text-teal-900">AI help</p>
+            <p className="mt-1 text-sm text-muted">
+              Describe the role in plain language. AI fills title, salary (£), location, description, and benefits.
+            </p>
+            <textarea
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder="Example: Senior backend engineer in London, hybrid, 5+ years Python/FastAPI, £75k–£95k, fintech experience preferred"
+              rows={3}
+              className={`mt-3 ${inputClass}`}
+            />
+            <button
+              type="button"
+              onClick={handleAiDraft}
+              disabled={aiLoading}
+              className="btn-primary mt-3 disabled:opacity-60"
+            >
+              {aiLoading ? 'Drafting with AI...' : 'Enhance & fill form with AI'}
+            </button>
+          </div>
+
+          <form className="mt-5 space-y-3" onSubmit={handleCreate}>
             <input
               value={form.title}
               onChange={(e) => updateField('title', e.target.value)}
@@ -211,7 +313,11 @@ export function JobsPipelinePage() {
               value={form.closing_date}
               onChange={(e) => updateField('closing_date', e.target.value)}
               className={inputClass}
+              aria-label="Application closing date"
             />
+            <p className="-mt-1 text-xs text-muted">
+              Application closing date (optional) — last day candidates can apply
+            </p>
             <textarea
               value={form.description}
               onChange={(e) => updateField('description', e.target.value)}
@@ -227,14 +333,14 @@ export function JobsPipelinePage() {
               rows={2}
               className={inputClass}
             />
-            <button type="submit" className="rounded-xl bg-teal-500 px-4 py-2 text-sm font-semibold text-ink">
+            <button type="submit" className="rounded-xl btn-primary">
               Publish recruitment request
             </button>
           </form>
         </Card>
 
         <Card>
-          <h3 className="text-lg font-semibold text-white">Open roles</h3>
+          <h3 className="text-lg font-semibold text-ink">Open roles</h3>
           <div className="mt-3 space-y-2">
             {jobs.map((job) => (
               <div key={job.id} className="rounded-xl border border-border p-3">
@@ -247,19 +353,19 @@ export function JobsPipelinePage() {
                       load(job.id)
                     }}
                   >
-                    <p className="text-sm font-medium text-white">{job.title}</p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="text-sm font-medium text-ink">{job.title}</p>
+                    <p className="mt-1 text-xs text-muted">
                       {[job.location, job.department, job.employment_type?.replaceAll('_', ' ')]
                         .filter(Boolean)
                         .join(' · ')}
                     </p>
-                    <p className="mt-1 text-xs text-teal-300">
+                    <p className="mt-1 text-xs text-teal-700">
                       {formatSalaryGbp(job.salary_min_gbp, job.salary_max_gbp)}
                     </p>
                   </button>
                   <button
                     type="button"
-                    className="text-xs text-teal-300"
+                    className="text-xs text-teal-700"
                     onClick={async () => {
                       await setJobVisibility(job.id, !(job.is_open ?? true))
                       await load(selectedJobId || undefined)
@@ -275,7 +381,7 @@ export function JobsPipelinePage() {
       </div>
 
       <Card>
-        <h3 className="text-lg font-semibold text-white">Applications</h3>
+        <h3 className="text-lg font-semibold text-ink">Applications</h3>
         <div className="mt-4 space-y-3">
           {filtered.length === 0 ? (
             <p className="text-sm text-slate-500">No applications for this filter.</p>
@@ -284,10 +390,10 @@ export function JobsPipelinePage() {
               <div key={app.id} className="rounded-xl border border-border bg-surface/60 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-white">
+                    <p className="font-medium text-ink">
                       {app.candidate_name} · {app.job_title}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-muted">
                       {app.contact_email || app.candidate_email}
                       {app.contact_phone ? ` · ${app.contact_phone}` : ''}
                       {app.match_score != null ? ` · Match ${app.match_score.toFixed(0)}/100` : ''}
@@ -303,7 +409,7 @@ export function JobsPipelinePage() {
                     <select
                       value={app.stage}
                       onChange={(e) => handleStage(app.id, e.target.value as PipelineStage)}
-                      className="rounded-lg border border-border bg-surface px-2 py-1 text-xs text-slate-100"
+                      className="rounded-lg border border-border bg-white px-2 py-1 text-xs text-ink"
                     >
                       {stages.map((stage) => (
                         <option key={stage} value={stage}>
@@ -315,7 +421,7 @@ export function JobsPipelinePage() {
                       <button
                         type="button"
                         onClick={() => handleDownload(app.cv_id!, `${app.candidate_name}-cv`)}
-                        className="rounded-lg border border-border px-3 py-1 text-xs text-teal-200"
+                        className="rounded-lg border border-border px-3 py-1 text-xs text-teal-700"
                       >
                         Download CV
                       </button>

@@ -31,6 +31,10 @@ class RescheduleRequest(BaseModel):
     candidate_note: str | None = None
 
 
+class CandidateMessageRequest(BaseModel):
+    candidate_note: str = Field(min_length=1, max_length=2000)
+
+
 class ScheduleItemResponse(BaseModel):
     session_id: UUID
     candidate_name: str

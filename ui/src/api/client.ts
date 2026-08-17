@@ -6,6 +6,12 @@ export type StoredUser = {
   email: string
   full_name: string
   role: 'RECRUITER' | 'CANDIDATE'
+  phone?: string | null
+  company?: string | null
+  job_title?: string | null
+  location?: string | null
+  linkedin_url?: string | null
+  email_verified?: boolean
 }
 
 export function getToken(): string | null {

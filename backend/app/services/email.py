@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 class EmailService:
     def send(self, to_email: str, subject: str, body: str) -> bool:
         if not settings.smtp_host:
-            logger.info("EMAIL (console): to=%s subject=%s\n%s", to_email, subject, body)
+            logger.info("EMAIL (console/dev): to=%s subject=%s\n%s", to_email, subject, body)
+            print(f"[IntelliInterview EMAIL] to={to_email} subject={subject}", flush=True)
             return True
 
         message = EmailMessage()

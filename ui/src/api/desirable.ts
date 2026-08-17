@@ -38,6 +38,13 @@ export function requestReschedule(sessionId: string, candidateNote?: string) {
   })
 }
 
+export function sendSessionMessage(sessionId: string, candidateNote: string) {
+  return apiRequest<ScheduleItem>(`/api/scheduling/${sessionId}/message`, {
+    method: 'POST',
+    body: JSON.stringify({ candidate_note: candidateNote }),
+  })
+}
+
 export function listNotifications() {
   return apiRequest<AppNotification[]>('/api/scheduling/notifications')
 }

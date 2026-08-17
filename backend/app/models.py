@@ -88,10 +88,37 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(120), nullable=False)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role", native_enum=False), nullable=False)
+    phone: Mapped[Optional[str]] = mapped_column(String(40))
+    company: Mapped[Optional[str]] = mapped_column(String(120))
+    job_title: Mapped[Optional[str]] = mapped_column(String(120))
+    location: Mapped[Optional[str]] = mapped_column(String(255))
+    linkedin_url: Mapped[Optional[str]] = mapped_column(String(255))
+    email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class OtpPurpose(str, enum.Enum):
+    REGISTER = "REGISTER"
+    LOGIN = "LOGIN"
+
+
+class OtpChallenge(Base):
+    __tablename__ = "otp_challenges"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    purpose: Mapped[OtpPurpose] = mapped_column(
+        Enum(OtpPurpose, name="otp_purpose", native_enum=False), nullable=False
+    )
+    code_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    payload: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consumed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class JobSpecification(Base):
@@ -441,5 +468,8 @@ class PreparationPack(Base):
     practice_questions: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
     guidance: Mapped[str] = mapped_column(Text, nullable=False)
     focus_areas: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    study_modules: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    checklist_items: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    completed_item_ids: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
     model_version: Mapped[Optional[str]] = mapped_column(String(60))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

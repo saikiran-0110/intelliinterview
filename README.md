@@ -1,6 +1,6 @@
 # IntelliInterview
 
-AI-assisted interview platform for **software engineering roles** — CO7201 Individual Project (Saikiran Buchiraju, [skb72@student.le.ac.uk](mailto:skb72@student.le.ac.uk)).
+AI-assisted interview platform for **software engineering roles** - CO7201 Individual Project (Saikiran Buchiraju, [skb72@student.le.ac.uk](mailto:skb72@student.le.ac.uk)).
 
 ## Technology stack
 

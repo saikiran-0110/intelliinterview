@@ -95,14 +95,43 @@ export type RankingResponse = {
   candidates: RankedCandidate[]
 }
 
+export type PreparationQuestion = {
+  id: string
+  question: string
+  difficulty: string
+  topic: string
+  talking_points: string[]
+  technical_context: string
+}
+
+export type PreparationStudyModule = {
+  id: string
+  title: string
+  summary: string
+  technical_details: string
+  topic: string
+  estimated_minutes: number
+}
+
+export type PreparationChecklistItem = {
+  id: string
+  label: string
+  category: string
+  technical_hint: string
+}
+
 export type PreparationPack = {
   id: string
   job_spec_id: string
   job_title: string
   cv_id: string
-  practice_questions: string[]
+  practice_questions: PreparationQuestion[]
   guidance: string
   focus_areas: string[]
+  study_modules: PreparationStudyModule[]
+  checklist_items: PreparationChecklistItem[]
+  completed_item_ids: string[]
+  progress_percent: number
   model_version: string | null
   created_at: string
 }

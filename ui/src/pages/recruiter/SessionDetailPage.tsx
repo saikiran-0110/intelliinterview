@@ -37,12 +37,12 @@ export function SessionDetailPage() {
     load()
   }, [sessionId])
 
-  if (loading) return <p className="text-sm text-slate-400">Loading session...</p>
+  if (loading) return <p className="text-sm text-muted">Loading session...</p>
   if (error || !session) {
     return (
       <Card>
-        <p className="text-sm text-rose-300">{error ?? 'Session not found'}</p>
-        <Link to="/recruiter/sessions" className="mt-3 inline-block text-sm font-semibold text-teal-300">
+        <p className="text-sm text-rose-600">{error ?? 'Session not found'}</p>
+        <Link to="/recruiter/sessions" className="mt-3 inline-block text-sm font-semibold text-teal-700">
           Back to sessions
         </Link>
       </Card>
@@ -59,32 +59,32 @@ export function SessionDetailPage() {
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
         <Card>
           <p className="text-xs text-slate-500">Status</p>
-          <p className="mt-1 text-lg font-semibold text-white">{session.status}</p>
+          <p className="mt-1 text-lg font-semibold text-ink">{session.status}</p>
         </Card>
         <Card>
           <p className="text-xs text-slate-500">Progress</p>
-          <p className="mt-1 text-lg font-semibold text-teal-300">
+          <p className="mt-1 text-lg font-semibold text-teal-700">
             {session.progress.index} / {session.progress.total}
           </p>
         </Card>
         <Card>
           <p className="text-xs text-slate-500">Follow-up limit</p>
-          <p className="mt-1 text-lg font-semibold text-white">{session.follow_up_limit}</p>
+          <p className="mt-1 text-lg font-semibold text-ink">{session.follow_up_limit}</p>
         </Card>
       </div>
 
       {session.status === 'COMPLETED' && report && (
-        <Card className="mb-6 border-teal-500/30">
+        <Card className="mb-6 border-teal-200">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-white">Evaluation report ready</p>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="text-sm font-semibold text-ink">Evaluation report ready</p>
+              <p className="mt-1 text-xs text-muted">
                 Overall {report.overall_score}/10 - {report.recommendation.replaceAll('_', ' ')}
               </p>
             </div>
             <Link
               to={`/recruiter/reports/${report.id}`}
-              className="rounded-xl bg-teal-500 px-4 py-2 text-sm font-semibold text-ink hover:bg-teal-400"
+              className="rounded-xl btn-primary hover:bg-teal-400"
             >
               View report
             </Link>
@@ -93,7 +93,7 @@ export function SessionDetailPage() {
       )}
 
       <Card>
-        <h3 className="text-lg font-semibold text-white">Transcript and evidence</h3>
+        <h3 className="text-lg font-semibold text-ink">Transcript and evidence</h3>
         <div className="mt-4 space-y-3">
           {session.turns.length === 0 ? (
             <p className="text-sm text-slate-500">No turns yet. Waiting for candidate to start.</p>
@@ -104,9 +104,9 @@ export function SessionDetailPage() {
                   {turn.role}
                   {turn.is_follow_up ? ' (follow-up)' : ''}
                 </p>
-                <p className="mt-2 text-sm text-slate-200">{turn.content}</p>
+                <p className="mt-2 text-sm text-ink">{turn.content}</p>
                 {turn.evaluation && (
-                  <div className="mt-3 rounded-lg border border-border bg-surface p-3 text-xs text-slate-400">
+                  <div className="mt-3 rounded-lg border border-border bg-surface p-3 text-xs text-muted">
                     <p>
                       Scores: technical {turn.evaluation.technical_score ?? '-'} / communication{' '}
                       {turn.evaluation.communication_score ?? '-'}

@@ -10,7 +10,7 @@ export function NewSessionPage() {
   const navigate = useNavigate()
   const [plans, setPlans] = useState<QuestionPlan[]>([])
   const [planId, setPlanId] = useState('')
-  const [candidateEmail, setCandidateEmail] = useState('candidate@example.com')
+  const [candidateEmail, setCandidateEmail] = useState('')
   const [followUpLimit, setFollowUpLimit] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
@@ -75,7 +75,7 @@ export function NewSessionPage() {
             <select
               value={planId}
               onChange={(e) => setPlanId(e.target.value)}
-              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-100"
+              className="input-field"
             >
               {plans.length === 0 ? (
                 <option value="">No question plans yet</option>
@@ -100,7 +100,7 @@ export function NewSessionPage() {
               type="email"
               value={candidateEmail}
               onChange={(e) => setCandidateEmail(e.target.value)}
-              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-100"
+              className="input-field"
               required
             />
             <p className="mt-1 text-xs text-slate-500">
@@ -115,7 +115,7 @@ export function NewSessionPage() {
             <select
               value={followUpLimit}
               onChange={(e) => setFollowUpLimit(Number(e.target.value))}
-              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-slate-100"
+              className="input-field"
             >
               <option value={0}>0</option>
               <option value={1}>1</option>
@@ -124,8 +124,8 @@ export function NewSessionPage() {
             </select>
           </div>
 
-          {status && <p className="text-sm text-teal-300">{status}</p>}
-          {error && <p className="text-sm text-rose-300">{error}</p>}
+          {status && <p className="text-sm text-teal-700">{status}</p>}
+          {error && <p className="text-sm text-rose-600">{error}</p>}
 
           <div className="flex flex-wrap gap-3">
             <button
@@ -137,7 +137,7 @@ export function NewSessionPage() {
             </button>
             <Link
               to="/recruiter/questions"
-              className="rounded-xl border border-border px-6 py-2.5 text-sm font-medium text-slate-300 hover:bg-surface-overlay"
+              className="rounded-xl border border-border px-6 py-2.5 text-sm font-medium text-slate-700 hover:bg-surface-overlay"
             >
               Back to question planning
             </Link>

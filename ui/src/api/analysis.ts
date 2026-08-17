@@ -1,6 +1,35 @@
 import { apiRequest } from './client'
-import type { AuthResponse, CandidateCv, GapAnalysis, JobSpecification } from '../types/analysis'
+import type {
+  AuthResponse,
+  CandidateCv,
+  GapAnalysis,
+  JobSpecification,
+  OtpStartResponse,
+  RegisterProfileInput,
+} from '../types/analysis'
 
+export function startRegister(role: 'RECRUITER' | 'CANDIDATE', profile: RegisterProfileInput) {
+  return apiRequest<OtpStartResponse>('/api/auth/register/start', {
+    method: 'POST',
+    body: JSON.stringify({ ...profile, role }),
+  })
+}
+
+export function startLogin(email: string) {
+  return apiRequest<OtpStartResponse>('/api/auth/login/start', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
+export function verifyOtp(email: string, otp: string, purpose: 'REGISTER' | 'LOGIN') {
+  return apiRequest<AuthResponse>('/api/auth/otp/verify', {
+    method: 'POST',
+    body: JSON.stringify({ email, otp, purpose }),
+  })
+}
+
+/** Legacy helpers retained for older screens/tests */
 export function login(email: string, password: string) {
   return apiRequest<AuthResponse>('/api/auth/login', {
     method: 'POST',
@@ -74,10 +103,10 @@ export function runGapAnalysis(cvId: string, jobSpecId: string) {
   })
 }
 
-export function getGapAnalysis(analysisId: string) {
-  return apiRequest<GapAnalysis>(`/api/analysis/gap/${analysisId}`)
-}
-
 export function listGapAnalyses() {
   return apiRequest<GapAnalysis[]>('/api/analysis/gap')
+}
+
+export function getGapAnalysis(analysisId: string) {
+  return apiRequest<GapAnalysis>(`/api/analysis/gap/${analysisId}`)
 }
