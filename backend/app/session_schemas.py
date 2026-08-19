@@ -2,14 +2,15 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
+from app.email_types import FlexibleEmail
 from app.models import InterviewSessionStatus, ScheduleConfirmationStatus, TurnRole
 
 
 class SessionCreateRequest(BaseModel):
     question_plan_id: UUID
-    candidate_email: EmailStr
+    candidate_email: FlexibleEmail
     follow_up_limit: int = Field(default=1, ge=0, le=3)
 
 

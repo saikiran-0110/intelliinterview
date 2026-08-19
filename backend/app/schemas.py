@@ -1,15 +1,16 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
+from app.email_types import FlexibleEmail
 from app.models import OtpPurpose, UserRole
 
 
 class RegisterRequest(BaseModel):
     """Legacy direct register (kept for compatibility). Prefer OTP register flow."""
 
-    email: EmailStr
+    email: FlexibleEmail
     password: str = Field(min_length=8, max_length=100)
     full_name: str = Field(min_length=1, max_length=120)
     role: UserRole
@@ -21,7 +22,7 @@ class RegisterRequest(BaseModel):
 
 
 class RegisterStartRequest(BaseModel):
-    email: EmailStr
+    email: FlexibleEmail
     password: str = Field(min_length=8, max_length=100)
     full_name: str = Field(min_length=1, max_length=120)
     role: UserRole
@@ -35,30 +36,30 @@ class RegisterStartRequest(BaseModel):
 class LoginRequest(BaseModel):
     """Legacy password login (kept for compatibility). Prefer OTP login flow."""
 
-    email: EmailStr
+    email: FlexibleEmail
     password: str
 
 
 class LoginStartRequest(BaseModel):
-    email: EmailStr
+    email: FlexibleEmail
 
 
 class OtpVerifyRequest(BaseModel):
-    email: EmailStr
+    email: FlexibleEmail
     otp: str = Field(min_length=4, max_length=12)
     purpose: OtpPurpose
 
 
 class OtpStartResponse(BaseModel):
     message: str
-    email: EmailStr
+    email: FlexibleEmail
     purpose: OtpPurpose
     expires_in_minutes: int = 10
 
 
 class AuthResponse(BaseModel):
     user_id: UUID
-    email: EmailStr
+    email: FlexibleEmail
     full_name: str
     role: UserRole
     token: str

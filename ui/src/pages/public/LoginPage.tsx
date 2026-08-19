@@ -122,10 +122,10 @@ export function LoginPage({ role }: LoginPageProps) {
           </h1>
           <p className="mt-2 text-sm text-muted">
             {step === 'otp'
-              ? 'Enter the one-time code from your email. In development, copy it from the backend console.'
+              ? 'Enter the one-time code from your email. The code is also printed in the backend console for development and dummy emails.'
               : isRecruiter
-                ? 'Register with company details, then verify by OTP.'
-                : 'Register with contact details, then verify by OTP.'}
+                ? 'Register with company details, then verify by OTP (email + backend console).'
+                : 'Register with contact details, then verify by OTP (email + backend console).'}
           </p>
         </div>
 
@@ -186,10 +186,12 @@ export function LoginPage({ role }: LoginPageProps) {
               </>
             )}
             <input
-              type="email"
+              type="text"
+              inputMode="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
+              placeholder="Email (dummy emails like you@test.com are allowed)"
               className="input-field"
               required
             />

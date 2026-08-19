@@ -1,8 +1,9 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
+from app.email_types import FlexibleEmail
 from app.models import PipelineStage
 
 
@@ -10,7 +11,7 @@ class ApplicationCreateRequest(BaseModel):
     job_spec_id: UUID
     cv_id: UUID | None = None
     contact_full_name: str = Field(min_length=1, max_length=120)
-    contact_email: EmailStr
+    contact_email: FlexibleEmail
     contact_phone: str = Field(min_length=7, max_length=40)
     contact_linkedin: str | None = Field(default=None, max_length=255)
     current_location: str | None = Field(default=None, max_length=255)

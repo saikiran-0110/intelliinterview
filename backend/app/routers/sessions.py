@@ -260,6 +260,39 @@ def create_session(
             detail="Candidate account not found. Ask the candidate to register first.",
         )
 
+    in_progress = (
+        db.query(InterviewSession)
+        .filter(
+            InterviewSession.recruiter_id == current_user.id,
+            InterviewSession.candidate_user_id == candidate.id,
+            InterviewSession.job_spec_id == analysis.job_spec_id,
+            InterviewSession.status == InterviewSessionStatus.IN_PROGRESS,
+        )
+        .first()
+    )
+    if in_progress:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An interview is already in progress for this candidate and role. Finish or cancel it before creating another.",
+        )
+
+    existing_active = (
+        db.query(InterviewSession)
+        .filter(
+            InterviewSession.recruiter_id == current_user.id,
+            InterviewSession.candidate_user_id == candidate.id,
+            InterviewSession.job_spec_id == analysis.job_spec_id,
+            InterviewSession.status == InterviewSessionStatus.SCHEDULED,
+        )
+        .order_by(InterviewSession.created_at.desc())
+        .first()
+    )
+    if existing_active:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A scheduled interview session already exists for this candidate and role. Use Scheduling to propose slots, or open the existing session.",
+        )
+
     session = InterviewSession(
         question_plan_id=plan.id,
         gap_analysis_id=analysis.id,
@@ -272,7 +305,7 @@ def create_session(
         current_question_index=0,
         current_follow_up_count=0,
         current_plan_question_id=questions[0].id,
-        scheduled_at=datetime.now(timezone.utc),
+        scheduled_at=None,
     )
     db.add(session)
     db.commit()

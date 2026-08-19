@@ -78,7 +78,11 @@ class OtpService:
             f"It expires in {self.ttl_minutes} minutes.\n\n"
             "If you did not request this, you can ignore this message."
         )
-        self.email_service.send(email_norm, subject, body)
+        # Send email when possible; failures are swallowed so dummy addresses still work.
+        try:
+            self.email_service.send(email_norm, subject, body)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("OTP email send ignored for %s: %s", email_norm, exc)
         return challenge, code
 
     def verify(self, db: Session, *, email: str, purpose: OtpPurpose, code: str) -> OtpChallenge:

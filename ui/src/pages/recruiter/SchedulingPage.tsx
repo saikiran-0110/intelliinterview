@@ -29,9 +29,7 @@ export function SchedulingPage() {
         listScheduleItems(),
         listNotifications(),
       ])
-      const active = sessionItems.filter(
-        (item) => item.status === 'SCHEDULED' || item.status === 'IN_PROGRESS',
-      )
+      const active = sessionItems.filter((item) => item.status === 'SCHEDULED')
       setSessions(active)
       setItems(scheduleItems)
       setNotifications(notes.slice(0, 8))
@@ -71,7 +69,7 @@ export function SchedulingPage() {
     <div>
       <PageHeader
         title="Interview Scheduling"
-        description="After shortlisting, propose weekday slots here. Candidates confirm or request a reschedule from their portal."
+        description="Propose time slots for existing interview sessions only. Create sessions from Question Planning → Interview Sessions first — this page does not create interviews."
       />
 
       {loading && <p className="text-sm text-muted">Loading scheduling workspace...</p>}
@@ -82,19 +80,24 @@ export function SchedulingPage() {
         <Card>
           <h3 className="text-lg font-semibold text-ink">Propose slots</h3>
           <p className="mt-2 text-sm text-muted">
-            Shortlisted candidates appear here automatically. Choose one, propose slots, and they get notified.
+            Choose a session created after question planning. This only proposes times — it does not
+            create another interview.
           </p>
 
           {sessions.length === 0 ? (
             <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-              <p>No shortlisted interview sessions yet.</p>
+              <p>No scheduled interview sessions waiting for slots.</p>
               <p className="mt-2">
-                Rank applicants and click <strong>Shortlist</strong> first — that creates the session for
-                scheduling.
+                Flow: shortlist → Question Planning → create Interview Session → propose slots here.
               </p>
-              <Link to="/recruiter/ranking" className="mt-3 inline-block font-semibold text-sky-800 underline">
-                Go to Candidate Ranking →
-              </Link>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Link to="/recruiter/questions" className="font-semibold text-sky-800 underline">
+                  Question Planning →
+                </Link>
+                <Link to="/recruiter/sessions" className="font-semibold text-sky-800 underline">
+                  Interview Sessions →
+                </Link>
+              </div>
             </div>
           ) : (
             <>

@@ -72,7 +72,7 @@ def register_start(request: RegisterStartRequest, db: Session = Depends(get_db))
         body_prefix="Welcome to IntelliInterview. Use this code to verify your email and finish registration.",
     )
     return OtpStartResponse(
-        message="Verification code sent. Check your email, or the backend console in development.",
+        message="Verification code sent. Check your email (OTP is also printed in the backend console).",
         email=email,
         purpose=OtpPurpose.REGISTER,
         expires_in_minutes=10,
@@ -95,7 +95,7 @@ def login_start(request: LoginStartRequest, db: Session = Depends(get_db)) -> Ot
         body_prefix="Use this one-time code to sign in to IntelliInterview.",
     )
     return OtpStartResponse(
-        message="Login code sent. Check your email, or the backend console in development.",
+        message="Login code sent. Check your email (OTP is also printed in the backend console).",
         email=email,
         purpose=OtpPurpose.LOGIN,
         expires_in_minutes=10,

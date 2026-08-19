@@ -228,7 +228,7 @@ export function QuestionPlanningPage() {
     <div>
       <PageHeader
         title="Interview Question Planning"
-        description="Generate tailored technical questions from CV and job-specification gap analysis, then add recruiter custom questions to build a combined session plan."
+        description="Plan questions before creating an interview session. Approve at least one question, then continue to create the session."
         action={
           <button
             type="button"
@@ -379,7 +379,7 @@ export function QuestionPlanningPage() {
           <Card className="mt-6">
             <h3 className="text-lg font-semibold text-ink">Combined session plan</h3>
             <p className="mt-1 text-sm text-muted">
-              Approved questions in interview order. Use this plan when creating a session.
+              Approve questions first, then create one interview session. Scheduling comes after that.
             </p>
             <div className="mt-4 space-y-3">
               {approvedQuestions.length === 0 ? (
@@ -395,12 +395,18 @@ export function QuestionPlanningPage() {
                 ))
               )}
             </div>
-            <Link
-              to="/recruiter/sessions/new"
-              className="mt-5 inline-block text-sm font-semibold text-teal-700 hover:text-teal-700"
-            >
-              Continue to create interview session
-            </Link>
+            {approvedQuestions.length > 0 ? (
+              <Link
+                to={`/recruiter/sessions/new?planId=${plan.id}`}
+                className="mt-5 inline-block rounded-xl bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-400"
+              >
+                Create interview session (email auto-filled)
+              </Link>
+            ) : (
+              <p className="mt-5 text-sm text-amber-700">
+                Approve at least one question before creating an interview session.
+              </p>
+            )}
           </Card>
         </>
       )}

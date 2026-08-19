@@ -4,13 +4,13 @@ export type NavItem = {
   description?: string
 }
 
-/** Recruiter hiring flow — schedule right after ranking; assistant near profile */
+/** Recruiter flow: plan questions before creating sessions; schedule slots after */
 export const recruiterNav: NavItem[] = [
   { label: 'Hiring Board', path: '/recruiter/jobs', description: 'Open roles and manage applicants' },
   { label: 'Candidate Ranking', path: '/recruiter/ranking', description: 'Match scores and shortlisting' },
+  { label: 'Question Planning', path: '/recruiter/questions', description: 'Build and approve interview questions' },
+  { label: 'Interview Sessions', path: '/recruiter/sessions', description: 'Create and run AI interviews' },
   { label: 'Scheduling', path: '/recruiter/scheduling', description: 'Propose and confirm interview slots' },
-  { label: 'Interview Sessions', path: '/recruiter/sessions', description: 'Run live AI interviews' },
-  { label: 'Question Planning', path: '/recruiter/questions', description: 'Review interview questions' },
   { label: 'Evaluation Reports', path: '/recruiter/reports', description: 'Post-interview assessments' },
   { label: 'Analytics', path: '/recruiter/analytics', description: 'Pipeline and hiring insights' },
   { label: 'Bias Detection', path: '/recruiter/bias', description: 'Fairness monitoring' },

@@ -1,7 +1,5 @@
 # IntelliInterview
 
-AI-assisted interview platform for **software engineering roles** - CO7201 Individual Project (Saikiran Buchiraju, [skb72@student.le.ac.uk](mailto:skb72@student.le.ac.uk)).
-
 ## Technology stack
 
 
@@ -23,8 +21,6 @@ IntelliInterview/
 └── ui/               # React recruiter dashboard & candidate portal
 ```
 
-
-
 ## Prerequisites
 
 - Python 3.11+
@@ -32,37 +28,22 @@ IntelliInterview/
 - PostgreSQL 16+ with [pgvector](https://github.com/pgvector/pgvector) extension
 - Java 8+ runtime (required by Apache Tika for CV/job-spec parsing)
 
-
-
-## Configuration
-
-All settings live in `backend/app/config.py`. Edit that file to set your database URL, JWT secret, and OpenAI API key.
-
 ## Quick start
 
-
-
-### 1. Database
-
-```bash
-python -m app.init_db
-```
-
-
-
-### 2. Backend
+### 1. Backend
 
 ```bash
 cd backend
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+python -m app.init_db
 uvicorn app.main:app --reload --port 8080
 ```
 
 API docs: [http://localhost:8080/docs](http://localhost:8080/docs)
 
-### 3. Frontend
+### 2. Frontend
 
 ```bash
 cd ui

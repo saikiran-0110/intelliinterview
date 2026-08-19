@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { getStoredUser, getToken } from '../../api/client'
 import { Badge } from '../../components/ui/Badge'
 import { Card } from '../../components/ui/Card'
 
@@ -37,11 +38,21 @@ const candidateFlow = [
 ]
 
 export function LandingPage() {
+  const token = getToken()
+  const user = getStoredUser()
+  const isLoggedIn = Boolean(token && user)
+  const portalPath =
+    user?.role === 'RECRUITER' ? '/recruiter/jobs' : user?.role === 'CANDIDATE' ? '/candidate/applications' : '/'
+  const portalLabel = user?.role === 'RECRUITER' ? 'Go to Hiring Board' : 'Go to Applications'
+
   return (
     <div className="relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
         <div className="animate-soft-float absolute -left-24 top-10 h-80 w-80 rounded-full bg-teal-200/40 blur-3xl" />
-        <div className="animate-soft-float absolute -right-16 top-40 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl" style={{ animationDelay: '1.2s' }} />
+        <div
+          className="animate-soft-float absolute -right-16 top-40 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl"
+          style={{ animationDelay: '1.2s' }}
+        />
       </div>
 
       <header className="relative border-b border-border/80 bg-white/80 backdrop-blur">
@@ -51,12 +62,25 @@ export function LandingPage() {
             <p className="text-xs text-muted">Ready-to-use hiring for software roles</p>
           </div>
           <div className="flex gap-3">
-            <Link to="/recruiter/login" className="btn-secondary !py-2">
-              Recruiter login
-            </Link>
-            <Link to="/candidate/login" className="btn-primary !py-2">
-              Candidate login
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <span className="hidden items-center text-sm text-muted sm:inline-flex">
+                  Signed in as {user?.full_name || user?.email}
+                </span>
+                <Link to={portalPath} className="btn-primary !py-2">
+                  {portalLabel}
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/recruiter/login" className="btn-secondary !py-2">
+                  Recruiter login
+                </Link>
+                <Link to="/candidate/login" className="btn-primary !py-2">
+                  Candidate login
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -72,22 +96,26 @@ export function LandingPage() {
             schedule, interview, and evaluate without leaving the platform.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <Link to="/recruiter/login" className="btn-primary">
-              Start hiring
-            </Link>
-            <Link to="/candidate/login" className="btn-secondary">
-              Find roles & apply
-            </Link>
+            {isLoggedIn ? (
+              <Link to={portalPath} className="btn-primary">
+                Continue to your portal
+              </Link>
+            ) : (
+              <>
+                <Link to="/recruiter/login" className="btn-primary">
+                  Start hiring
+                </Link>
+                <Link to="/candidate/login" className="btn-secondary">
+                  Find roles & apply
+                </Link>
+              </>
+            )}
           </div>
         </section>
 
         <section className="mb-20 grid gap-6 md:grid-cols-3">
           {flowSteps.map((step, index) => (
-            <Card
-              key={step.step}
-              hover
-              className={`animate-fade-up-delay-${Math.min(index + 1, 3)}`}
-            >
+            <Card key={step.step} hover className={`animate-fade-up-delay-${Math.min(index + 1, 3)}`}>
               <p className="font-display text-sm font-bold text-teal-700">{step.step}</p>
               <h3 className="mt-2 text-lg font-bold text-ink">{step.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">{step.description}</p>
@@ -107,8 +135,11 @@ export function LandingPage() {
                 </li>
               ))}
             </ul>
-            <Link to="/recruiter/login" className="mt-5 inline-block text-sm font-semibold text-teal-700 hover:text-teal-800">
-              Enter recruiter portal →
+            <Link
+              to={isLoggedIn && user?.role === 'RECRUITER' ? '/recruiter/jobs' : '/recruiter/login'}
+              className="mt-5 inline-block text-sm font-semibold text-teal-700 hover:text-teal-800"
+            >
+              {isLoggedIn && user?.role === 'RECRUITER' ? 'Open Hiring Board →' : 'Enter recruiter portal →'}
             </Link>
           </Card>
 
@@ -123,8 +154,15 @@ export function LandingPage() {
                 </li>
               ))}
             </ul>
-            <Link to="/candidate/login" className="mt-5 inline-block text-sm font-semibold text-sky-700 hover:text-sky-800">
-              Enter candidate portal →
+            <Link
+              to={
+                isLoggedIn && user?.role === 'CANDIDATE' ? '/candidate/applications' : '/candidate/login'
+              }
+              className="mt-5 inline-block text-sm font-semibold text-sky-700 hover:text-sky-800"
+            >
+              {isLoggedIn && user?.role === 'CANDIDATE'
+                ? 'Open Applications →'
+                : 'Enter candidate portal →'}
             </Link>
           </Card>
         </section>

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import require_role
-from app.models import CandidateCv, GapAnalysis, InterviewQuestion, JobSpecification, QuestionPlan, User, UserRole
+from app.models import CandidateCv, GapAnalysis, InterviewQuestion, JobApplication, JobSpecification, QuestionPlan, User, UserRole
 from app.question_schemas import (
     CustomQuestionRequest,
     QuestionGenerateRequest,
@@ -20,6 +20,29 @@ from app.services.question_generation import QuestionGenerationService
 
 router = APIRouter(prefix="/api/questions", tags=["questions"])
 question_service = QuestionGenerationService()
+
+
+def _resolve_candidate_email(db: Session, analysis: GapAnalysis, cv: CandidateCv) -> str | None:
+    application = (
+        db.query(JobApplication)
+        .filter(
+            JobApplication.job_spec_id == analysis.job_spec_id,
+            JobApplication.cv_id == cv.id,
+        )
+        .order_by(JobApplication.created_at.desc())
+        .first()
+    )
+    if application:
+        if application.contact_email:
+            return application.contact_email
+        candidate = db.get(User, application.candidate_user_id)
+        if candidate and candidate.email:
+            return candidate.email
+    if cv.uploaded_by:
+        owner = db.get(User, cv.uploaded_by)
+        if owner and owner.role == UserRole.CANDIDATE and owner.email:
+            return owner.email
+    return None
 
 
 def _get_owned_analysis(db: Session, analysis_id: UUID, user: User) -> GapAnalysis:
@@ -50,7 +73,15 @@ def _plan_with_context(db: Session, plan: QuestionPlan) -> QuestionPlanResponse:
         .order_by(InterviewQuestion.sort_order.asc())
         .all()
     )
-    return to_plan_response(plan, questions, cv.candidate_name, job_spec.title)
+    return to_plan_response(
+        plan,
+        questions,
+        cv.candidate_name,
+        job_spec.title,
+        candidate_email=_resolve_candidate_email(db, analysis, cv),
+        job_spec_id=job_spec.id,
+        cv_id=cv.id,
+    )
 
 
 @router.post("/generate", response_model=QuestionPlanResponse, status_code=status.HTTP_201_CREATED)

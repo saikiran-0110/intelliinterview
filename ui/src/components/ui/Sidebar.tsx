@@ -58,10 +58,16 @@ export function Sidebar({ title, subtitle, items, accent, homePath }: SidebarPro
 
       <div className="border-t border-border px-5 py-4">
         <NavLink
-          to="/"
+          to={homePath}
           className="text-sm font-semibold text-muted transition-colors hover:text-teal-800"
         >
-          Back to home
+          Back to portal home
+        </NavLink>
+        <NavLink
+          to="/"
+          className="mt-2 block text-xs font-medium text-slate-500 transition-colors hover:text-teal-800"
+        >
+          Public landing page
         </NavLink>
       </div>
     </aside>

@@ -19,7 +19,10 @@ export type QuestionPlan = {
   gap_analysis_id: string
   title: string
   candidate_name: string
+  candidate_email?: string | null
   job_title: string
+  job_spec_id?: string | null
+  cv_id?: string | null
   questions: InterviewQuestion[]
   ai_question_count: number
   recruiter_question_count: number

@@ -54,7 +54,7 @@ export function CandidateRankingPage() {
     setError(null)
     try {
       await updateApplicationStage(applicationId, 'SHORTLISTED')
-      setStatus('Candidate shortlisted. Interview session created — propose slots on Scheduling.')
+      setStatus('Candidate shortlisted. Next: generate questions, then create an interview session.')
       await handleRank()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to shortlist')
@@ -67,14 +67,14 @@ export function CandidateRankingPage() {
     <div>
       <PageHeader
         title="Candidate Ranking"
-        description="Score applicants still awaiting a decision. Shortlisting prepares an interview session for Scheduling."
+        description="Score applicants still awaiting a decision. After shortlisting, plan questions before creating an interview session."
       />
       {error && <p className="mb-4 text-sm text-rose-600">{error}</p>}
       {status && (
         <p className="mb-4 text-sm text-teal-700">
           {status}{' '}
-          <Link to="/recruiter/scheduling" className="font-semibold underline">
-            Go to Scheduling
+          <Link to="/recruiter/questions" className="font-semibold underline">
+            Go to Question Planning
           </Link>
         </p>
       )}
@@ -152,8 +152,8 @@ export function CandidateRankingPage() {
         <div className="mt-8 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-lg font-semibold text-ink">Already shortlisted</h3>
-            <Link to="/recruiter/scheduling" className="text-sm font-semibold text-sky-700">
-              Propose interview slots →
+            <Link to="/recruiter/questions" className="text-sm font-semibold text-sky-700">
+              Plan questions →
             </Link>
           </div>
           {shortlisted.map((item) => (
@@ -167,19 +167,21 @@ export function CandidateRankingPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={busyId === item.id}
-                    onClick={() => handleShortlist(item.id)}
-                    className="rounded-xl border border-border px-3 py-2 text-xs font-semibold text-sky-800 disabled:opacity-50"
-                  >
-                    {busyId === item.id ? 'Preparing…' : 'Prepare for scheduling'}
-                  </button>
                   <Link
-                    to="/recruiter/scheduling"
+                    to={
+                      item.gap_analysis_id
+                        ? `/recruiter/questions?analysisId=${item.gap_analysis_id}`
+                        : '/recruiter/questions'
+                    }
+                    className="rounded-xl border border-border px-3 py-2 text-xs font-semibold text-sky-800"
+                  >
+                    Plan questions
+                  </Link>
+                  <Link
+                    to="/recruiter/sessions/new"
                     className="rounded-lg bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800"
                   >
-                    Open Scheduling
+                    Create session
                   </Link>
                 </div>
               </div>

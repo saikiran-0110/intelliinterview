@@ -16,12 +16,13 @@ class Settings:
     openai_model: str = "gpt-4o"
     upload_max_size_mb: int = 10
     frontend_base_url: str = "http://localhost:5173"
-    # Leave smtp_host empty to log emails instead of sending (dev-friendly).
-    smtp_host: str = ""
+
+    # Gmail SMTP (App Password). OTP codes are always printed to the backend console as well.
+    smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
-    smtp_username: str = ""
-    smtp_password: str = ""
-    smtp_from_email: str = "noreply@intelliinterview.local"
+    smtp_username: str = "Intellinterview@gmail.com"
+    smtp_password: str = "REDACTED-SMTP-APP-PASSWORD-ROTATE-IF-STILL-ACTIVE"
+    smtp_from_email: str = "Intellinterview@gmail.com"
     smtp_use_tls: bool = True
 
     @property

@@ -139,7 +139,7 @@ export function JobsPipelinePage() {
     try {
       await updateApplicationStage(appId, stage)
       if (stage === 'SHORTLISTED') {
-        setStatus('Candidate shortlisted and interview session prepared. Next: propose slots on Scheduling.')
+        setStatus('Candidate shortlisted. Next: plan questions, then create an interview session.')
       }
       await load(selectedJobId || undefined)
     } catch (err) {
@@ -173,8 +173,8 @@ export function JobsPipelinePage() {
         {[
           { label: '1. Open role', to: null },
           { label: '2. Rank applicants', to: '/recruiter/ranking' },
-          { label: '3. Shortlist', to: '/recruiter/ranking' },
-          { label: '4. Schedule interview', to: '/recruiter/scheduling' },
+          { label: '3. Plan questions', to: '/recruiter/questions' },
+          { label: '4. Create & schedule interview', to: '/recruiter/sessions' },
         ].map((step) =>
           step.to ? (
             <Link
@@ -198,11 +198,11 @@ export function JobsPipelinePage() {
       {status && (
         <p className="mb-4 text-sm text-teal-700">
           {status}
-          {status.includes('Scheduling') && (
+          {(status.includes('questions') || status.includes('Question')) && (
             <>
               {' '}
-              <Link to="/recruiter/scheduling" className="font-semibold underline">
-                Open Scheduling
+              <Link to="/recruiter/questions" className="font-semibold underline">
+                Open Question Planning
               </Link>
             </>
           )}

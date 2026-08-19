@@ -51,7 +51,10 @@ class QuestionPlanResponse(BaseModel):
     gap_analysis_id: UUID
     title: str
     candidate_name: str
+    candidate_email: str | None = None
     job_title: str
+    job_spec_id: UUID | None = None
+    cv_id: UUID | None = None
     questions: list[InterviewQuestionResponse]
     ai_question_count: int
     recruiter_question_count: int
@@ -81,6 +84,10 @@ def to_plan_response(
     questions: list[Any],
     candidate_name: str,
     job_title: str,
+    *,
+    candidate_email: str | None = None,
+    job_spec_id: UUID | None = None,
+    cv_id: UUID | None = None,
 ) -> QuestionPlanResponse:
     ordered = sorted(questions, key=lambda item: item.sort_order)
     ai_count = sum(1 for item in ordered if item.source == QuestionSource.AI)
@@ -91,7 +98,10 @@ def to_plan_response(
         gap_analysis_id=plan.gap_analysis_id,
         title=plan.title,
         candidate_name=candidate_name,
+        candidate_email=candidate_email,
         job_title=job_title,
+        job_spec_id=job_spec_id,
+        cv_id=cv_id,
         questions=[to_question_response(item) for item in ordered],
         ai_question_count=ai_count,
         recruiter_question_count=recruiter_count,
