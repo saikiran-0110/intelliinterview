@@ -208,6 +208,77 @@ class SchedulingService:
         )
         return session
 
+    def force_confirm_time(
+        self,
+        db: Session,
+        session: InterviewSession,
+        *,
+        recruiter_id: UUID,
+        starts_at: datetime | None = None,
+        duration_minutes: int = 45,
+        notify_candidate: bool = True,
+    ) -> InterviewSession:
+        """Set/override confirmed interview time without candidate approval (demo helper)."""
+        if starts_at is None:
+            starts_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        elif starts_at.tzinfo is None:
+            starts_at = starts_at.replace(tzinfo=timezone.utc)
+
+        ends_at = starts_at + timedelta(minutes=max(duration_minutes, 15))
+        session.duration_minutes = duration_minutes
+        session.scheduled_at = starts_at
+        session.confirmation_status = ScheduleConfirmationStatus.CONFIRMED
+        session.confirmed_at = datetime.now(timezone.utc)
+        session.candidate_note = (
+            (session.candidate_note or "")
+            + ("\n" if session.candidate_note else "")
+            + "[Recruiter demo override] Interview time set by recruiter without candidate approval."
+        ).strip()
+
+        # Replace prior proposals with a single confirmed slot.
+        db.query(InterviewSlotSuggestion).filter(InterviewSlotSuggestion.session_id == session.id).delete()
+        slot = InterviewSlotSuggestion(
+            session_id=session.id,
+            starts_at=starts_at,
+            ends_at=ends_at,
+            proposed_by=recruiter_id,
+            is_selected=True,
+        )
+        db.add(slot)
+        db.add(session)
+
+        application = (
+            db.query(JobApplication)
+            .filter(
+                JobApplication.job_spec_id == session.job_spec_id,
+                JobApplication.candidate_user_id == session.candidate_user_id,
+            )
+            .first()
+        )
+        if application:
+            application.stage = PipelineStage.INTERVIEW
+            db.add(application)
+
+        db.commit()
+        db.refresh(session)
+
+        if notify_candidate:
+            job = db.get(JobSpecification, session.job_spec_id)
+            role = job.title if job else "the role"
+            self.notifications.notify(
+                db,
+                user_id=session.candidate_user_id,
+                title=f"Interview time updated for {role}",
+                body=(
+                    f"Your recruiter set the interview time to {starts_at.isoformat()} "
+                    f"({duration_minutes} minutes). No further confirmation is required."
+                ),
+                link=f"{settings.frontend_base_url}/candidate/sessions",
+                related_session_id=session.id,
+                send_email=True,
+            )
+        return session
+
     def ensure_application_for_session(self, db: Session, session: InterviewSession, match_score: float | None) -> JobApplication:
         existing = (
             db.query(JobApplication)

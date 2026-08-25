@@ -24,6 +24,20 @@ export function proposeSlots(sessionId: string, slotCount = 5, durationMinutes =
   })
 }
 
+export function forceScheduleSession(
+  sessionId: string,
+  payload: { starts_at?: string | null; duration_minutes?: number; notify_candidate?: boolean } = {},
+) {
+  return apiRequest<ScheduleItem>(`/api/scheduling/${sessionId}/force-schedule`, {
+    method: 'POST',
+    body: JSON.stringify({
+      starts_at: payload.starts_at ?? null,
+      duration_minutes: payload.duration_minutes ?? 45,
+      notify_candidate: payload.notify_candidate ?? true,
+    }),
+  })
+}
+
 export function confirmSlot(sessionId: string, slotId: string, candidateNote?: string) {
   return apiRequest<ScheduleItem>(`/api/scheduling/${sessionId}/confirm`, {
     method: 'POST',

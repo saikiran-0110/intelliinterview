@@ -35,6 +35,14 @@ class CandidateMessageRequest(BaseModel):
     candidate_note: str = Field(min_length=1, max_length=2000)
 
 
+class RecruiterForceScheduleRequest(BaseModel):
+    """Demo/admin override: set confirmed interview time without candidate approval."""
+
+    starts_at: datetime | None = None
+    duration_minutes: int = Field(default=45, ge=15, le=180)
+    notify_candidate: bool = True
+
+
 class ScheduleItemResponse(BaseModel):
     session_id: UUID
     candidate_name: str

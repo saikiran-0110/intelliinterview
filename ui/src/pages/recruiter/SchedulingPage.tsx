@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { listSessions } from '../../api/sessions'
-import { listNotifications, listScheduleItems, proposeSlots } from '../../api/desirable'
+import {
+  forceScheduleSession,
+  listNotifications,
+  listScheduleItems,
+  proposeSlots,
+} from '../../api/desirable'
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
 import type { AppNotification, ScheduleItem } from '../../types/desirable'
@@ -19,6 +24,7 @@ export function SchedulingPage() {
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -49,10 +55,16 @@ export function SchedulingPage() {
     load()
   }, [])
 
+  const selectedSchedule = useMemo(
+    () => items.find((item) => item.session_id === selectedSessionId),
+    [items, selectedSessionId],
+  )
+
   async function handlePropose() {
     if (!selectedSessionId) return
     setStatus('Suggesting available slots and notifying candidate...')
     setError(null)
+    setBusy(true)
     try {
       await proposeSlots(selectedSessionId)
       setStatus('Slots proposed. Candidate notified by email/in-app.')
@@ -60,16 +72,36 @@ export function SchedulingPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to propose slots')
       setStatus(null)
+    } finally {
+      setBusy(false)
     }
   }
 
-  const selectedSchedule = items.find((item) => item.session_id === selectedSessionId)
+  async function handleForceSchedule(sessionId: string, durationMinutes = 45) {
+    setBusy(true)
+    setError(null)
+    try {
+      await forceScheduleSession(sessionId, {
+        starts_at: null,
+        duration_minutes: durationMinutes,
+        notify_candidate: true,
+      })
+      setSelectedSessionId(sessionId)
+      setStatus('Interview set to ~5 minutes from now and confirmed for demo.')
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to override interview time')
+      setStatus(null)
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <div>
       <PageHeader
         title="Interview Scheduling"
-        description="Propose time slots for existing interview sessions only. Create sessions from Question Planning → Interview Sessions first — this page does not create interviews."
+        description="Propose slots for candidates and track confirmation status. Use Demo on a row to set time without candidate approval."
       />
 
       {loading && <p className="text-sm text-muted">Loading scheduling workspace...</p>}
@@ -115,15 +147,17 @@ export function SchedulingPage() {
               {selectedSchedule && (
                 <p className="mt-2 text-xs text-muted">
                   Current status: {selectedSchedule.confirmation_status.replaceAll('_', ' ')}
-                  {selectedSchedule.slots.length
-                    ? ` · ${selectedSchedule.slots.length} slot(s) proposed`
-                    : ' · no slots proposed yet'}
+                  {selectedSchedule.scheduled_at
+                    ? ` · Confirmed: ${formatSlot(selectedSchedule.scheduled_at)}`
+                    : selectedSchedule.slots.length
+                      ? ` · ${selectedSchedule.slots.length} slot(s) proposed`
+                      : ' · no slots proposed yet'}
                 </p>
               )}
               <button
                 type="button"
                 onClick={handlePropose}
-                disabled={!selectedSessionId}
+                disabled={!selectedSessionId || busy}
                 className="mt-4 rounded-xl btn-primary hover:bg-teal-400 disabled:opacity-50"
               >
                 Propose slots and notify
@@ -158,7 +192,7 @@ export function SchedulingPage() {
         <div className="mt-4 space-y-3">
           {items.length === 0 ? (
             <p className="text-sm text-slate-500">
-              No sessions to track yet. Shortlist a candidate, then propose slots above.
+              No sessions to track yet. Create a session, then propose slots above.
             </p>
           ) : (
             items.map((item) => (
@@ -173,9 +207,19 @@ export function SchedulingPage() {
                       {item.scheduled_at ? ` · Confirmed: ${formatSlot(item.scheduled_at)}` : ''}
                     </p>
                   </div>
-                  <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs text-teal-700">
-                    {item.slots.length} slots
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs text-teal-700">
+                      {item.slots.length} slots
+                    </span>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => handleForceSchedule(item.session_id, item.duration_minutes || 45)}
+                      className="rounded-lg border border-amber-300 px-2.5 py-1 text-xs font-semibold text-amber-800 disabled:opacity-50"
+                    >
+                      Demo: 5 min from now
+                    </button>
+                  </div>
                 </div>
                 {item.slots.length > 0 && (
                   <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

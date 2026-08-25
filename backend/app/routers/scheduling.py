@@ -19,6 +19,7 @@ from app.scheduling_schemas import (
     ConfirmSlotRequest,
     NotificationResponse,
     ProposeSlotsRequest,
+    RecruiterForceScheduleRequest,
     RescheduleRequest,
     ScheduleItemResponse,
     SlotSuggestionResponse,
@@ -150,6 +151,28 @@ def request_reschedule(
     if session is None or session.candidate_user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
     scheduling.request_reschedule(db, session, request.candidate_note)
+    return _schedule_item(db, session)
+
+
+@router.post("/{session_id}/force-schedule", response_model=ScheduleItemResponse)
+def force_schedule(
+    session_id: UUID,
+    request: RecruiterForceScheduleRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.RECRUITER)),
+) -> ScheduleItemResponse:
+    """Demo helper: recruiter sets/overrides confirmed time without candidate approval."""
+    session = db.get(InterviewSession, session_id)
+    if session is None or session.recruiter_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    scheduling.force_confirm_time(
+        db,
+        session,
+        recruiter_id=current_user.id,
+        starts_at=request.starts_at,
+        duration_minutes=request.duration_minutes,
+        notify_candidate=request.notify_candidate,
+    )
     return _schedule_item(db, session)
 
 
