@@ -1,4 +1,4 @@
-from tests.helpers import auth_headers, register_recruiter
+from tests.helpers import auth_headers, confirm_session_for_interview, register_recruiter
 from tests.sample_documents import SAMPLE_CV, SAMPLE_JOB_SPEC
 
 
@@ -47,6 +47,7 @@ def _complete_session(client, recruiter_token: str, candidate_token: str, candid
             "follow_up_limit": 0,
         },
     ).json()["id"]
+    confirm_session_for_interview(client, recruiter_token, session_id)
 
     client.post(f"/api/sessions/{session_id}/start", headers=auth_headers(candidate_token))
     answer = (

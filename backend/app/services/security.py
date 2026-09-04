@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 import bcrypt
-from jose import jwt
+import jwt
 
 from app.config import settings
 from app.models import UserRole

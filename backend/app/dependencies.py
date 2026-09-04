@@ -1,8 +1,9 @@
 from uuid import UUID
 
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import ExpiredSignatureError, JWTError, jwt
+from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -24,7 +25,7 @@ def get_current_user(
         user_id = UUID(payload["sub"])
     except ExpiredSignatureError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired") from exc
-    except (JWTError, ValueError, KeyError) as exc:
+    except (InvalidTokenError, ValueError, KeyError) as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
 
     user = db.get(User, user_id)

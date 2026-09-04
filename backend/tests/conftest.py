@@ -11,6 +11,15 @@ from app.main import app
 settings.jwt_secret = "test-secret-key-with-minimum-32-characters"
 
 
+@pytest.fixture(autouse=True)
+def disable_real_smtp(monkeypatch):
+    class DisabledSmtp:
+        def __init__(self, *args, **kwargs):
+            raise OSError("SMTP disabled in tests")
+
+    monkeypatch.setattr("app.services.email.smtplib.SMTP", DisabledSmtp)
+
+
 @pytest.fixture
 def client():
     engine = create_engine(

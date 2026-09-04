@@ -1,4 +1,4 @@
-from tests.helpers import auth_headers, register_recruiter
+from tests.helpers import auth_headers, confirm_session_for_interview, register_recruiter
 from tests.sample_documents import SAMPLE_CV, SAMPLE_JOB_SPEC
 
 
@@ -59,6 +59,7 @@ def test_live_interview_flow_with_follow_up_and_evidence(client):
     assert create_response.status_code == 201
     session_id = create_response.json()["id"]
     assert create_response.json()["status"] == "SCHEDULED"
+    confirm_session_for_interview(client, recruiter_token, session_id)
 
     start_response = client.post(
         f"/api/sessions/{session_id}/start",

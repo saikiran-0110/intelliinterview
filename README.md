@@ -13,6 +13,8 @@
 | Auth             | JWT with role-based access (Recruiter / Candidate) |
 
 
+
+
 ## Project layout
 
 ```
@@ -21,6 +23,8 @@ IntelliInterview/
 └── ui/               # React recruiter dashboard & candidate portal
 ```
 
+
+
 ## Prerequisites
 
 - Python 3.11+
@@ -28,7 +32,11 @@ IntelliInterview/
 - PostgreSQL 16+ with [pgvector](https://github.com/pgvector/pgvector) extension
 - Java 8+ runtime (required by Apache Tika for CV/job-spec parsing)
 
+
+
 ## Quick start
+
+
 
 ### 1. Backend
 
@@ -57,7 +65,15 @@ UI: [http://localhost:5173](http://localhost:5173)
 
 ```bash
 cd backend
+.venv\Scripts\activate
 pytest
 ```
 
 Tests use an in-memory SQLite database and do not require PostgreSQL.
+
+```bash
+cd ui
+npm test
+```
+
+Frontend tests run with Vitest and React Testing Library.

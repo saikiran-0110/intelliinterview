@@ -1,0 +1,228 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="1560" viewBox="0 0 2200 1560">
+<rect width='100%' height='100%' fill='#FFFFFF'/>
+<rect width='100%' height='124' fill='#F3F6FB'/>
+<text x='48' y='48' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='34' font-weight='700' fill='#12233F'>IntelliInterview  —  Entity Relationship Diagram</text>
+<text x='48' y='88' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='17' fill='#3B4D66'>PostgreSQL public schema   |   17 tables   |   Crow’s foot on the many side   |   Dashed line = optional foreign key   |   Green = 1:1</text>
+<rect x='48' y='98' width='16' height='16' rx='3' fill='#D9E6F5' stroke='#1B3354'/>
+<text x='70' y='111' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' font-weight='700' fill='#14325C'>Identity</text>
+<rect x='160' y='98' width='16' height='16' rx='3' fill='#D4EFE8' stroke='#1B3354'/>
+<text x='182' y='111' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' font-weight='700' fill='#0F4C3F'>Documents</text>
+<rect x='280' y='98' width='16' height='16' rx='3' fill='#E8DCF6' stroke='#1B3354'/>
+<text x='302' y='111' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' font-weight='700' fill='#4A2D73'>Matching</text>
+<rect x='392' y='98' width='16' height='16' rx='3' fill='#F8E4CC' stroke='#1B3354'/>
+<text x='414' y='111' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' font-weight='700' fill='#6B3F12'>Questions</text>
+<rect x='512' y='98' width='16' height='16' rx='3' fill='#D8EFDA' stroke='#1B3354'/>
+<text x='534' y='111' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' font-weight='700' fill='#1B4D2B'>Live interview</text>
+<rect x='672' y='98' width='16' height='16' rx='3' fill='#F5DCE8' stroke='#1B3354'/>
+<text x='694' y='111' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' font-weight='700' fill='#6B2448'>Outcomes</text>
+<path d='M 448.0 694.0 L 484.0 694.0 L 484.0 414.0 L 520.0 414.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 520.0 414.0 L 506.0 422.0 M 520.0 414.0 L 506.0 406.0 M 520.0 414.0 L 506.0 414.0 M 500.0 422.0 L 500.0 406.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 448.0 838.0 L 484.0 838.0 L 484.0 414.0 L 520.0 414.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 520.0 414.0 L 506.0 422.0 M 520.0 414.0 L 506.0 406.0 M 520.0 414.0 L 506.0 414.0 M 500.0 422.0 L 500.0 406.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 448.0 694.0 L 484.0 694.0 L 484.0 222.0 L 520.0 222.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 520.0 222.0 L 506.0 230.0 M 520.0 222.0 L 506.0 214.0 M 520.0 222.0 L 506.0 222.0 M 500.0 230.0 L 500.0 214.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 448.0 838.0 L 484.0 838.0 L 484.0 222.0 L 520.0 222.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linejoin='round' stroke-dasharray='9 7'/>
+<path d='M 520.0 222.0 L 506.0 230.0 M 520.0 222.0 L 506.0 214.0 M 520.0 222.0 L 506.0 222.0 M 500.0 230.0 L 500.0 214.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linecap='round'/>
+<path d='M 720.0 360.0 L 720.0 318.0 L 720.0 318.0 L 720.0 276.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linejoin='round' stroke-dasharray='9 7'/>
+<path d='M 720.0 276.0 L 728.0 290.0 M 720.0 276.0 L 712.0 290.0 M 720.0 276.0 L 720.0 290.0 M 728.0 296.0 L 712.0 296.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linecap='round'/>
+<path d='M 448.0 694.0 L 484.0 694.0 L 484.0 606.0 L 520.0 606.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 520.0 606.0 L 506.0 614.0 M 520.0 606.0 L 506.0 598.0 M 520.0 606.0 L 506.0 606.0 M 500.0 614.0 L 500.0 598.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 448.0 838.0 L 484.0 838.0 L 484.0 606.0 L 520.0 606.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 520.0 606.0 L 506.0 614.0 M 520.0 606.0 L 506.0 598.0 M 520.0 606.0 L 506.0 606.0 M 500.0 614.0 L 500.0 598.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 720.0 468.0 L 720.0 614.0 L 720.0 614.0 L 720.0 760.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 720.0 760.0 L 712.0 746.0 M 720.0 760.0 L 728.0 746.0 M 720.0 760.0 L 720.0 746.0 M 712.0 740.0 L 728.0 740.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 720.0 868.0 L 720.0 894.0 L 720.0 894.0 L 720.0 920.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 720.0 920.0 L 712.0 906.0 M 720.0 920.0 L 728.0 906.0 M 720.0 920.0 L 720.0 906.0 M 712.0 900.0 L 728.0 900.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 920.0 814.0 L 956.0 814.0 L 956.0 414.0 L 992.0 414.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 992.0 414.0 L 978.0 422.0 M 992.0 414.0 L 978.0 406.0 M 992.0 414.0 L 978.0 414.0 M 972.0 422.0 L 972.0 406.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 920.0 414.0 L 956.0 414.0 L 956.0 414.0 L 992.0 414.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 992.0 414.0 L 978.0 422.0 M 992.0 414.0 L 978.0 406.0 M 992.0 414.0 L 978.0 414.0 M 972.0 422.0 L 972.0 406.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 448.0 838.0 L 720.0 838.0 L 720.0 414.0 L 992.0 414.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 992.0 414.0 L 978.0 422.0 M 992.0 414.0 L 978.0 406.0 M 992.0 414.0 L 978.0 414.0 M 972.0 422.0 L 972.0 406.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 448.0 694.0 L 720.0 694.0 L 720.0 414.0 L 992.0 414.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 992.0 414.0 L 978.0 422.0 M 992.0 414.0 L 978.0 406.0 M 992.0 414.0 L 978.0 414.0 M 972.0 422.0 L 972.0 406.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 1192.0 360.0 L 1192.0 318.0 L 1192.0 318.0 L 1192.0 276.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 1192.0 276.0 L 1200.0 290.0 M 1192.0 276.0 L 1184.0 290.0 M 1192.0 276.0 L 1192.0 290.0 M 1200.0 296.0 L 1184.0 296.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 1192.0 468.0 L 1192.0 510.0 L 1192.0 510.0 L 1192.0 552.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 1192.0 552.0 L 1184.0 538.0 M 1192.0 552.0 L 1200.0 538.0 M 1192.0 552.0 L 1192.0 538.0 M 1184.0 532.0 L 1200.0 532.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 920.0 974.0 L 956.0 974.0 L 956.0 606.0 L 992.0 606.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linejoin='round' stroke-dasharray='9 7'/>
+<path d='M 992.0 606.0 L 978.0 614.0 M 992.0 606.0 L 978.0 598.0 M 992.0 606.0 L 978.0 606.0 M 972.0 614.0 L 972.0 598.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linecap='round'/>
+<path d='M 1192.0 660.0 L 1192.0 702.0 L 1192.0 702.0 L 1192.0 744.0' fill='none' stroke='#1F6B4A' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 1192.0 744.0 L 1184.0 730.0 M 1192.0 744.0 L 1200.0 730.0 M 1192.0 744.0 L 1192.0 730.0 M 1184.0 724.0 L 1200.0 724.0' fill='none' stroke='#1F6B4A' stroke-width='3' stroke-linecap='round'/>
+<path d='M 1192.0 468.0 L 1192.0 606.0 L 1192.0 606.0 L 1192.0 744.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 1192.0 744.0 L 1184.0 730.0 M 1192.0 744.0 L 1200.0 730.0 M 1192.0 744.0 L 1192.0 730.0 M 1184.0 724.0 L 1200.0 724.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 1392.0 414.0 L 1428.0 414.0 L 1428.0 414.0 L 1464.0 414.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 1464.0 414.0 L 1450.0 422.0 M 1464.0 414.0 L 1450.0 406.0 M 1464.0 414.0 L 1450.0 414.0 M 1444.0 422.0 L 1444.0 406.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 448.0 694.0 L 956.0 694.0 L 956.0 414.0 L 1464.0 414.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 1464.0 414.0 L 1450.0 422.0 M 1464.0 414.0 L 1450.0 406.0 M 1464.0 414.0 L 1450.0 414.0 M 1444.0 422.0 L 1444.0 406.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 448.0 838.0 L 956.0 838.0 L 956.0 414.0 L 1464.0 414.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 1464.0 414.0 L 1450.0 422.0 M 1464.0 414.0 L 1450.0 406.0 M 1464.0 414.0 L 1450.0 414.0 M 1444.0 422.0 L 1444.0 406.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 1392.0 414.0 L 1428.0 414.0 L 1428.0 606.0 L 1464.0 606.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 1464.0 606.0 L 1450.0 614.0 M 1464.0 606.0 L 1450.0 598.0 M 1464.0 606.0 L 1450.0 606.0 M 1444.0 614.0 L 1444.0 598.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 1664.0 468.0 L 1664.0 510.0 L 1664.0 510.0 L 1664.0 552.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linejoin='round' stroke-dasharray='9 7'/>
+<path d='M 1664.0 552.0 L 1656.0 538.0 M 1664.0 552.0 L 1672.0 538.0 M 1664.0 552.0 L 1664.0 538.0 M 1656.0 532.0 L 1672.0 532.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linecap='round'/>
+<path d='M 1392.0 414.0 L 1428.0 414.0 L 1428.0 222.0 L 1464.0 222.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linejoin='round' stroke-dasharray='9 7'/>
+<path d='M 1464.0 222.0 L 1450.0 230.0 M 1464.0 222.0 L 1450.0 214.0 M 1464.0 222.0 L 1450.0 222.0 M 1444.0 230.0 L 1444.0 214.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linecap='round'/>
+<path d='M 248.0 420.0 L 248.0 438.0 L 248.0 438.0 L 248.0 456.0' fill='none' stroke='#234468' stroke-width='3' stroke-linejoin='round'/>
+<path d='M 248.0 456.0 L 240.0 442.0 M 248.0 456.0 L 256.0 442.0 M 248.0 456.0 L 248.0 442.0 M 240.0 436.0 L 256.0 436.0' fill='none' stroke='#234468' stroke-width='3' stroke-linecap='round'/>
+<path d='M 248.0 420.0 L 248.0 530.0 L 248.0 530.0 L 248.0 640.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linejoin='round' stroke-dasharray='9 7'/>
+<path d='M 248.0 640.0 L 240.0 626.0 M 248.0 640.0 L 256.0 626.0 M 248.0 640.0 L 248.0 626.0 M 240.0 620.0 L 256.0 620.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linecap='round'/>
+<path d='M 248.0 420.0 L 248.0 602.0 L 248.0 602.0 L 248.0 784.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linejoin='round' stroke-dasharray='9 7'/>
+<path d='M 248.0 784.0 L 240.0 770.0 M 248.0 784.0 L 256.0 770.0 M 248.0 784.0 L 248.0 770.0 M 240.0 764.0 L 256.0 764.0' fill='none' stroke='#5C7594' stroke-width='3' stroke-linecap='round'/>
+<rect x='48' y='168' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='48' y='168' width='400' height='34' fill='#D9E6F5'/>
+<path d='M 48 168 h 400 v 34 H 48 z' fill='#D9E6F5'/>
+<rect x='48' y='168' width='400' height='34' rx='8' fill='#D9E6F5'/>
+<rect x='48' y='178' width='400' height='24' fill='#D9E6F5'/>
+<line x1='48' y1='202' x2='448' y2='202' stroke='#1B3354' stroke-width='2'/>
+<text x='62' y='192' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#14325C'>otp_challenges</text>
+<text x='62' y='226' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='62' y='250' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>email  purpose  code_hash</text>
+<rect x='48' y='312' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='48' y='312' width='400' height='34' fill='#D9E6F5'/>
+<path d='M 48 312 h 400 v 34 H 48 z' fill='#D9E6F5'/>
+<rect x='48' y='312' width='400' height='34' rx='8' fill='#D9E6F5'/>
+<rect x='48' y='322' width='400' height='24' fill='#D9E6F5'/>
+<line x1='48' y1='346' x2='448' y2='346' stroke='#1B3354' stroke-width='2'/>
+<text x='62' y='336' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#14325C'>users</text>
+<text x='62' y='370' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='62' y='394' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>email  role  password_hash</text>
+<rect x='48' y='456' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='48' y='456' width='400' height='34' fill='#D9E6F5'/>
+<path d='M 48 456 h 400 v 34 H 48 z' fill='#D9E6F5'/>
+<rect x='48' y='456' width='400' height='34' rx='8' fill='#D9E6F5'/>
+<rect x='48' y='466' width='400' height='24' fill='#D9E6F5'/>
+<line x1='48' y1='490' x2='448' y2='490' stroke='#1B3354' stroke-width='2'/>
+<text x='62' y='480' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#14325C'>bias_alerts</text>
+<text x='62' y='514' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='62' y='538' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK recruiter_id → users</text>
+<rect x='48' y='640' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='48' y='640' width='400' height='34' fill='#D4EFE8'/>
+<path d='M 48 640 h 400 v 34 H 48 z' fill='#D4EFE8'/>
+<rect x='48' y='640' width='400' height='34' rx='8' fill='#D4EFE8'/>
+<rect x='48' y='650' width='400' height='24' fill='#D4EFE8'/>
+<line x1='48' y1='674' x2='448' y2='674' stroke='#1B3354' stroke-width='2'/>
+<text x='62' y='664' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#0F4C3F'>job_specifications</text>
+<text x='62' y='698' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='62' y='722' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK created_by → users</text>
+<rect x='48' y='784' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='48' y='784' width='400' height='34' fill='#D4EFE8'/>
+<path d='M 48 784 h 400 v 34 H 48 z' fill='#D4EFE8'/>
+<rect x='48' y='784' width='400' height='34' rx='8' fill='#D4EFE8'/>
+<rect x='48' y='794' width='400' height='24' fill='#D4EFE8'/>
+<line x1='48' y1='818' x2='448' y2='818' stroke='#1B3354' stroke-width='2'/>
+<text x='62' y='808' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#0F4C3F'>candidate_cvs</text>
+<text x='62' y='842' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='62' y='866' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK uploaded_by → users</text>
+<rect x='520' y='168' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='520' y='168' width='400' height='34' fill='#E8DCF6'/>
+<path d='M 520 168 h 400 v 34 H 520 z' fill='#E8DCF6'/>
+<rect x='520' y='168' width='400' height='34' rx='8' fill='#E8DCF6'/>
+<rect x='520' y='178' width='400' height='24' fill='#E8DCF6'/>
+<line x1='520' y1='202' x2='920' y2='202' stroke='#1B3354' stroke-width='2'/>
+<text x='534' y='192' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#4A2D73'>job_applications</text>
+<text x='534' y='226' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='534' y='250' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK job_spec_id  candidate_user_id</text>
+<rect x='520' y='360' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='520' y='360' width='400' height='34' fill='#E8DCF6'/>
+<path d='M 520 360 h 400 v 34 H 520 z' fill='#E8DCF6'/>
+<rect x='520' y='360' width='400' height='34' rx='8' fill='#E8DCF6'/>
+<rect x='520' y='370' width='400' height='24' fill='#E8DCF6'/>
+<line x1='520' y1='394' x2='920' y2='394' stroke='#1B3354' stroke-width='2'/>
+<text x='534' y='384' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#4A2D73'>gap_analyses</text>
+<text x='534' y='418' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='534' y='442' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK cv_id  job_spec_id</text>
+<rect x='520' y='552' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='520' y='552' width='400' height='34' fill='#E8DCF6'/>
+<path d='M 520 552 h 400 v 34 H 520 z' fill='#E8DCF6'/>
+<rect x='520' y='552' width='400' height='34' rx='8' fill='#E8DCF6'/>
+<rect x='520' y='562' width='400' height='24' fill='#E8DCF6'/>
+<line x1='520' y1='586' x2='920' y2='586' stroke='#1B3354' stroke-width='2'/>
+<text x='534' y='576' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#4A2D73'>preparation_packs</text>
+<text x='534' y='610' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='534' y='634' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK cv_id  job_spec_id  user</text>
+<rect x='520' y='760' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='520' y='760' width='400' height='34' fill='#F8E4CC'/>
+<path d='M 520 760 h 400 v 34 H 520 z' fill='#F8E4CC'/>
+<rect x='520' y='760' width='400' height='34' rx='8' fill='#F8E4CC'/>
+<rect x='520' y='770' width='400' height='24' fill='#F8E4CC'/>
+<line x1='520' y1='794' x2='920' y2='794' stroke='#1B3354' stroke-width='2'/>
+<text x='534' y='784' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#6B3F12'>question_plans</text>
+<text x='534' y='818' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='534' y='842' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK gap_analysis_id</text>
+<rect x='520' y='920' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='520' y='920' width='400' height='34' fill='#F8E4CC'/>
+<path d='M 520 920 h 400 v 34 H 520 z' fill='#F8E4CC'/>
+<rect x='520' y='920' width='400' height='34' rx='8' fill='#F8E4CC'/>
+<rect x='520' y='930' width='400' height='24' fill='#F8E4CC'/>
+<line x1='520' y1='954' x2='920' y2='954' stroke='#1B3354' stroke-width='2'/>
+<text x='534' y='944' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#6B3F12'>interview_questions</text>
+<text x='534' y='978' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='534' y='1002' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK plan_id → question_plans</text>
+<rect x='992' y='168' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='992' y='168' width='400' height='34' fill='#D8EFDA'/>
+<path d='M 992 168 h 400 v 34 H 992 z' fill='#D8EFDA'/>
+<rect x='992' y='168' width='400' height='34' rx='8' fill='#D8EFDA'/>
+<rect x='992' y='178' width='400' height='24' fill='#D8EFDA'/>
+<line x1='992' y1='202' x2='1392' y2='202' stroke='#1B3354' stroke-width='2'/>
+<text x='1006' y='192' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#1B4D2B'>interview_slot_suggestions</text>
+<text x='1006' y='226' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='1006' y='250' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK session_id  proposed_by</text>
+<rect x='992' y='360' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='992' y='360' width='400' height='34' fill='#D8EFDA'/>
+<path d='M 992 360 h 400 v 34 H 992 z' fill='#D8EFDA'/>
+<rect x='992' y='360' width='400' height='34' rx='8' fill='#D8EFDA'/>
+<rect x='992' y='370' width='400' height='24' fill='#D8EFDA'/>
+<line x1='992' y1='394' x2='1392' y2='394' stroke='#1B3354' stroke-width='2'/>
+<text x='1006' y='384' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#1B4D2B'>interview_sessions</text>
+<text x='1006' y='418' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='1006' y='442' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK plan  gap  cv  job  users</text>
+<rect x='992' y='552' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='992' y='552' width='400' height='34' fill='#D8EFDA'/>
+<path d='M 992 552 h 400 v 34 H 992 z' fill='#D8EFDA'/>
+<rect x='992' y='552' width='400' height='34' rx='8' fill='#D8EFDA'/>
+<rect x='992' y='562' width='400' height='24' fill='#D8EFDA'/>
+<line x1='992' y1='586' x2='1392' y2='586' stroke='#1B3354' stroke-width='2'/>
+<text x='1006' y='576' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#1B4D2B'>interview_turns</text>
+<text x='1006' y='610' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='1006' y='634' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK session_id  plan_question_id</text>
+<rect x='992' y='744' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='992' y='744' width='400' height='34' fill='#D8EFDA'/>
+<path d='M 992 744 h 400 v 34 H 992 z' fill='#D8EFDA'/>
+<rect x='992' y='744' width='400' height='34' rx='8' fill='#D8EFDA'/>
+<rect x='992' y='754' width='400' height='24' fill='#D8EFDA'/>
+<line x1='992' y1='778' x2='1392' y2='778' stroke='#1B3354' stroke-width='2'/>
+<text x='1006' y='768' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#1B4D2B'>interview_turn_evaluations</text>
+<text x='1006' y='802' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='1006' y='826' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>UQ FK turn_id  (1:1)</text>
+<rect x='1464' y='168' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='1464' y='168' width='400' height='34' fill='#F5DCE8'/>
+<path d='M 1464 168 h 400 v 34 H 1464 z' fill='#F5DCE8'/>
+<rect x='1464' y='168' width='400' height='34' rx='8' fill='#F5DCE8'/>
+<rect x='1464' y='178' width='400' height='24' fill='#F5DCE8'/>
+<line x1='1464' y1='202' x2='1864' y2='202' stroke='#1B3354' stroke-width='2'/>
+<text x='1478' y='192' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#6B2448'>notifications</text>
+<text x='1478' y='226' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='1478' y='250' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK user_id  related_session_id</text>
+<rect x='1464' y='360' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='1464' y='360' width='400' height='34' fill='#F5DCE8'/>
+<path d='M 1464 360 h 400 v 34 H 1464 z' fill='#F5DCE8'/>
+<rect x='1464' y='360' width='400' height='34' rx='8' fill='#F5DCE8'/>
+<rect x='1464' y='370' width='400' height='24' fill='#F5DCE8'/>
+<line x1='1464' y1='394' x2='1864' y2='394' stroke='#1B3354' stroke-width='2'/>
+<text x='1478' y='384' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#6B2448'>interview_reports</text>
+<text x='1478' y='418' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='1478' y='442' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK session_id  cv_id  job_spec_id</text>
+<rect x='1464' y='552' width='400' height='108' rx='8' fill='#FFFFFF' stroke='#1B3354' stroke-width='2'/>
+<rect x='1464' y='552' width='400' height='34' fill='#F5DCE8'/>
+<path d='M 1464 552 h 400 v 34 H 1464 z' fill='#F5DCE8'/>
+<rect x='1464' y='552' width='400' height='34' rx='8' fill='#F5DCE8'/>
+<rect x='1464' y='562' width='400' height='24' fill='#F5DCE8'/>
+<line x1='1464' y1='586' x2='1864' y2='586' stroke='#1B3354' stroke-width='2'/>
+<text x='1478' y='576' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='19' font-weight='700' fill='#6B2448'>candidate_feedbacks</text>
+<text x='1478' y='610' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#1A2A40'>PK id</text>
+<text x='1478' y='634' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='15' fill='#334155'>FK session_id  report_id</text>
+<rect x='0' y='1472' width='2200' height='88' fill='#F3F6FB'/>
+<text x='48' y='1512' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='14' fill='#3B4D66'>users is also referenced by applications, sessions, reports, feedback, notifications, question_plans and preparation_packs (omitted here so the hiring path stays readable).</text>
+<text x='48' y='1536' font-family='Segoe UI, Arial, Helvetica, sans-serif' font-size='14' fill='#3B4D66'>otp_challenges has no foreign keys. Three keys commented in the pgAdmin dump are drawn: gap_analyses.cv_id, gap_analyses.job_spec_id, interview_questions.plan_id.</text>
+</svg>
