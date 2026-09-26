@@ -86,3 +86,73 @@ describe('JobsPipelinePage form labels', () => {
     })
   })
 })
+
+describe('JobsPipelinePage search and filter', () => {
+  beforeEach(() => {
+    mockedListJobs.mockReset()
+    mockedListApps.mockReset()
+    mockedAiDraft.mockReset()
+    mockedListJobs.mockResolvedValue([
+      { id: 'job-1', title: 'Senior Backend Engineer', location: 'London, UK' } as never,
+      { id: 'job-2', title: 'Frontend Developer', location: 'Bristol, UK' } as never,
+    ])
+    mockedListApps.mockResolvedValue([
+      // Both scoped to job-1: the page auto-selects the first loaded job and scopes the
+      // applications list to it, so both need to share a job_spec_id to appear together.
+      {
+        id: 'app-1',
+        job_spec_id: 'job-1',
+        job_title: 'Senior Backend Engineer',
+        candidate_name: 'Alex Morgan',
+        candidate_email: 'alex@example.com',
+        stage: 'APPLIED',
+      } as never,
+      {
+        id: 'app-2',
+        job_spec_id: 'job-1',
+        job_title: 'Senior Backend Engineer',
+        candidate_name: 'Jamie Lee',
+        candidate_email: 'jamie@example.com',
+        stage: 'SHORTLISTED',
+      } as never,
+    ])
+  })
+
+  it('filters open roles by search text', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <JobsPipelinePage />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('Senior Backend Engineer')).toBeInTheDocument()
+    expect(screen.getByText('Frontend Developer')).toBeInTheDocument()
+
+    await user.type(screen.getByPlaceholderText(/Search by title, location, or department/i), 'Bristol')
+
+    expect(screen.queryByText('Senior Backend Engineer')).not.toBeInTheDocument()
+    expect(screen.getByText('Frontend Developer')).toBeInTheDocument()
+  })
+
+  it('filters applications by candidate search and by stage', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <JobsPipelinePage />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText(/Alex Morgan/)).toBeInTheDocument()
+    expect(screen.getByText(/Jamie Lee/)).toBeInTheDocument()
+
+    await user.type(screen.getByPlaceholderText(/Search by candidate name or email/i), 'jamie')
+    expect(screen.queryByText(/Alex Morgan/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Jamie Lee/)).toBeInTheDocument()
+
+    await user.clear(screen.getByPlaceholderText(/Search by candidate name or email/i))
+    await user.selectOptions(screen.getByDisplayValue('All stages'), 'APPLIED')
+    expect(screen.getByText(/Alex Morgan/)).toBeInTheDocument()
+    expect(screen.queryByText(/Jamie Lee/)).not.toBeInTheDocument()
+  })
+})

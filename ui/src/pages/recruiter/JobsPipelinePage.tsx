@@ -68,6 +68,9 @@ export function JobsPipelinePage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
+  const [jobSearch, setJobSearch] = useState('')
+  const [appSearch, setAppSearch] = useState('')
+  const [stageFilter, setStageFilter] = useState<PipelineStage | 'ALL'>('ALL')
 
   async function load(jobId?: string) {
     try {
@@ -179,7 +182,24 @@ export function JobsPipelinePage() {
     }
   }
 
-  const filtered = selectedJobId ? apps.filter((item) => item.job_spec_id === selectedJobId) : apps
+  const jobScoped = selectedJobId ? apps.filter((item) => item.job_spec_id === selectedJobId) : apps
+  const appSearchLower = appSearch.trim().toLowerCase()
+  const filtered = jobScoped.filter((item) => {
+    if (stageFilter !== 'ALL' && item.stage !== stageFilter) return false
+    if (!appSearchLower) return true
+    return (
+      item.candidate_name.toLowerCase().includes(appSearchLower) ||
+      (item.contact_email || item.candidate_email || '').toLowerCase().includes(appSearchLower)
+    )
+  })
+
+  const jobSearchLower = jobSearch.trim().toLowerCase()
+  const visibleJobs = jobs.filter((job) => {
+    if (!jobSearchLower) return true
+    return [job.title, job.location, job.department]
+      .filter(Boolean)
+      .some((field) => field!.toLowerCase().includes(jobSearchLower))
+  })
 
   return (
     <div>
@@ -380,8 +400,17 @@ export function JobsPipelinePage() {
 
         <Card>
           <h3 className="text-lg font-semibold text-ink">Open roles</h3>
+          <input
+            value={jobSearch}
+            onChange={(e) => setJobSearch(e.target.value)}
+            placeholder="Search by title, location, or department..."
+            className={`mt-3 ${inputClass}`}
+          />
           <div className="mt-3 space-y-2">
-            {jobs.map((job) => (
+            {jobs.length > 0 && visibleJobs.length === 0 && (
+              <p className="text-sm text-slate-500">No roles match your search.</p>
+            )}
+            {visibleJobs.map((job) => (
               <div key={job.id} className="rounded-xl border border-border p-3">
                 <div className="flex items-start justify-between gap-2">
                   <button
@@ -421,9 +450,29 @@ export function JobsPipelinePage() {
 
       <Card>
         <h3 className="text-lg font-semibold text-ink">Applications</h3>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <input
+            value={appSearch}
+            onChange={(e) => setAppSearch(e.target.value)}
+            placeholder="Search by candidate name or email..."
+            className={`flex-1 ${inputClass}`}
+          />
+          <select
+            value={stageFilter}
+            onChange={(e) => setStageFilter(e.target.value as PipelineStage | 'ALL')}
+            className={`sm:w-48 ${inputClass}`}
+          >
+            <option value="ALL">All stages</option>
+            {stages.map((stage) => (
+              <option key={stage} value={stage}>
+                {stage}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="mt-4 space-y-3">
           {filtered.length === 0 ? (
-            <p className="text-sm text-slate-500">No applications for this filter.</p>
+            <p className="text-sm text-slate-500">No applications match your filters.</p>
           ) : (
             filtered.map((app) => (
               <div key={app.id} className="rounded-xl border border-border bg-surface/60 p-4">

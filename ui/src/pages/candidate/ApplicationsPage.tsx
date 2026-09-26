@@ -13,7 +13,7 @@ import {
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
 import type { AuthResponse, CandidateCv } from '../../types/analysis'
-import type { ApplicationItem, MatchPreview, OpenJob } from '../../types/optional'
+import type { ApplicationItem, MatchPreview, OpenJob, WorkMode } from '../../types/optional'
 
 const inputClass = 'input-field'
 
@@ -36,6 +36,8 @@ export function ApplicationsPage() {
   const [coverNote, setCoverNote] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
+  const [jobFilter, setJobFilter] = useState('')
+  const [workModeFilter, setWorkModeFilter] = useState<'ALL' | WorkMode>('ALL')
 
   async function load() {
     try {
@@ -147,6 +149,14 @@ export function ApplicationsPage() {
 
   const appliedIds = new Set(apps.map((item) => item.job_spec_id))
   const selectedJob = jobs.find((job) => job.id === selectedJobId)
+  const jobFilterLower = jobFilter.trim().toLowerCase()
+  const visibleJobs = jobs.filter((job) => {
+    if (workModeFilter !== 'ALL' && job.work_mode !== workModeFilter) return false
+    if (!jobFilterLower) return true
+    return [job.title, job.location, job.department, job.description]
+      .filter(Boolean)
+      .some((field) => field!.toLowerCase().includes(jobFilterLower))
+  })
 
   return (
     <div>
@@ -340,8 +350,30 @@ export function ApplicationsPage() {
         </form>
       </Card>
 
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+        <input
+          value={jobFilter}
+          onChange={(e) => setJobFilter(e.target.value)}
+          placeholder="Search open roles by title, location, or keyword..."
+          className={`flex-1 ${inputClass}`}
+        />
+        <select
+          value={workModeFilter}
+          onChange={(e) => setWorkModeFilter(e.target.value as 'ALL' | WorkMode)}
+          className={`sm:w-40 ${inputClass}`}
+        >
+          <option value="ALL">Any work mode</option>
+          <option value="HYBRID">Hybrid</option>
+          <option value="ONSITE">On-site</option>
+          <option value="REMOTE">Remote</option>
+        </select>
+      </div>
+
       <div className="mb-8 grid gap-4 lg:grid-cols-2">
-        {jobs.map((job) => (
+        {jobs.length > 0 && visibleJobs.length === 0 && (
+          <p className="text-sm text-slate-500 lg:col-span-2">No open roles match your search.</p>
+        )}
+        {visibleJobs.map((job) => (
           <Card key={job.id}>
             <h3 className="text-lg font-semibold text-ink">{job.title}</h3>
             <p className="mt-1 text-xs text-teal-700">
