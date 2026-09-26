@@ -75,7 +75,7 @@ export function RecruiterLayout() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen print:block">
       <Sidebar
         title="Recruiter Portal"
         subtitle="Hire end to end"
@@ -83,8 +83,8 @@ export function RecruiterLayout() {
         accent="teal"
         homePath="/recruiter/dashboard"
       />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-col gap-3 border-b border-teal-200/70 bg-teal-50/70 px-4 py-4 pl-16 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-6 md:pl-6">
+      <div className="flex min-w-0 flex-1 flex-col print:block">
+        <header className="flex flex-col gap-3 border-b border-teal-200/70 bg-teal-50/70 px-4 py-4 pl-16 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-6 md:pl-6 print:hidden">
           <div>
             <p className="text-sm text-muted">Logged in as</p>
             <p className="text-base font-bold text-ink">{user?.full_name ?? 'Recruiter'}</p>
@@ -103,7 +103,7 @@ export function RecruiterLayout() {
             </button>
           </div>
         </header>
-        <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-10 print:overflow-visible print:p-0">
           <Outlet />
         </main>
       </div>

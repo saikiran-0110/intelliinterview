@@ -79,9 +79,18 @@ export function ReportDetailPage() {
         title="Interview Evaluation Report"
         description={`${report.candidate_name} for ${report.job_title}`}
         action={
-          <div className="rounded-xl border border-border bg-surface-raised px-4 py-2 text-right">
-            <p className="text-xs text-slate-500">Overall</p>
-            <p className="text-2xl font-bold text-teal-700">{report.overall_score}/10</p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="btn-secondary min-h-11 print:hidden"
+            >
+              Print / Export PDF
+            </button>
+            <div className="rounded-xl border border-border bg-surface-raised px-4 py-2 text-right">
+              <p className="text-xs text-slate-500">Overall</p>
+              <p className="text-2xl font-bold text-teal-700">{report.overall_score}/10</p>
+            </div>
           </div>
         }
       />
@@ -162,7 +171,7 @@ export function ReportDetailPage() {
       </Card>
 
       {recordingUrl && (
-        <Card className="mt-6">
+        <Card className="mt-6 print:hidden">
           <h3 className="text-lg font-semibold text-ink">Candidate recording</h3>
           <p className="mt-1 text-xs text-muted">
             For human review only - not used in scoring or by the AI evaluation.
@@ -171,7 +180,7 @@ export function ReportDetailPage() {
         </Card>
       )}
 
-      <p className="mt-4 text-sm text-slate-500">
+      <p className="mt-4 text-sm text-slate-500 print:hidden">
         <Link to={`/recruiter/sessions/${report.session_id}`} className="text-teal-700 hover:text-teal-700">
           View session transcript
         </Link>

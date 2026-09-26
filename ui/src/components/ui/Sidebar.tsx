@@ -24,7 +24,7 @@ export function Sidebar({ title, subtitle, items, accent, homePath }: SidebarPro
         type="button"
         aria-label={open ? 'Close navigation menu' : 'Open navigation menu'}
         onClick={() => setOpen((value) => !value)}
-        className="fixed left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-surface shadow-sm md:hidden"
+        className="fixed left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-surface shadow-sm md:hidden print:hidden"
       >
         <span className="text-xl leading-none">{open ? '✕' : '☰'}</span>
       </button>
@@ -39,7 +39,7 @@ export function Sidebar({ title, subtitle, items, accent, homePath }: SidebarPro
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 max-w-[85vw] shrink-0 transform flex-col border-r border-teal-200/80 bg-gradient-to-b from-teal-50/95 to-sky-50/80 backdrop-blur transition-transform duration-200 md:static md:z-auto md:w-72 md:max-w-none md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 max-w-[85vw] shrink-0 transform flex-col border-r border-teal-200/80 bg-gradient-to-b from-teal-50/95 to-sky-50/80 backdrop-blur transition-transform duration-200 md:static md:z-auto md:w-72 md:max-w-none md:translate-x-0 print:hidden ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
