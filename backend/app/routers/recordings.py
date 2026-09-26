@@ -122,19 +122,3 @@ def get_recording(
     if recording is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No recording for this session")
     return Response(content=recording.data, media_type=recording.content_type)
-
-
-@router.delete("/{session_id}/recording", status_code=status.HTTP_204_NO_CONTENT)
-def delete_recording(
-    session_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.CANDIDATE)),
-) -> None:
-    session = _get_own_session(db, session_id, current_user)
-    recording = (
-        db.query(InterviewRecording).filter(InterviewRecording.session_id == session.id).first()
-    )
-    if recording is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No recording for this session")
-    db.delete(recording)
-    db.commit()

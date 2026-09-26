@@ -162,7 +162,8 @@ def test_recording_size_limit_covers_a_45_minute_interview():
     assert settings.recording_max_size_mb >= 900
 
 
-def test_candidate_can_delete_their_own_recording(client):
+def test_recording_cannot_be_deleted_by_the_candidate(client):
+    # Recording is compulsory and retained - there is deliberately no delete capability.
     recruiter_token = register_recruiter(client, email="rec-recruiter7@example.com")
     candidate_token = _register_candidate(client, email="rec-candidate7@example.com")
     session_id = _create_session(client, recruiter_token, "rec-candidate7@example.com")
@@ -175,7 +176,8 @@ def test_candidate_can_delete_their_own_recording(client):
     delete_response = client.delete(
         f"/api/sessions/{session_id}/recording", headers=auth_headers(candidate_token)
     )
-    assert delete_response.status_code == 204
+    assert delete_response.status_code == 405
 
+    # The recording must still be there afterwards.
     get_response = client.get(f"/api/sessions/{session_id}/recording", headers=auth_headers(candidate_token))
-    assert get_response.status_code == 404
+    assert get_response.status_code == 200
