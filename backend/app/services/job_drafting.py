@@ -3,12 +3,46 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 
 import httpx
 
 from app.config import settings
 from app.models import EmploymentType, WorkMode
+
+logger = logging.getLogger(__name__)
+
+
+def _as_money(value: object, fallback: float | None) -> float | None:
+    """Coerce a model salary field into a float, handling '£80,000', '80k', commas, and None."""
+    if value is None:
+        return fallback
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value).strip()
+    if not text:
+        return fallback
+    text = text.replace("£", "").replace(",", "").replace("$", "").strip()
+    match = re.match(r"(\d+(?:\.\d+)?)\s*(k)?", text, re.I)
+    if not match:
+        return fallback
+    number = float(match.group(1))
+    if match.group(2):
+        number *= 1000
+    return number
+
+
+def _as_int(value: object, fallback: int | None) -> int | None:
+    """Coerce a model field into an int, extracting the first integer (handles '5+', '5 years')."""
+    if value is None:
+        return fallback
+    if isinstance(value, (int, float)):
+        return int(value)
+    match = re.search(r"\d+", str(value))
+    if not match:
+        return fallback
+    return int(match.group(0))
 
 
 def _extract_salary_range(prompt: str) -> tuple[float | None, float | None]:
@@ -134,6 +168,7 @@ def _baseline_draft(prompt: str) -> dict:
 
 def _openai_draft(prompt: str, baseline: dict) -> dict | None:
     if not settings.openai_api_key:
+        logger.info("job_drafting: no OpenAI API key configured, using deterministic baseline")
         return None
     try:
         response = httpx.post(
@@ -141,7 +176,7 @@ def _openai_draft(prompt: str, baseline: dict) -> dict | None:
             headers={"Authorization": f"Bearer {settings.openai_api_key}"},
             json={
                 "model": settings.openai_model,
-                "temperature": 0.4,
+                "temperature": 0.2,
                 "response_format": {"type": "json_object"},
                 "messages": [
                     {
@@ -152,7 +187,11 @@ def _openai_draft(prompt: str, baseline: dict) -> dict | None:
                             "employment_type (FULL_TIME|PART_TIME|CONTRACT|INTERNSHIP), "
                             "work_mode (ONSITE|HYBRID|REMOTE), salary_min_gbp, salary_max_gbp, "
                             "years_experience_min, benefits. "
-                            "Salaries must be in GBP pounds. Description should be polished and complete."
+                            "Salaries must be in GBP pounds. Description should be polished and complete. "
+                            "salary_min_gbp, salary_max_gbp and years_experience_min must be plain numbers "
+                            "with no currency symbols, commas or units (e.g. 80000, not '£80,000' or '80k'). "
+                            "If the recruiter's prompt does not state a salary, return null for both salary "
+                            "fields — never invent a salary. Keep the recruiter's job title wording if given."
                         ),
                     },
                     {
@@ -180,6 +219,12 @@ def _openai_draft(prompt: str, baseline: dict) -> dict | None:
             employment = baseline["employment_type"]
         if work_mode not in {w.value for w in WorkMode}:
             work_mode = baseline["work_mode"]
+
+        salary_min = _as_money(payload.get("salary_min_gbp"), baseline["salary_min_gbp"])
+        salary_max = _as_money(payload.get("salary_max_gbp"), baseline["salary_max_gbp"])
+        if salary_min is not None and salary_max is not None and salary_min > salary_max:
+            salary_min, salary_max = salary_max, salary_min
+
         return {
             "title": str(payload.get("title") or baseline["title"])[:255],
             "description": str(payload.get("description") or baseline["description"]),
@@ -187,17 +232,24 @@ def _openai_draft(prompt: str, baseline: dict) -> dict | None:
             "location": str(payload.get("location") or baseline["location"]),
             "employment_type": employment,
             "work_mode": work_mode,
-            "salary_min_gbp": float(payload.get("salary_min_gbp") or baseline["salary_min_gbp"]),
-            "salary_max_gbp": float(payload.get("salary_max_gbp") or baseline["salary_max_gbp"]),
-            "years_experience_min": int(
-                payload.get("years_experience_min")
-                if payload.get("years_experience_min") is not None
-                else baseline["years_experience_min"]
+            "salary_min_gbp": salary_min,
+            "salary_max_gbp": salary_max,
+            "years_experience_min": _as_int(
+                payload.get("years_experience_min"), baseline["years_experience_min"]
             ),
             "benefits": str(payload.get("benefits") or baseline["benefits"]),
             "model_version": settings.openai_model,
         }
-    except (httpx.HTTPError, KeyError, json.JSONDecodeError, IndexError, TypeError, ValueError):
+    except httpx.HTTPStatusError as exc:
+        logger.warning(
+            "job_drafting: OpenAI returned status %s: %s", exc.response.status_code, exc.response.text[:300]
+        )
+        return None
+    except httpx.HTTPError as exc:
+        logger.warning("job_drafting: OpenAI request failed: %s", exc)
+        return None
+    except (KeyError, json.JSONDecodeError, IndexError, TypeError, ValueError) as exc:
+        logger.warning("job_drafting: could not parse OpenAI response: %s", exc)
         return None
 
 

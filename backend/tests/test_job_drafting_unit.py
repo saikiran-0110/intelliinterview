@@ -1,6 +1,8 @@
 from app.models import EmploymentType, WorkMode
 from app.services.job_drafting import (
     JobDraftingService,
+    _as_int,
+    _as_money,
     _baseline_draft,
     _extract_salary_range,
     _guess_employment,
@@ -49,5 +51,30 @@ def test_baseline_draft_and_service_without_openai():
 
     service = JobDraftingService()
     result = service.draft(prompt)
-   # assert result["model_version"] == "baseline"
+    assert result["model_version"] == "baseline"
     assert result["title"] == draft["title"]
+
+
+def test_as_money_handles_currency_commas_and_k_suffix():
+    assert _as_money("£80,000", None) == 80000.0
+    assert _as_money("80k", None) == 80000.0
+    assert _as_money(80000, None) == 80000.0
+    assert _as_money(80000.5, None) == 80000.5
+
+
+def test_as_money_none_and_unusable_return_fallback():
+    assert _as_money(None, 55000.0) == 55000.0
+    assert _as_money("not stated", 55000.0) == 55000.0
+    assert _as_money("", 55000.0) == 55000.0
+
+
+def test_as_int_extracts_first_integer():
+    assert _as_int("5+", None) == 5
+    assert _as_int("5 years", None) == 5
+    assert _as_int(5, None) == 5
+    assert _as_int(5.0, None) == 5
+
+
+def test_as_int_none_and_unusable_return_fallback():
+    assert _as_int(None, 3) == 3
+    assert _as_int("unspecified", 3) == 3
