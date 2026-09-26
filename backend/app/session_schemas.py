@@ -2,16 +2,27 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.email_types import FlexibleEmail
 from app.models import InterviewSessionStatus, ScheduleConfirmationStatus, TurnRole
+
+SUPPORTED_INTERVIEW_LANGUAGES = {"en-GB", "en-US", "es-ES", "fr-FR", "de-DE", "hi-IN", "zh-CN"}
+DEFAULT_INTERVIEW_LANGUAGE = "en-GB"
 
 
 class SessionCreateRequest(BaseModel):
     question_plan_id: UUID
     candidate_email: FlexibleEmail
     follow_up_limit: int = Field(default=1, ge=0, le=3)
+    language: str = DEFAULT_INTERVIEW_LANGUAGE
+
+    @field_validator("language", mode="before")
+    @classmethod
+    def coerce_language(cls, value: Any) -> str:
+        if isinstance(value, str) and value in SUPPORTED_INTERVIEW_LANGUAGES:
+            return value
+        return DEFAULT_INTERVIEW_LANGUAGE
 
 
 class SubmitAnswerRequest(BaseModel):
@@ -69,6 +80,7 @@ class InterviewSessionResponse(BaseModel):
     confirmation_status: ScheduleConfirmationStatus
     follow_up_limit: int
     duration_minutes: int = 45
+    language: str = DEFAULT_INTERVIEW_LANGUAGE
     current_question_index: int
     current_follow_up_count: int
     current_plan_question_id: UUID | None
@@ -91,6 +103,7 @@ class SessionSummaryResponse(BaseModel):
     current_question_index: int
     total_questions: int
     duration_minutes: int = 45
+    language: str = DEFAULT_INTERVIEW_LANGUAGE
     created_at: datetime
     started_at: datetime | None
     completed_at: datetime | None

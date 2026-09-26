@@ -32,6 +32,11 @@ SESSION_COLUMN_UPGRADES = [
         "ALTER TABLE interview_sessions "
         "ADD COLUMN IF NOT EXISTS candidate_note TEXT",
     ),
+    (
+        "language",
+        "ALTER TABLE interview_sessions "
+        "ADD COLUMN IF NOT EXISTS language VARCHAR(10) NOT NULL DEFAULT 'en-GB'",
+    ),
 ]
 
 JOB_SPEC_COLUMN_UPGRADES = [

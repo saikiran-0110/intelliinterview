@@ -179,6 +179,7 @@ def _session_response(db: Session, session: InterviewSession) -> InterviewSessio
         current_question_index=session.current_question_index,
         current_follow_up_count=session.current_follow_up_count,
         current_plan_question_id=session.current_plan_question_id,
+        language=session.language or "en-GB",
         progress=SessionQuestionProgress(
             index=min(session.current_question_index + 1, max(total, 1)),
             total=total,
@@ -210,6 +211,7 @@ def _summary(db: Session, session: InterviewSession) -> SessionSummaryResponse:
         current_question_index=session.current_question_index,
         total_questions=total,
         duration_minutes=session.duration_minutes,
+        language=session.language or "en-GB",
         created_at=session.created_at,
         started_at=session.started_at,
         completed_at=session.completed_at,
@@ -306,6 +308,7 @@ def create_session(
         current_follow_up_count=0,
         current_plan_question_id=questions[0].id,
         scheduled_at=None,
+        language=request.language,
     )
     db.add(session)
     db.commit()
@@ -444,6 +447,7 @@ def submit_answer(
         follow_up_count=session.current_follow_up_count,
         follow_up_limit=session.follow_up_limit,
         job_title=job_title,
+        language=session.language or "en-GB",
     )
 
     evaluation = InterviewTurnEvaluation(

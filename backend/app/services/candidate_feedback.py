@@ -42,12 +42,13 @@ def _baseline_feedback(report: InterviewReport, job_title: str) -> dict:
     }
 
 
-def _openai_feedback(report: InterviewReport, job_title: str, baseline: dict) -> dict | None:
+def _openai_feedback(report: InterviewReport, job_title: str, baseline: dict, language: str = "en-GB") -> dict | None:
     if not settings.openai_api_key:
         logger.info("candidate_feedback: no OpenAI API key configured, using deterministic baseline")
         return None
     prompt = {
         "job_title": job_title,
+        "language": language,
         "strengths": report.strengths,
         "weaknesses": report.weaknesses,
         "scores": {
@@ -58,6 +59,9 @@ def _openai_feedback(report: InterviewReport, job_title: str, baseline: dict) ->
         },
         "baseline": baseline,
         "instructions": (
+            "Write the feedback entirely in the language given as 'language' (a BCP-47 tag). "
+            "Skill names, technology names and evidence quotes stay in their original form - "
+            "do not translate them. "
             "Write candidate-facing feedback. Do NOT include hiring recommendations. "
             "Return JSON with keys: summary (string), strong_answers (string array), "
             "improvement_areas (string array), focus_tips (string array). "
@@ -117,8 +121,11 @@ class CandidateFeedbackService:
         )
         job = db.get(JobSpecification, report.job_spec_id)
         job_title = job.title if job else "the role"
+        session = db.get(InterviewSession, report.session_id)
+        language = (session.language if session and session.language else "en-GB")
+        # The deterministic baseline below always stays in English - an accepted limitation.
         baseline = _baseline_feedback(report, job_title)
-        polished = _openai_feedback(report, job_title, baseline) or baseline
+        polished = _openai_feedback(report, job_title, baseline, language) or baseline
 
         if existing:
             feedback = existing

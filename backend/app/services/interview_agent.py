@@ -89,6 +89,7 @@ def _openai_evaluate(
     follow_up_count: int,
     follow_up_limit: int,
     job_title: str,
+    language: str = "en-GB",
 ) -> dict[str, Any] | None:
     if not settings.openai_api_key:
         logger.info("interview_agent: no OpenAI API key configured, using deterministic baseline")
@@ -105,6 +106,7 @@ def _openai_evaluate(
 
     prompt = {
         "job_title": job_title,
+        "language": language,
         "current_question": {
             "text": question.text,
             "topic": question.topic,
@@ -116,6 +118,9 @@ def _openai_evaluate(
         "follow_up_limit": follow_up_limit,
         "recent_turns": history,
         "instructions": (
+            "Respond entirely in the language given as 'language' (a BCP-47 tag). Skill names, "
+            "technology names and evidence quotes stay in their original form - do not translate "
+            "them. "
             "Evaluate the candidate answer for a software engineering interview. "
             "Return JSON with keys: technical_score (0-10), communication_score (0-10), "
             "observations (string array), evidence_quotes (string array of short quotes from the answer), "
@@ -206,9 +211,12 @@ class InterviewAgentService:
         follow_up_count: int,
         follow_up_limit: int,
         job_title: str,
+        language: str = "en-GB",
     ) -> dict[str, Any]:
+        # The deterministic baseline below always answers in English - an accepted
+        # limitation. Only the OpenAI-enhanced path honours `language`.
         enhanced = _openai_evaluate(
-            answer, question, recent_turns, follow_up_count, follow_up_limit, job_title
+            answer, question, recent_turns, follow_up_count, follow_up_limit, job_title, language
         )
         if enhanced:
             return enhanced

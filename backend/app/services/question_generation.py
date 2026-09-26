@@ -185,6 +185,7 @@ def _enhance_with_openai(
     job_text: str,
     analysis: GapAnalysis,
     baseline: list[dict[str, Any]],
+    language: str | None = None,
 ) -> list[dict[str, Any]] | None:
     if not settings.openai_api_key:
         logger.info("question_generation: no OpenAI API key configured, using deterministic baseline")
@@ -203,6 +204,7 @@ def _enhance_with_openai(
     prompt = {
         "candidate_name": candidate_name,
         "job_title": job_title,
+        "language": language or "en-GB",
         "cv_excerpt": cv_text[:5000],
         "job_excerpt": job_text[:5000],
         "gap_summary": {
@@ -215,6 +217,9 @@ def _enhance_with_openai(
         },
         "coverage_targets": coverage_targets,
         "instructions": (
+            "Write the question text entirely in the language given as 'language' (a BCP-47 "
+            "tag). Skill names, technology names and evidence quotes stay in their original "
+            "form - do not translate them. "
             "Write 6 to 10 original interview questions. "
             "coverage_targets lists WHICH skills and question types to cover — it is a "
             "checklist, not wording to copy. Write every question yourself in your own words. "
@@ -308,12 +313,19 @@ class QuestionGenerationService:
         cv: CandidateCv,
         job_spec: JobSpecification,
         recruiter_id: UUID,
+        language: str | None = None,
     ) -> tuple[QuestionPlan, list[InterviewQuestion]]:
+        # The deterministic baseline below always stays in English - an accepted limitation.
+        # `language` is only known when a recruiter passes one explicitly (there is no
+        # session yet at plan-generation time); when given, only the OpenAI-enhanced path
+        # honours it.
         baseline = _build_baseline_questions(cv.candidate_name, job_spec.title, analysis)
         cv_text = cv.extracted_text or ""
         job_text = job_spec.extracted_text or job_spec.description
         generated = (
-            _enhance_with_openai(cv.candidate_name, job_spec.title, cv_text, job_text, analysis, baseline)
+            _enhance_with_openai(
+                cv.candidate_name, job_spec.title, cv_text, job_text, analysis, baseline, language
+            )
             or baseline
         )
 
