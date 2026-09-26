@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import require_role
 from app.models import User, UserRole
-from app.optional_schemas import AssistantQueryRequest, AssistantQueryResponse
+from app.optional_schemas import AssistantQueryRequest, AssistantQueryResponse, NextActionsResponse
 from app.services.assistant_agent import AssistantAgentService
 
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
@@ -19,3 +19,12 @@ def query_assistant(
 ) -> AssistantQueryResponse:
     result = assistant.answer(db, current_user.id, request.message.strip())
     return AssistantQueryResponse(**result)
+
+
+@router.get("/next-actions", response_model=NextActionsResponse)
+def get_next_actions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.RECRUITER)),
+) -> NextActionsResponse:
+    items = assistant.next_actions(db, current_user.id)
+    return NextActionsResponse(items=items)

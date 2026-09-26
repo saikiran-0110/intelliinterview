@@ -148,3 +148,17 @@ class AssistantQueryResponse(BaseModel):
     answer: str
     structured: dict
     tools_used: list[str]
+
+
+class NextActionItem(BaseModel):
+    id: str
+    priority: int
+    title: str
+    detail: str
+    cta_label: str | None = None
+    cta_path: str | None = None
+
+
+class NextActionsResponse(BaseModel):
+    items: list[NextActionItem]
+    generated_from: str = "pipeline-rules"

@@ -11,10 +11,27 @@ import httpx
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models import CandidateCv, GapAnalysis, JobApplication, JobSpecification, User
+from app.models import (
+    CandidateCv,
+    GapAnalysis,
+    InterviewQuestion,
+    InterviewReport,
+    InterviewSession,
+    InterviewSessionStatus,
+    JobApplication,
+    JobSpecification,
+    PipelineStage,
+    QuestionPlan,
+    ScheduleConfirmationStatus,
+    User,
+)
 from app.services.llm_json import as_text
 
 logger = logging.getLogger(__name__)
+
+
+def _plural(count: int) -> str:
+    return "" if count == 1 else "s"
 
 
 class AssistantAgentService:
@@ -45,6 +62,190 @@ class AssistantAgentService:
             "structured": structured,
             "tools_used": tools_used,
         }
+
+    def next_actions(self, db: Session, recruiter_id: UUID) -> list[dict]:
+        """Deterministic pipeline-rules panel. No model call: these are rules over the
+        recruiter's own data, matching the principle that deterministic logic owns
+        anything a recruiter acts on."""
+        items: list[dict] = []
+
+        planned_gap_ids = {
+            row[0]
+            for row in db.query(QuestionPlan.gap_analysis_id)
+            .filter(QuestionPlan.created_by == recruiter_id)
+            .all()
+        }
+        shortlisted_by_job: dict[UUID, int] = {}
+        for app in (
+            db.query(JobApplication)
+            .filter(
+                JobApplication.recruiter_id == recruiter_id,
+                JobApplication.stage == PipelineStage.SHORTLISTED,
+                JobApplication.gap_analysis_id.isnot(None),
+            )
+            .all()
+        ):
+            if app.gap_analysis_id in planned_gap_ids:
+                continue
+            shortlisted_by_job[app.job_spec_id] = shortlisted_by_job.get(app.job_spec_id, 0) + 1
+        for job_id, count in shortlisted_by_job.items():
+            job_title = self._job_title(db, job_id)
+            items.append(
+                {
+                    "id": f"shortlisted-no-plan:{job_id}",
+                    "priority": 0,
+                    "title": f"{count} shortlisted candidate{_plural(count)} with no question plan for {job_title}",
+                    "detail": f"Build an interview question plan before scheduling for {job_title}.",
+                    "cta_label": "Plan questions",
+                    "cta_path": "/recruiter/questions",
+                }
+            )
+
+        unconfirmed = (
+            db.query(InterviewSession)
+            .filter(
+                InterviewSession.recruiter_id == recruiter_id,
+                InterviewSession.status == InterviewSessionStatus.SCHEDULED,
+                InterviewSession.confirmation_status != ScheduleConfirmationStatus.CONFIRMED,
+            )
+            .count()
+        )
+        if unconfirmed:
+            items.append(
+                {
+                    "id": "sessions-unconfirmed",
+                    "priority": 0,
+                    "title": f"{unconfirmed} scheduled interview{_plural(unconfirmed)} awaiting confirmation",
+                    "detail": "These candidates have not confirmed their interview slot yet.",
+                    "cta_label": "Open scheduling",
+                    "cta_path": "/recruiter/scheduling",
+                }
+            )
+
+        pending_by_job: dict[UUID, int] = {}
+        for app in (
+            db.query(JobApplication)
+            .join(JobSpecification, JobApplication.job_spec_id == JobSpecification.id)
+            .filter(
+                JobApplication.recruiter_id == recruiter_id,
+                JobApplication.stage.in_([PipelineStage.APPLIED, PipelineStage.SCREENING]),
+                JobSpecification.is_open.is_(True),
+            )
+            .all()
+        ):
+            pending_by_job[app.job_spec_id] = pending_by_job.get(app.job_spec_id, 0) + 1
+        for job_id, count in pending_by_job.items():
+            job_title = self._job_title(db, job_id)
+            items.append(
+                {
+                    "id": f"rank-applicants:{job_id}",
+                    "priority": 1,
+                    "title": f"{count} applicant{_plural(count)} to rank for {job_title}",
+                    "detail": f"New or screening-stage applicants are waiting to be ranked for {job_title}.",
+                    "cta_label": "Rank applicants",
+                    "cta_path": "/recruiter/ranking",
+                }
+            )
+
+        scheduled_plan_ids = {
+            row[0]
+            for row in db.query(InterviewSession.question_plan_id)
+            .filter(InterviewSession.recruiter_id == recruiter_id)
+            .all()
+        }
+        ready_by_job: dict[UUID | None, int] = {}
+        for plan in db.query(QuestionPlan).filter(QuestionPlan.created_by == recruiter_id).all():
+            if plan.id in scheduled_plan_ids:
+                continue
+            has_approved = (
+                db.query(InterviewQuestion)
+                .filter(InterviewQuestion.plan_id == plan.id, InterviewQuestion.approved.is_(True))
+                .first()
+            )
+            if not has_approved:
+                continue
+            analysis = db.get(GapAnalysis, plan.gap_analysis_id)
+            job_id = analysis.job_spec_id if analysis else None
+            ready_by_job[job_id] = ready_by_job.get(job_id, 0) + 1
+        for job_id, count in ready_by_job.items():
+            job_title = self._job_title(db, job_id) if job_id else "a role"
+            items.append(
+                {
+                    "id": f"create-session:{job_id or 'unknown'}",
+                    "priority": 1,
+                    "title": f"{count} question plan{_plural(count)} ready for a session for {job_title}",
+                    "detail": f"Approved questions exist but no interview session has been created for {job_title}.",
+                    "cta_label": "Create session",
+                    "cta_path": "/recruiter/sessions/new",
+                }
+            )
+
+        completed_with_report = (
+            db.query(InterviewSession)
+            .join(InterviewReport, InterviewReport.session_id == InterviewSession.id)
+            .filter(
+                InterviewSession.recruiter_id == recruiter_id,
+                InterviewSession.status == InterviewSessionStatus.COMPLETED,
+            )
+            .count()
+        )
+        if completed_with_report:
+            items.append(
+                {
+                    "id": "reports-ready",
+                    "priority": 2,
+                    "title": (
+                        f"{completed_with_report} completed interview report"
+                        f"{_plural(completed_with_report)} ready to review"
+                    ),
+                    "detail": "Review scores and recommendations from completed interviews.",
+                    "cta_label": "Open reports",
+                    "cta_path": "/recruiter/reports",
+                }
+            )
+
+        applied_job_ids = {
+            row[0]
+            for row in db.query(JobApplication.job_spec_id)
+            .filter(JobApplication.recruiter_id == recruiter_id)
+            .all()
+        }
+        open_jobs = (
+            db.query(JobSpecification)
+            .filter(JobSpecification.created_by == recruiter_id, JobSpecification.is_open.is_(True))
+            .all()
+        )
+        empty_jobs = sum(1 for job in open_jobs if job.id not in applied_job_ids)
+        if empty_jobs:
+            items.append(
+                {
+                    "id": "open-roles-no-applications",
+                    "priority": 3,
+                    "title": f"{empty_jobs} open role{_plural(empty_jobs)} with no applications yet",
+                    "detail": "Consider sharing these roles more widely.",
+                    "cta_label": "Open hiring board",
+                    "cta_path": "/recruiter/jobs",
+                }
+            )
+
+        if not items:
+            items.append(
+                {
+                    "id": "nothing-blocked",
+                    "priority": 4,
+                    "title": "Nothing is blocked right now",
+                    "detail": "Your pipeline has no outstanding blockers.",
+                    "cta_label": None,
+                    "cta_path": None,
+                }
+            )
+
+        items.sort(key=lambda item: item["priority"])
+        return items[:6]
+
+    def _job_title(self, db: Session, job_id: UUID) -> str:
+        job = db.get(JobSpecification, job_id)
+        return job.title if job else "a role"
 
     def _resolve_job(self, db: Session, recruiter_id: UUID, message: str) -> JobSpecification | None:
         jobs = (
