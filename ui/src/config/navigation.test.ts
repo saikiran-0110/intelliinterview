@@ -3,8 +3,9 @@ import { candidateNav, recruiterNav } from './navigation'
 
 describe('navigation config', () => {
   it('lists recruiter destinations in hiring order', () => {
-    expect(recruiterNav[0]).toMatchObject({ label: 'Hiring Board', path: '/recruiter/jobs' })
+    expect(recruiterNav[0]).toMatchObject({ label: 'Dashboard', path: '/recruiter/dashboard' })
     expect(recruiterNav.map((item) => item.path)).toEqual([
+      '/recruiter/dashboard',
       '/recruiter/jobs',
       '/recruiter/ranking',
       '/recruiter/questions',

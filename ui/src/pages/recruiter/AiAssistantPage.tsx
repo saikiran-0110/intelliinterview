@@ -1,11 +1,10 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { listJobSpecs } from '../../api/analysis'
-import { getNextActions, queryAssistant } from '../../api/optional'
+import { queryAssistant } from '../../api/optional'
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
 import type { JobSpecification } from '../../types/analysis'
-import type { NextActionItem } from '../../types/optional'
 
 const ACTIONS = [
   {
@@ -32,7 +31,6 @@ export function AiAssistantPage() {
   const [answer, setAnswer] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [nextActions, setNextActions] = useState<NextActionItem[] | null>(null)
 
   useEffect(() => {
     async function loadJobs() {
@@ -45,19 +43,6 @@ export function AiAssistantPage() {
       }
     }
     loadJobs()
-  }, [])
-
-  useEffect(() => {
-    async function loadNextActions() {
-      try {
-        const result = await getNextActions()
-        setNextActions(result.items)
-      } catch {
-        // Next-actions is a nice-to-have panel; never let it break the assistant below it.
-        setNextActions(null)
-      }
-    }
-    loadNextActions()
   }, [])
 
   const selectedJob = jobs.find((job) => job.id === selectedJobId)
@@ -91,40 +76,6 @@ export function AiAssistantPage() {
         description="Quick answers about one role — top matches, pipeline status, or a CV summary. For full scoring and shortlisting, use Candidate Ranking."
       />
       {error && <p className="mb-4 text-sm text-rose-600">{error}</p>}
-
-      {nextActions && nextActions.length > 0 && nextActions[0]?.id !== 'nothing-blocked' && (
-        <Card className="mb-6">
-          <h3 className="text-sm font-semibold text-ink">Next actions</h3>
-          <ul className="mt-3 space-y-3">
-            {nextActions.map((item) => (
-              <li
-                key={item.id}
-                className="flex flex-col gap-2 rounded-xl border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    {item.priority === 0 && (
-                      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700">
-                        Blocked
-                      </span>
-                    )}
-                    <p className="text-sm font-semibold text-ink">{item.title}</p>
-                  </div>
-                  <p className="mt-1 text-xs text-muted">{item.detail}</p>
-                </div>
-                {item.cta_label && item.cta_path && (
-                  <Link
-                    to={item.cta_path}
-                    className="shrink-0 rounded-xl border border-border px-3 py-2 text-center text-xs font-semibold text-sky-800"
-                  >
-                    {item.cta_label}
-                  </Link>
-                )}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
 
       <Card className="mb-6">
         <label className="text-xs text-slate-500">Role to ask about</label>

@@ -14,6 +14,7 @@ import { AiAssistantPage } from '../pages/recruiter/AiAssistantPage'
 import { AnalyticsPage } from '../pages/recruiter/AnalyticsPage'
 import { BiasDetectionPage } from '../pages/recruiter/BiasDetectionPage'
 import { CandidateRankingPage } from '../pages/recruiter/CandidateRankingPage'
+import { DashboardPage } from '../pages/recruiter/DashboardPage'
 import { InterviewSessionsPage } from '../pages/recruiter/InterviewSessionsPage'
 import { JobsPipelinePage } from '../pages/recruiter/JobsPipelinePage'
 import { NewSessionPage } from '../pages/recruiter/NewSessionPage'
@@ -34,7 +35,8 @@ export function AppRoutes() {
       </Route>
 
       <Route path="recruiter" element={<RecruiterLayout />}>
-        <Route index element={<Navigate to="jobs" replace />} />
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<DashboardPage />} />
         <Route path="jobs" element={<JobsPipelinePage />} />
         <Route path="ranking" element={<CandidateRankingPage />} />
         <Route path="assistant" element={<AiAssistantPage />} />

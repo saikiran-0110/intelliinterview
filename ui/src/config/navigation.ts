@@ -6,6 +6,7 @@ export type NavItem = {
 
 /** Recruiter flow: plan questions before creating sessions; schedule slots after */
 export const recruiterNav: NavItem[] = [
+  { label: 'Dashboard', path: '/recruiter/dashboard', description: 'Next actions and pipeline overview' },
   { label: 'Hiring Board', path: '/recruiter/jobs', description: 'Open roles and manage applicants' },
   { label: 'Candidate Ranking', path: '/recruiter/ranking', description: 'Match scores and shortlisting' },
   { label: 'Question Planning', path: '/recruiter/questions', description: 'Build and approve interview questions' },
