@@ -9,6 +9,7 @@ import {
   sendSessionMessage,
 } from '../../api/desirable'
 import { listSessions } from '../../api/sessions'
+import { CalendarExportButtons } from '../../components/ui/CalendarExportButtons'
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
 import type { AppNotification, ScheduleItem } from '../../types/desirable'
@@ -181,6 +182,15 @@ export function MySessionsPage() {
                       <p className="mt-2 text-xs text-slate-600">
                         Last note sent: {schedule.candidate_note}
                       </p>
+                    )}
+
+                    {confirmationReady && (
+                      <div className="mt-3">
+                        <CalendarExportButtons
+                          sessionId={session.id}
+                          scheduledAt={session.scheduled_at || schedule?.scheduled_at || null}
+                        />
+                      </div>
                     )}
 
                     {canActOnSchedule && (

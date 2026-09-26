@@ -7,6 +7,7 @@ import {
   listScheduleItems,
   proposeSlots,
 } from '../../api/desirable'
+import { CalendarExportButtons } from '../../components/ui/CalendarExportButtons'
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
 import type { AppNotification, ScheduleItem } from '../../types/desirable'
@@ -221,6 +222,11 @@ export function SchedulingPage() {
                     </button>
                   </div>
                 </div>
+                {item.scheduled_at && (
+                  <div className="mt-3">
+                    <CalendarExportButtons sessionId={item.session_id} scheduledAt={item.scheduled_at} />
+                  </div>
+                )}
                 {item.slots.length > 0 && (
                   <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {item.slots.map((slot) => (

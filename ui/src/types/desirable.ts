@@ -26,6 +26,12 @@ export type ScheduleItem = {
   slots: SlotSuggestion[]
 }
 
+export type CalendarLinks = {
+  google_url: string
+  outlook_url: string
+  ics_url: string
+}
+
 export type AppNotification = {
   id: string
   title: string

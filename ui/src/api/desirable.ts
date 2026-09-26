@@ -3,6 +3,7 @@ import type {
   AnalyticsOverview,
   AppNotification,
   BiasOverview,
+  CalendarLinks,
   CandidateFeedback,
   CandidateFeedbackSummary,
   ScheduleItem,
@@ -57,6 +58,14 @@ export function sendSessionMessage(sessionId: string, candidateNote: string) {
     method: 'POST',
     body: JSON.stringify({ candidate_note: candidateNote }),
   })
+}
+
+export function getCalendarLinks(sessionId: string) {
+  return apiRequest<CalendarLinks>(`/api/scheduling/sessions/${sessionId}/calendar-links`)
+}
+
+export function downloadCalendarIcs(sessionId: string) {
+  return apiRequest<Blob>(`/api/scheduling/sessions/${sessionId}/calendar.ics`, { raw: true })
 }
 
 export function listNotifications() {
