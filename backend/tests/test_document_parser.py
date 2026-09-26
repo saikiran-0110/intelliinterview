@@ -2,6 +2,7 @@ from io import BytesIO
 
 from docx import Document
 
+from app.services import document_parser as document_parser_module
 from app.services.document_parser import DocumentParserService, _looks_mangled
 
 
@@ -99,6 +100,41 @@ def test_extract_pdf_keeps_mangled_text_when_tika_unavailable(monkeypatch):
 
     text = parser.extract_text(b"pdf-bytes", "resume.pdf")
     assert text == mangled
+
+
+def test_extract_pdf_layout_mode_resolves_mangled_text_without_tika(monkeypatch):
+    parser = DocumentParserService()
+    mangled = " ".join(list("Docker Kubernetes PostgreSQL FastAPI React TypeScript " * 3))
+    clean_via_layout = "Senior engineer skilled in Docker and Kubernetes production deployments."
+
+    def fake_extract_pdf(_file_bytes, _errors, extraction_mode="plain"):
+        return clean_via_layout if extraction_mode == "layout" else mangled
+
+    def tika_should_not_be_called(*_args, **_kwargs):
+        raise AssertionError("Tika should not be tried when layout mode already resolved the text")
+
+    monkeypatch.setattr(parser, "_extract_pdf", fake_extract_pdf)
+    monkeypatch.setattr(parser, "_extract_with_tika", tika_should_not_be_called)
+
+    text = parser.extract_text(b"pdf-bytes", "resume.pdf")
+    assert text == clean_via_layout
+
+
+def test_extract_with_tika_short_circuits_without_java(monkeypatch):
+    monkeypatch.setattr(document_parser_module, "_java_available", None)
+    monkeypatch.setattr(document_parser_module.shutil, "which", lambda _name: None)
+
+    def from_buffer_should_not_be_called(*_args, **_kwargs):
+        raise AssertionError("Tika server should never be invoked without a Java runtime")
+
+    monkeypatch.setattr("tika.parser.from_buffer", from_buffer_should_not_be_called)
+
+    parser = DocumentParserService()
+    errors: list[str] = []
+    result = parser._extract_with_tika(b"pdf-bytes", errors)
+
+    assert result is None
+    assert any("Java runtime" in message for message in errors)
 
 
 def test_docx_includes_table_cells():

@@ -1,5 +1,6 @@
 import logging
 import re
+import shutil
 from io import BytesIO
 from typing import Optional
 
@@ -7,6 +8,24 @@ from docx import Document
 from pypdf import PdfReader
 
 logger = logging.getLogger(__name__)
+
+_java_available: bool | None = None
+
+
+def _has_java() -> bool:
+    """Apache Tika's server component is a Java application - without a JVM on PATH it
+    can never run, no matter how the JAR is fetched. Checked once and cached so a
+    missing Java runtime doesn't cost a `shutil.which` call, and is logged once instead
+    of on every upload."""
+    global _java_available
+    if _java_available is None:
+        _java_available = shutil.which("java") is not None
+        if not _java_available:
+            logger.info(
+                "document_parser: no Java runtime found on PATH; Apache Tika fallback is "
+                "disabled for this process (tika-server requires a JVM to run)."
+            )
+    return _java_available
 
 
 def _looks_mangled(text: str) -> bool:
@@ -44,8 +63,18 @@ class DocumentParserService:
             if text:
                 if _looks_mangled(text):
                     logger.warning(
-                        "document_parser: pypdf output for %s looks glyph-mangled, trying Tika", filename
+                        "document_parser: pypdf output for %s looks glyph-mangled, retrying with "
+                        "layout mode",
+                        filename,
                     )
+                    layout_text = self._extract_pdf(file_bytes, [], extraction_mode="layout")
+                    if layout_text and not _looks_mangled(layout_text):
+                        logger.info(
+                            "document_parser: layout-mode extraction resolved mangled text for %s",
+                            filename,
+                        )
+                        return layout_text
+
                     tika_text = self._extract_with_tika(file_bytes, errors)
                     if tika_text and not _looks_mangled(tika_text):
                         return tika_text
@@ -77,10 +106,12 @@ class DocumentParserService:
             raise ValueError("No text could be extracted from the uploaded document")
         return cleaned
 
-    def _extract_pdf(self, file_bytes: bytes, errors: list[str]) -> Optional[str]:
+    def _extract_pdf(
+        self, file_bytes: bytes, errors: list[str], extraction_mode: str = "plain"
+    ) -> Optional[str]:
         try:
             reader = PdfReader(BytesIO(file_bytes))
-            parts = [(page.extract_text() or "") for page in reader.pages]
+            parts = [(page.extract_text(extraction_mode=extraction_mode) or "") for page in reader.pages]
             text = " ".join(parts).strip()
             return self._normalize(text) if text else None
         except Exception as exc:  # noqa: BLE001 - surface parser failures as extract errors
@@ -103,6 +134,10 @@ class DocumentParserService:
             return None
 
     def _extract_with_tika(self, file_bytes: bytes, errors: list[str]) -> Optional[str]:
+        if not _has_java():
+            errors.append("Apache Tika requires a Java runtime, which is not installed")
+            return None
+
         try:
             from tika import parser
         except ImportError:
