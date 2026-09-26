@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 from uuid import UUID
 
@@ -18,6 +19,8 @@ from app.models import (
     QuestionPlan,
     QuestionSource,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _skill_name(item: dict[str, Any] | str) -> str:
@@ -184,6 +187,7 @@ def _enhance_with_openai(
     baseline: list[dict[str, Any]],
 ) -> list[dict[str, Any]] | None:
     if not settings.openai_api_key:
+        logger.info("question_generation: no OpenAI API key configured, using deterministic baseline")
         return None
 
     coverage_targets = [
@@ -235,7 +239,7 @@ def _enhance_with_openai(
             headers={"Authorization": f"Bearer {settings.openai_api_key}"},
             json={
                 "model": settings.openai_model,
-                "temperature": 0.3,
+                "temperature": 0.55,
                 "response_format": {"type": "json_object"},
                 "messages": [
                     {
@@ -269,8 +273,30 @@ def _enhance_with_openai(
                     "rationale": item.get("rationale"),
                 }
             )
-        return cleaned or None
-    except (httpx.HTTPError, KeyError, json.JSONDecodeError, IndexError, TypeError):
+        if not cleaned:
+            return None
+
+        baseline_texts = {item["text"].strip().lower() for item in baseline}
+        copied = [item["text"] for item in cleaned if item["text"].strip().lower() in baseline_texts]
+        if copied:
+            logger.warning(
+                "question_generation: %d generated question(s) matched baseline wording verbatim: %s",
+                len(copied),
+                copied,
+            )
+        return cleaned
+    except httpx.HTTPStatusError as exc:
+        logger.warning(
+            "question_generation: OpenAI returned status %s: %s",
+            exc.response.status_code,
+            exc.response.text[:300],
+        )
+        return None
+    except httpx.HTTPError as exc:
+        logger.warning("question_generation: OpenAI request failed: %s", exc)
+        return None
+    except (KeyError, json.JSONDecodeError, IndexError, TypeError, ValueError) as exc:
+        logger.warning("question_generation: could not parse OpenAI response: %s", exc)
         return None
 
 
