@@ -115,6 +115,18 @@ class ExperienceAnalysis(BaseModel):
     required_seniority: str | None = None
     notes: list[str] = Field(default_factory=list)
 
+    @field_validator("notes", mode="before")
+    @classmethod
+    def coerce_notes(cls, value: Any) -> list[str]:
+        if value is None:
+            return []
+        if isinstance(value, str):
+            stripped = value.strip()
+            return [stripped] if stripped else []
+        if isinstance(value, (list, tuple)):
+            return [str(item).strip() for item in value if str(item).strip()]
+        return [str(value).strip()]
+
 
 class QualificationsAnalysis(BaseModel):
     alignment: str
@@ -122,6 +134,20 @@ class QualificationsAnalysis(BaseModel):
     missing_qualifications: list[str] = Field(default_factory=list)
     additional_qualifications: list[str] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
+
+    @field_validator("matched_qualifications",
+        "missing_qualifications",
+        "additional_qualifications","notes", mode="before")
+    @classmethod
+    def coerce_notes(cls, value: Any) -> list[str]:
+        if value is None:
+            return []
+        if isinstance(value, str):
+            stripped = value.strip()
+            return [stripped] if stripped else []
+        if isinstance(value, (list, tuple)):
+            return [str(item).strip() for item in value if str(item).strip()]
+        return [str(value).strip()]
 
 
 class GapAnalysisRequest(BaseModel):

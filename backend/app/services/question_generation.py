@@ -186,6 +186,16 @@ def _enhance_with_openai(
     if not settings.openai_api_key:
         return None
 
+    coverage_targets = [
+        {
+            "skill_ref": item.get("skill_ref"),
+            "topic": item.get("topic"),
+            "question_type": item.get("question_type"),
+            "why": item.get("rationale"),
+        }
+        for item in baseline
+    ]
+
     prompt = {
         "candidate_name": candidate_name,
         "job_title": job_title,
@@ -199,14 +209,23 @@ def _enhance_with_openai(
             "qualifications_analysis": analysis.qualifications_analysis,
             "narrative_summary": analysis.narrative_summary,
         },
-        "baseline_questions": baseline,
+        "coverage_targets": coverage_targets,
         "instructions": (
-            "Return JSON with key 'questions': an array of 6 to 10 interview questions. "
-            "Each item must include text, topic, question_type "
+            "Write 6 to 10 original interview questions. "
+            "coverage_targets lists WHICH skills and question types to cover — it is a "
+            "checklist, not wording to copy. Write every question yourself in your own words. "
+            "Do NOT use the phrasing 'Walk us through a project where you used X, or how you "
+            "would ramp up on it', 'Describe a complex challenge you solved with X', or any "
+            "other formulaic template. "
+            "Each question must reference something concrete from the CV or job excerpt — a "
+            "named project, a specific technology pairing, a stated responsibility — so it "
+            "could not have been asked of a different candidate. "
+            "For gap skills, ask how the candidate's nearest actual experience would transfer, "
+            "naming that experience. "
+            "Quote the CV exactly when you quote it; never correct its spelling or spacing. "
+            "Return JSON with key 'questions': each item has text, topic, question_type "
             "(gap_probe|partial_probe|depth|experience|scenario|evidence|qualifications), "
-            "skill_ref (nullable), and rationale. "
-            "Questions must be tailored to this candidate and job, not generic. "
-            "Prioritise gaps and partial matches. Ground questions in the documents only."
+            "skill_ref (nullable), and rationale."
         ),
     }
 

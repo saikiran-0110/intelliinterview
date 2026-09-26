@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, type ReactNode, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { listJobSpecs } from '../../api/analysis'
 import {
@@ -40,6 +40,24 @@ const emptyForm = {
 }
 
 const inputClass = 'input-field'
+
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string
+  hint?: string
+  children: ReactNode
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-medium text-slate-500">{label}</span>
+      {children}
+      {hint ? <span className="mt-1 block text-xs text-muted">{hint}</span> : null}
+    </label>
+  )
+}
 
 export function JobsPipelinePage() {
   const [jobs, setJobs] = useState<JobSpecification[]>([])
@@ -236,103 +254,124 @@ export function JobsPipelinePage() {
           </div>
 
           <form className="mt-5 space-y-3" onSubmit={handleCreate}>
-            <input
-              value={form.title}
-              onChange={(e) => updateField('title', e.target.value)}
-              placeholder="Role title"
-              className={inputClass}
-              required
-            />
+            <Field label="Role title" hint="Job title candidates will see on the hiring board">
+              <input
+                value={form.title}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="e.g. Senior Backend Engineer"
+                className={inputClass}
+                required
+              />
+            </Field>
             <div className="grid gap-3 sm:grid-cols-2">
-              <input
-                value={form.department}
-                onChange={(e) => updateField('department', e.target.value)}
-                placeholder="Department (e.g. Engineering)"
-                className={inputClass}
-              />
-              <input
-                value={form.location}
-                onChange={(e) => updateField('location', e.target.value)}
-                placeholder="Location (e.g. London, UK)"
-                className={inputClass}
-              />
+              <Field label="Department" hint="Team or function this role sits in">
+                <input
+                  value={form.department}
+                  onChange={(e) => updateField('department', e.target.value)}
+                  placeholder="e.g. Engineering"
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Location" hint="City, country, or remote">
+                <input
+                  value={form.location}
+                  onChange={(e) => updateField('location', e.target.value)}
+                  placeholder="e.g. London, UK"
+                  className={inputClass}
+                />
+              </Field>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <select
-                value={form.employment_type}
-                onChange={(e) => updateField('employment_type', e.target.value as EmploymentType)}
-                className={inputClass}
-              >
-                <option value="FULL_TIME">Full time</option>
-                <option value="PART_TIME">Part time</option>
-                <option value="CONTRACT">Contract</option>
-                <option value="INTERNSHIP">Internship</option>
-              </select>
-              <select
-                value={form.work_mode}
-                onChange={(e) => updateField('work_mode', e.target.value as WorkMode)}
-                className={inputClass}
-              >
-                <option value="HYBRID">Hybrid</option>
-                <option value="ONSITE">On-site</option>
-                <option value="REMOTE">Remote</option>
-              </select>
+              <Field label="Employment type" hint="Full time, part time, contract, or internship">
+                <select
+                  value={form.employment_type}
+                  onChange={(e) => updateField('employment_type', e.target.value as EmploymentType)}
+                  className={inputClass}
+                >
+                  <option value="FULL_TIME">Full time</option>
+                  <option value="PART_TIME">Part time</option>
+                  <option value="CONTRACT">Contract</option>
+                  <option value="INTERNSHIP">Internship</option>
+                </select>
+              </Field>
+              <Field label="Work mode" hint="Where the person will work">
+                <select
+                  value={form.work_mode}
+                  onChange={(e) => updateField('work_mode', e.target.value as WorkMode)}
+                  className={inputClass}
+                >
+                  <option value="HYBRID">Hybrid</option>
+                  <option value="ONSITE">On-site</option>
+                  <option value="REMOTE">Remote</option>
+                </select>
+              </Field>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <input
-                type="number"
-                min={0}
-                step={1000}
-                value={form.salary_min_gbp}
-                onChange={(e) => updateField('salary_min_gbp', e.target.value)}
-                placeholder="Min salary (£)"
-                className={inputClass}
-                required
-              />
-              <input
-                type="number"
-                min={0}
-                step={1000}
-                value={form.salary_max_gbp}
-                onChange={(e) => updateField('salary_max_gbp', e.target.value)}
-                placeholder="Max salary (£)"
-                className={inputClass}
-                required
-              />
-              <input
-                type="number"
-                min={0}
-                value={form.years_experience_min}
-                onChange={(e) => updateField('years_experience_min', e.target.value)}
-                placeholder="Min years exp."
-                className={inputClass}
-              />
+              <Field label="Min salary (£)" hint="Lower end of the advertised band">
+                <input
+                  type="number"
+                  min={0}
+                  step={1000}
+                  value={form.salary_min_gbp}
+                  onChange={(e) => updateField('salary_min_gbp', e.target.value)}
+                  placeholder="e.g. 75000"
+                  className={inputClass}
+                  required
+                />
+              </Field>
+              <Field label="Max salary (£)" hint="Upper end of the advertised band">
+                <input
+                  type="number"
+                  min={0}
+                  step={1000}
+                  value={form.salary_max_gbp}
+                  onChange={(e) => updateField('salary_max_gbp', e.target.value)}
+                  placeholder="e.g. 95000"
+                  className={inputClass}
+                  required
+                />
+              </Field>
+              <Field label="Min years experience" hint="Minimum relevant experience required">
+                <input
+                  type="number"
+                  min={0}
+                  value={form.years_experience_min}
+                  onChange={(e) => updateField('years_experience_min', e.target.value)}
+                  placeholder="e.g. 5"
+                  className={inputClass}
+                />
+              </Field>
             </div>
-            <input
-              type="date"
-              value={form.closing_date}
-              onChange={(e) => updateField('closing_date', e.target.value)}
-              className={inputClass}
-              aria-label="Application closing date"
-            />
-            <p className="-mt-1 text-xs text-muted">
-              Application closing date (optional) — last day candidates can apply
-            </p>
-            <textarea
-              value={form.description}
-              onChange={(e) => updateField('description', e.target.value)}
-              placeholder="Job description and requirements"
-              rows={5}
-              className={inputClass}
-              required
-            />
-            <textarea
-              value={form.benefits}
-              onChange={(e) => updateField('benefits', e.target.value)}
-              placeholder="Benefits (pension, bonus, remote days, etc.)"
-              rows={2}
-              className={inputClass}
-            />
+            <Field
+              label="Application closing date"
+              hint="Optional — last day candidates can apply"
+            >
+              <input
+                type="date"
+                value={form.closing_date}
+                onChange={(e) => updateField('closing_date', e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Job description" hint="Role summary, responsibilities, and requirements">
+              <textarea
+                value={form.description}
+                onChange={(e) => updateField('description', e.target.value)}
+                placeholder="Describe the role, tech stack, and what success looks like"
+                rows={5}
+                className={inputClass}
+                required
+              />
+            </Field>
+            <Field label="Benefits" hint="Pension, bonus, remote days, healthcare, and similar perks">
+              <textarea
+                value={form.benefits}
+                onChange={(e) => updateField('benefits', e.target.value)}
+                placeholder="e.g. Pension, private healthcare, 25 days holiday"
+                rows={2}
+                className={inputClass}
+              />
+            </Field>
             <button type="submit" className="rounded-xl btn-primary">
               Publish recruitment request
             </button>
