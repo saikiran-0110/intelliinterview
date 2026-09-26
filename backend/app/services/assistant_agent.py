@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from uuid import UUID
 
@@ -11,6 +12,9 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models import CandidateCv, GapAnalysis, JobApplication, JobSpecification, User
+from app.services.llm_json import as_text
+
+logger = logging.getLogger(__name__)
 
 
 class AssistantAgentService:
@@ -165,6 +169,7 @@ class AssistantAgentService:
 
     def _openai_polish(self, message: str, structured: dict, baseline: str) -> str | None:
         if not settings.openai_api_key:
+            logger.info("assistant_agent: no OpenAI API key configured, using deterministic baseline")
             return None
         try:
             response = httpx.post(
@@ -179,7 +184,7 @@ class AssistantAgentService:
                             "role": "system",
                             "content": (
                                 "You are a recruiter assistant. Answer using only provided structured data. "
-                                "Return JSON with key answer."
+                                "Return JSON with key answer (a single string, never an array or null)."
                             ),
                         },
                         {
@@ -194,7 +199,17 @@ class AssistantAgentService:
             )
             response.raise_for_status()
             payload = json.loads(response.json()["choices"][0]["message"]["content"])
-            answer = payload.get("answer")
-            return str(answer).strip() if answer else None
-        except (httpx.HTTPError, KeyError, json.JSONDecodeError, IndexError, TypeError):
+            return as_text(payload.get("answer"), baseline)
+        except httpx.HTTPStatusError as exc:
+            logger.warning(
+                "assistant_agent: OpenAI returned status %s: %s",
+                exc.response.status_code,
+                exc.response.text[:300],
+            )
+            return None
+        except httpx.HTTPError as exc:
+            logger.warning("assistant_agent: OpenAI request failed: %s", exc)
+            return None
+        except (KeyError, json.JSONDecodeError, IndexError, TypeError, ValueError) as exc:
+            logger.warning("assistant_agent: could not parse OpenAI response: %s", exc)
             return None
