@@ -100,3 +100,27 @@ export type BiasOverview = {
   alerts: BiasAlert[]
   notes: string[]
 }
+
+export type OrganisationAlert = {
+  recruiter_label: string
+  alert_type: string
+  severity: 'LOW' | 'MEDIUM' | 'HIGH'
+  title: string
+  description: string
+  metric_payload: Record<string, unknown>
+}
+
+export type OrganisationRecruiterFigure = {
+  label: string
+  shortlist_rate: number
+  scored_applications: number
+}
+
+export type OrganisationBias = {
+  company: string | null
+  recruiter_count: number
+  insufficient_sample: boolean
+  alerts: OrganisationAlert[]
+  recruiter_figures: OrganisationRecruiterFigure[]
+  notes: string[]
+}

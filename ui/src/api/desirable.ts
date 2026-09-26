@@ -6,6 +6,7 @@ import type {
   CalendarLinks,
   CandidateFeedback,
   CandidateFeedbackSummary,
+  OrganisationBias,
   ScheduleItem,
 } from '../types/desirable'
 
@@ -92,6 +93,10 @@ export function getFeedbackBySession(sessionId: string) {
 
 export function getBiasOverview() {
   return apiRequest<BiasOverview>('/api/bias/overview')
+}
+
+export function getOrganisationBias() {
+  return apiRequest<OrganisationBias>('/api/bias/organisation')
 }
 
 export function acknowledgeBiasAlert(alertId: string) {
