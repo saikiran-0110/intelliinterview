@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { getSession, listSessions, startSession, submitAnswer } from '../../api/sessions'
 import { Card } from '../../components/ui/Card'
+import { InterviewRecorder } from '../../components/ui/InterviewRecorder'
 import { PageHeader } from '../../components/ui/PageHeader'
 import {
   createSpeechRecognition,
@@ -482,6 +483,17 @@ export function LiveInterviewPage() {
                 Speech-to-text is unavailable in this browser. Typed answers still work.
               </p>
             )}
+          </Card>
+
+          <Card>
+            <h3 className="text-lg font-semibold text-ink">Recording (optional)</h3>
+            <div className="mt-3">
+              <InterviewRecorder
+                sessionId={session.id}
+                active={session.status === 'IN_PROGRESS'}
+                completed={session.status === 'COMPLETED'}
+              />
+            </div>
           </Card>
 
           {canStart && (

@@ -33,3 +33,19 @@ export function submitAnswer(sessionId: string, answer: string) {
     body: JSON.stringify({ answer }),
   })
 }
+
+export function uploadRecording(sessionId: string, blob: Blob, durationSeconds?: number) {
+  const formData = new FormData()
+  const extension = blob.type.includes('mp4') ? 'mp4' : 'webm'
+  formData.append('file', blob, `interview.${extension}`)
+  if (durationSeconds != null) formData.append('duration_seconds', String(Math.round(durationSeconds)))
+  return apiRequest(`/api/sessions/${sessionId}/recording`, { method: 'POST', body: formData })
+}
+
+export function getRecordingBlob(sessionId: string) {
+  return apiRequest<Blob>(`/api/sessions/${sessionId}/recording`, { raw: true })
+}
+
+export function deleteRecording(sessionId: string) {
+  return apiRequest<void>(`/api/sessions/${sessionId}/recording`, { method: 'DELETE' })
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getReport } from '../../api/reports'
+import { getRecordingBlob } from '../../api/sessions'
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
 import type { InterviewReport } from '../../types/reports'
@@ -10,6 +11,7 @@ export function ReportDetailPage() {
   const [report, setReport] = useState<InterviewReport | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [recordingUrl, setRecordingUrl] = useState<string | null>(null)
 
   useEffect(() => {
     if (!reportId) return
@@ -25,6 +27,20 @@ export function ReportDetailPage() {
     }
     load()
   }, [reportId])
+
+  useEffect(() => {
+    if (!report) return
+    let objectUrl: string | null = null
+    getRecordingBlob(report.session_id)
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob)
+        setRecordingUrl(objectUrl)
+      })
+      .catch(() => setRecordingUrl(null))
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [report])
 
   if (!reportId) {
     return (
@@ -144,6 +160,16 @@ export function ReportDetailPage() {
           )}
         </div>
       </Card>
+
+      {recordingUrl && (
+        <Card className="mt-6">
+          <h3 className="text-lg font-semibold text-ink">Candidate recording</h3>
+          <p className="mt-1 text-xs text-muted">
+            For human review only - not used in scoring or by the AI evaluation.
+          </p>
+          <video controls className="mt-3 w-full rounded-xl" src={recordingUrl} />
+        </Card>
+      )}
 
       <p className="mt-4 text-sm text-slate-500">
         <Link to={`/recruiter/sessions/${report.session_id}`} className="text-teal-700 hover:text-teal-700">
