@@ -457,6 +457,26 @@ class InterviewReport(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class InterviewRecording(Base):
+    """Asynchronous candidate video/audio capture, stored as bytes in Postgres for simplicity
+    at prototype scale (the same pattern already used for CandidateCv.file_data)."""
+
+    __tablename__ = "interview_recordings"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_sessions.id"), nullable=False, unique=True, index=True
+    )
+    content_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    duration_seconds: Mapped[Optional[int]] = mapped_column(Integer)
+    data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 class PreparationPack(Base):
     __tablename__ = "preparation_packs"
 

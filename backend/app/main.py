@@ -20,6 +20,7 @@ from app.routers import (
     questions,
     preparation,
     ranking,
+    recordings,
     reports,
     scheduling,
     sessions,
@@ -55,3 +56,4 @@ app.include_router(applications.router)
 app.include_router(ranking.router)
 app.include_router(preparation.router)
 app.include_router(assistant.router)
+app.include_router(recordings.router)
