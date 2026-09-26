@@ -486,7 +486,7 @@ export function LiveInterviewPage() {
           </Card>
 
           <Card>
-            <h3 className="text-lg font-semibold text-ink">Recording (optional)</h3>
+            <h3 className="text-lg font-semibold text-ink">Recording</h3>
             <div className="mt-3">
               <InterviewRecorder
                 sessionId={session.id}

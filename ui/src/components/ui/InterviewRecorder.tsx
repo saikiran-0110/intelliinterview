@@ -26,15 +26,15 @@ function pickMimeType(): string | undefined {
 }
 
 /**
- * Opt-in, candidate-side interview recording. Never required to complete an interview:
- * every failure path (unsupported browser, denied permission, upload error) just disables
- * the feature and lets the interview continue normally. The recording is for human review
+ * Compulsory, candidate-side interview recording: capture starts automatically once the
+ * interview is in progress, with no opt-out toggle. The recording is for human review
  * only - it is never sent to any model, and the AI evaluation reads typed/transcribed
- * answers only.
+ * answers only. A browser that cannot support capture, or a denied camera/microphone
+ * permission, still cannot be forced open - that failure is surfaced clearly so the
+ * candidate can tell the recruiter, but it does not block the interview itself.
  */
 export function InterviewRecorder({ sessionId, active, completed }: Props) {
   const supported = useRef(isRecordingSupported()).current
-  const [enabled, setEnabled] = useState(false)
   const [permissionDenied, setPermissionDenied] = useState(false)
   const [recording, setRecording] = useState(false)
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle')
@@ -76,7 +76,6 @@ export function InterviewRecorder({ sessionId, active, completed }: Props) {
       setPermissionDenied(false)
     } catch {
       setPermissionDenied(true)
-      setEnabled(false)
       stopStream()
     }
   }
@@ -110,11 +109,11 @@ export function InterviewRecorder({ sessionId, active, completed }: Props) {
   }
 
   useEffect(() => {
-    if (enabled && active && !recording && uploadState === 'idle') {
+    if (active && !recording && uploadState === 'idle') {
       void startCapture()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, active])
+  }, [active])
 
   useEffect(() => {
     if (completed && recording) {
@@ -138,33 +137,25 @@ export function InterviewRecorder({ sessionId, active, completed }: Props) {
   if (!supported) {
     return (
       <p className="text-xs text-amber-700">
-        Recording is not supported in this browser. The interview will proceed normally without it.
+        This interview requires recording, but your browser does not support it. Please let your
+        recruiter know - the interview will still proceed.
       </p>
     )
   }
 
   return (
     <div className="space-y-2">
-      <label className="flex min-h-11 items-center gap-3 text-sm text-slate-700">
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => setEnabled(e.target.checked)}
-          disabled={completed}
-          className="h-5 w-5 shrink-0 rounded border-border"
-        />
-        Record this interview
-      </label>
+      <p className="text-sm font-semibold text-ink">This interview is recorded.</p>
       <p className="text-xs text-muted">
-        Off by default. If enabled, your camera and microphone are captured for the length of the
-        interview and shared with your recruiter for human review only - it is not used in scoring,
-        and you can complete the interview without it. A visible indicator shows whenever capture is
-        active, and you can delete your recording afterwards.
+        Recording is required for this interview and cannot be turned off. Your camera and
+        microphone are captured for the length of the interview and shared with your recruiter for
+        human review only - it is not used in scoring, and the AI evaluation reads your typed or
+        transcribed answers only. A visible indicator shows whenever capture is active.
       </p>
       {permissionDenied && (
-        <p className="text-xs text-amber-700">
-          Camera/microphone permission was denied, so recording is off. The interview will proceed
-          normally.
+        <p className="text-xs text-rose-600">
+          Camera/microphone permission was denied or unavailable, so recording could not start.
+          Please let your recruiter know - the interview will still proceed.
         </p>
       )}
       {recording && (
