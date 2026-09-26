@@ -9,6 +9,7 @@ from app.database import Base, get_db
 from app.main import app
 
 settings.jwt_secret = "test-secret-key-with-minimum-32-characters"
+settings.openai_api_key = ""  # tests exercise the deterministic baseline, never live OpenAI
 
 
 @pytest.fixture(autouse=True)
