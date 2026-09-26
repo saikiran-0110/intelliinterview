@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 from uuid import UUID
 
@@ -22,6 +23,9 @@ from app.models import (
     TurnRole,
     User,
 )
+from app.services.llm_json import as_text
+
+logger = logging.getLogger(__name__)
 
 
 PROBLEM_SOLVING_TYPES = {"problem_solving", "scenario", "system_design", "scenario_question"}
@@ -92,6 +96,7 @@ def _openai_polish_summary(
     baseline_summary: str,
 ) -> str | None:
     if not settings.openai_api_key:
+        logger.info("report_generation: no OpenAI API key configured, using deterministic baseline")
         return None
 
     prompt = {
@@ -105,7 +110,7 @@ def _openai_polish_summary(
         "instructions": (
             "Write a concise recruiter recommendation summary (3-5 sentences). "
             "Ground every claim in the provided scores and evidence. "
-            "Return JSON with key recommendation_summary."
+            "Return JSON with key recommendation_summary (a single string, never an array)."
         ),
     }
 
@@ -130,9 +135,19 @@ def _openai_polish_summary(
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]
         payload = json.loads(content)
-        summary = payload.get("recommendation_summary")
-        return str(summary).strip() if summary else None
-    except (httpx.HTTPError, KeyError, json.JSONDecodeError, IndexError, TypeError):
+        return as_text(payload.get("recommendation_summary"), baseline_summary)
+    except httpx.HTTPStatusError as exc:
+        logger.warning(
+            "report_generation: OpenAI returned status %s: %s",
+            exc.response.status_code,
+            exc.response.text[:300],
+        )
+        return None
+    except httpx.HTTPError as exc:
+        logger.warning("report_generation: OpenAI request failed: %s", exc)
+        return None
+    except (KeyError, json.JSONDecodeError, IndexError, TypeError, ValueError) as exc:
+        logger.warning("report_generation: could not parse OpenAI response: %s", exc)
         return None
 
 
