@@ -144,3 +144,44 @@ def test_compare_skills_credits_swift_as_partial_match_for_ios_gap():
     assert "swift" in strong_names
     assert "ios" in partial_names
     assert result["gaps"] == []
+
+
+def test_extract_skills_detects_expanded_data_devops_and_frontend_terms():
+    text = (
+        "Data engineer skilled in Pandas, NumPy, PySpark, Apache Airflow, and Apache "
+        "Kafka for ETL pipelines. Infrastructure managed with Terraform and Ansible, "
+        "monitored via Prometheus and Grafana. Frontend built with React and Redux, "
+        "styled with SCSS. Databases: SQLite and DynamoDB. Tested with Selenium and "
+        "Cypress."
+    )
+    skills = extract_skills(text)
+    for expected in [
+        "data engineering",
+        "terraform",
+        "ansible",
+        "monitoring",
+        "react",
+        "state management",
+        "css",
+        "sqlite",
+        "dynamodb",
+        "testing",
+        "message queues",
+    ]:
+        assert expected in skills, f"expected {expected!r} in {skills}"
+
+
+def test_extract_skills_avoids_common_word_false_positives_for_new_aliases():
+    # "sass" (a common English word, "don't give me any sass") was deliberately left out
+    # of the CSS catalog entry to avoid this; "spark" was deliberately never added bare.
+    text = "The manager did not tolerate any sass, but the new hire will spark real change."
+    skills = extract_skills(text)
+    assert "css" not in skills
+    assert "data engineering" not in skills
+
+
+def test_extract_skills_mobile_frameworks():
+    text = "Flutter developer experienced with React Native and cross-platform apps."
+    skills = extract_skills(text)
+    assert "flutter" in skills
+    assert "react" in skills
