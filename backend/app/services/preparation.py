@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from uuid import UUID, uuid4
 
@@ -12,6 +13,9 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models import CandidateCv, GapAnalysis, JobSpecification, PreparationPack
 from app.services.gap_analysis import GapAnalysisService
+from app.services.llm_json import as_dict_list, as_str_list, as_text
+
+logger = logging.getLogger(__name__)
 
 
 def _slug(value: str) -> str:
@@ -234,6 +238,7 @@ def _baseline_pack(job_title: str, analysis: GapAnalysis) -> dict:
 
 def _openai_pack(job_title: str, cv_text: str, job_text: str, baseline: dict) -> dict | None:
     if not settings.openai_api_key:
+        logger.info("preparation: no OpenAI API key configured, using deterministic baseline")
         return None
     prompt = {
         "job_title": job_title,
@@ -246,7 +251,9 @@ def _openai_pack(job_title: str, cv_text: str, job_text: str, baseline: dict) ->
             "talking_points array, technical_context), guidance (string), focus_areas (string array), "
             "study_modules (array of objects with id, title, summary, technical_details, topic, "
             "estimated_minutes), checklist_items (array of objects with id, label, category, "
-            "technical_hint). Make content specific and technical, not generic."
+            "technical_hint). Make content specific and technical, not generic. "
+            "Every array field MUST be a JSON array as specified, never a single concatenated "
+            "string or null."
         ),
     }
     try:
@@ -272,17 +279,27 @@ def _openai_pack(job_title: str, cv_text: str, job_text: str, baseline: dict) ->
         )
         response.raise_for_status()
         payload = json.loads(response.json()["choices"][0]["message"]["content"])
+        practice_questions = payload.get("practice_questions")
+        if not isinstance(practice_questions, list) or not practice_questions:
+            practice_questions = baseline["practice_questions"]
         return {
-            "practice_questions": _normalize_questions(
-                payload.get("practice_questions") or baseline["practice_questions"]
-            ),
-            "guidance": payload.get("guidance") or baseline["guidance"],
-            "focus_areas": payload.get("focus_areas") or baseline["focus_areas"],
-            "study_modules": payload.get("study_modules") or baseline["study_modules"],
-            "checklist_items": payload.get("checklist_items") or baseline["checklist_items"],
+            "practice_questions": _normalize_questions(practice_questions),
+            "guidance": as_text(payload.get("guidance"), baseline["guidance"]),
+            "focus_areas": as_str_list(payload.get("focus_areas"), baseline["focus_areas"]),
+            "study_modules": as_dict_list(payload.get("study_modules"), baseline["study_modules"]),
+            "checklist_items": as_dict_list(payload.get("checklist_items"), baseline["checklist_items"]),
             "model_version": settings.openai_model,
         }
-    except (httpx.HTTPError, KeyError, json.JSONDecodeError, IndexError, TypeError):
+    except httpx.HTTPStatusError as exc:
+        logger.warning(
+            "preparation: OpenAI returned status %s: %s", exc.response.status_code, exc.response.text[:300]
+        )
+        return None
+    except httpx.HTTPError as exc:
+        logger.warning("preparation: OpenAI request failed: %s", exc)
+        return None
+    except (KeyError, json.JSONDecodeError, IndexError, TypeError, ValueError) as exc:
+        logger.warning("preparation: could not parse OpenAI response: %s", exc)
         return None
 
 
