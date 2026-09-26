@@ -15,7 +15,16 @@ from app.models import (
     JobApplication,
     JobSpecification,
     PipelineStage,
+    User,
+    UserRole,
 )
+
+SHORTLISTED_STAGES = {
+    PipelineStage.SHORTLISTED,
+    PipelineStage.INTERVIEW,
+    PipelineStage.OFFER,
+    PipelineStage.HIRED,
+}
 
 
 class BiasDetectionService:
@@ -191,3 +200,133 @@ class BiasDetectionService:
         db.commit()
         db.refresh(alert)
         return alert
+
+    def analyze_organisation(self, db: Session, company: str | None, caller_id: UUID) -> dict:
+        """Aggregate the existing per-recruiter analyze() across every recruiter sharing a
+        company name, plus one organisation-only check: cross-recruiter shortlist-rate
+        divergence. Reuses analyze() rather than duplicating its logic."""
+        normalized_company = (company or "").strip()
+        base_notes = [
+            "Monitoring uses role, match-score bands, and interview score patterns only.",
+            "No demographic attributes are inferred from CV text.",
+            "Alerts are advisory and do not block hiring decisions.",
+            "Organisation view aggregates recruiters sharing a company name; it infers no demographics.",
+        ]
+
+        if not normalized_company:
+            alerts = self.analyze(db, caller_id)
+            return {
+                "company": None,
+                "recruiter_count": 1,
+                "insufficient_sample": True,
+                "alerts": [
+                    {
+                        "recruiter_label": "You",
+                        "alert_type": a.alert_type,
+                        "severity": a.severity,
+                        "title": a.title,
+                        "description": a.description,
+                        "metric_payload": a.metric_payload or {},
+                    }
+                    for a in alerts
+                ],
+                "recruiter_figures": [],
+                "notes": [
+                    "No company is set on this account, so this view covers only your own pipeline "
+                    "(an organisation of one).",
+                    *base_notes,
+                ],
+            }
+
+        recruiters = [
+            user
+            for user in db.query(User).filter(User.role == UserRole.RECRUITER).all()
+            if (user.company or "").strip().lower() == normalized_company.lower()
+        ]
+        if caller_id not in {r.id for r in recruiters}:
+            caller = db.get(User, caller_id)
+            if caller:
+                recruiters.append(caller)
+
+        ordered = sorted(recruiters, key=lambda u: str(u.id))
+        anon_labels = {user.id: f"Recruiter {chr(65 + i)}" for i, user in enumerate(ordered)}
+
+        def label_for(user_id: UUID) -> str:
+            return "You" if user_id == caller_id else anon_labels[user_id]
+
+        aggregated_alerts: list[dict] = []
+        eligible_rates: list[tuple[UUID, float, int]] = []
+        total_scored = 0
+
+        for recruiter in ordered:
+            recruiter_alerts = self.analyze(db, recruiter.id)
+            label = label_for(recruiter.id)
+            for alert in recruiter_alerts:
+                aggregated_alerts.append(
+                    {
+                        "recruiter_label": label,
+                        "alert_type": alert.alert_type,
+                        "severity": alert.severity,
+                        "title": alert.title,
+                        "description": alert.description,
+                        "metric_payload": alert.metric_payload or {},
+                    }
+                )
+
+            applications = db.query(JobApplication).filter(JobApplication.recruiter_id == recruiter.id).all()
+            scored = [app for app in applications if app.match_score is not None]
+            total_scored += len(scored)
+            if len(scored) >= 6:
+                shortlisted = [app for app in scored if app.stage in SHORTLISTED_STAGES]
+                rate = len(shortlisted) / len(scored)
+                eligible_rates.append((recruiter.id, rate, len(scored)))
+
+        insufficient_sample = len(ordered) < 2 or total_scored < 15
+
+        recruiter_figures = [
+            {"label": label_for(rid), "shortlist_rate": round(rate, 2), "scored_applications": count}
+            for rid, rate, count in eligible_rates
+        ]
+
+        if not insufficient_sample and len(eligible_rates) >= 3:
+            rates = [rate for _, rate, _ in eligible_rates]
+            spread = max(rates) - min(rates)
+            if spread >= 0.40:
+                aggregated_alerts.insert(
+                    0,
+                    {
+                        "recruiter_label": "Organisation",
+                        "alert_type": "cross_recruiter_shortlist_divergence",
+                        "severity": BiasAlertSeverity.MEDIUM,
+                        "title": "Shortlist rates diverge sharply across recruiters",
+                        "description": (
+                            f"Shortlist rates across {len(eligible_rates)} recruiters with enough "
+                            f"scored applications range from {min(rates):.0%} to {max(rates):.0%}, "
+                            "a spread of 40 percentage points or more. This does not identify which "
+                            "recruiters are outliers - review shortlisting criteria with the team."
+                        ),
+                        "metric_payload": {
+                            "recruiter_count": len(eligible_rates),
+                            "min_rate": round(min(rates), 2),
+                            "max_rate": round(max(rates), 2),
+                            "spread": round(spread, 2),
+                        },
+                    },
+                )
+
+        notes = list(base_notes)
+        if insufficient_sample:
+            notes.insert(
+                0,
+                "Not enough organisation-wide data yet (need at least 2 recruiters and 15 scored "
+                "applications) for the cross-recruiter divergence check.",
+            )
+
+        return {
+            "company": company,
+            "recruiter_count": len(ordered),
+            "insufficient_sample": insufficient_sample,
+            "alerts": aggregated_alerts,
+            "recruiter_figures": recruiter_figures,
+            "notes": notes,
+        }

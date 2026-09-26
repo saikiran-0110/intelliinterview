@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.bias_schemas import BiasAlertResponse, BiasOverviewResponse
+from app.bias_schemas import BiasAlertResponse, BiasOverviewResponse, OrganisationBiasResponse
 from app.database import get_db
 from app.dependencies import require_role
 from app.models import BiasAlert, User, UserRole
@@ -44,6 +44,16 @@ def get_bias_overview(
             "Alerts are advisory and do not block hiring decisions.",
         ],
     )
+
+
+@router.get("/organisation", response_model=OrganisationBiasResponse)
+def get_organisation_bias(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.RECRUITER)),
+) -> OrganisationBiasResponse:
+    # Always scoped to the caller's own company - never an arbitrary value from the request.
+    result = bias_service.analyze_organisation(db, current_user.company, current_user.id)
+    return OrganisationBiasResponse(**result)
 
 
 @router.post("/alerts/{alert_id}/acknowledge", response_model=BiasAlertResponse)
