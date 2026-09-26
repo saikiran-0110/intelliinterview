@@ -33,32 +33,45 @@ class BiasDetectionService:
         reports = db.query(InterviewReport).filter(InterviewReport.recruiter_id == recruiter_id).all()
         alerts: list[BiasAlert] = []
 
-        # Alert 1: shortlist rate vs match score bands looks inverted.
-        with_scores = [app for app in applications if app.match_score is not None]
-        if len(with_scores) >= 6:
+        apps_by_job: dict[UUID, list[JobApplication]] = defaultdict(list)
+        for app in applications:
+            apps_by_job[app.job_spec_id].append(app)
+
+        reports_by_job: dict[UUID, list[InterviewReport]] = defaultdict(list)
+        for report in reports:
+            reports_by_job[report.job_spec_id].append(report)
+
+        # Alert 1: shortlist rate vs match score bands looks inverted - computed per job
+        # specification. Pooling applications across different roles would compare
+        # incommensurable candidate pools (a competitive senior role naturally scores
+        # differently than a junior one), which can manufacture a false signal.
+        for job_id, job_apps in apps_by_job.items():
+            with_scores = [app for app in job_apps if app.match_score is not None]
+            if len(with_scores) < 6:
+                continue
             high = [app for app in with_scores if (app.match_score or 0) >= 70]
             low = [app for app in with_scores if (app.match_score or 0) < 50]
-            high_shortlisted = [
-                app for app in high if app.stage in {PipelineStage.SHORTLISTED, PipelineStage.INTERVIEW, PipelineStage.OFFER, PipelineStage.HIRED}
-            ]
-            low_shortlisted = [
-                app for app in low if app.stage in {PipelineStage.SHORTLISTED, PipelineStage.INTERVIEW, PipelineStage.OFFER, PipelineStage.HIRED}
-            ]
+            high_shortlisted = [app for app in high if app.stage in SHORTLISTED_STAGES]
+            low_shortlisted = [app for app in low if app.stage in SHORTLISTED_STAGES]
             high_rate = len(high_shortlisted) / len(high) if high else 0
             low_rate = len(low_shortlisted) / len(low) if low else 0
             if low and high and low_rate - high_rate >= 0.35:
+                job = db.get(JobSpecification, job_id)
+                job_title = job.title if job else "a role"
                 alerts.append(
                     self._upsert_alert(
                         db,
                         recruiter_id,
-                        alert_type="shortlist_match_inversion",
+                        alert_type=f"shortlist_match_inversion:{job_id}",
                         severity=BiasAlertSeverity.HIGH,
-                        title="Shortlisting may not align with match scores",
+                        title=f"Shortlisting may not align with match scores for {job_title}",
                         description=(
-                            "Candidates in lower match-score bands were shortlisted more often than "
-                            "higher-match candidates in the current window. Review shortlisting decisions."
+                            f"For {job_title}, candidates in lower match-score bands were "
+                            "shortlisted more often than higher-match candidates in the current "
+                            "window. Review shortlisting decisions for this role."
                         ),
                         payload={
+                            "job_spec_id": str(job_id),
                             "high_band_shortlist_rate": round(high_rate, 2),
                             "low_band_shortlist_rate": round(low_rate, 2),
                             "sample_size": len(with_scores),
@@ -66,32 +79,44 @@ class BiasDetectionService:
                     )
                 )
 
-        # Alert 2: interview overall scores unusually low-variance (possible rubber-stamping).
-        scores = [report.overall_score for report in reports]
-        if len(scores) >= 5:
+        # Alert 2: interview overall scores unusually low-variance (possible
+        # rubber-stamping) - computed per job specification for the same reason as above.
+        for job_id, job_reports in reports_by_job.items():
+            scores = [report.overall_score for report in job_reports]
+            if len(scores) < 5:
+                continue
             spread = pstdev(scores)
             if spread < 0.4:
+                job = db.get(JobSpecification, job_id)
+                job_title = job.title if job else "a role"
                 alerts.append(
                     self._upsert_alert(
                         db,
                         recruiter_id,
-                        alert_type="score_low_variance",
+                        alert_type=f"score_low_variance:{job_id}",
                         severity=BiasAlertSeverity.MEDIUM,
-                        title="Interview scores show unusually low variation",
+                        title=f"Interview scores show unusually low variation for {job_title}",
                         description=(
-                            "Recent interview overall scores are tightly clustered. "
-                            "This may indicate insufficient differentiation between candidates."
+                            f"Recent interview overall scores for {job_title} are tightly "
+                            "clustered. This may indicate insufficient differentiation between "
+                            "candidates for this role."
                         ),
-                        payload={"score_count": len(scores), "stdev": round(spread, 3), "mean": round(mean(scores), 2)},
+                        payload={
+                            "job_spec_id": str(job_id),
+                            "score_count": len(scores),
+                            "stdev": round(spread, 3),
+                            "mean": round(mean(scores), 2),
+                        },
                     )
                 )
 
         # Alert 3: one role dominates shortlists heavily versus applications share.
+        # This check is intentionally cross-role: it compares roles against each other.
         by_role_apps: dict[UUID, int] = defaultdict(int)
         by_role_shortlists: dict[UUID, int] = defaultdict(int)
         for app in applications:
             by_role_apps[app.job_spec_id] += 1
-            if app.stage in {PipelineStage.SHORTLISTED, PipelineStage.INTERVIEW, PipelineStage.OFFER, PipelineStage.HIRED}:
+            if app.stage in SHORTLISTED_STAGES:
                 by_role_shortlists[app.job_spec_id] += 1
         total_apps = sum(by_role_apps.values())
         total_shortlists = sum(by_role_shortlists.values())
@@ -105,7 +130,10 @@ class BiasDetectionService:
                         self._upsert_alert(
                             db,
                             recruiter_id,
-                            alert_type="role_shortlist_concentration",
+                            # Scoped per job: without this, two different concentrated roles in
+                            # the same pass would share one alert_type and each _upsert_alert
+                            # call would overwrite the previous role's persisted alert.
+                            alert_type=f"role_shortlist_concentration:{job_id}",
                             severity=BiasAlertSeverity.MEDIUM,
                             title="Shortlists concentrated on one role",
                             description=(
