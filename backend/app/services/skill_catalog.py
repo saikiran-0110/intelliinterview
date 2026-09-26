@@ -19,6 +19,19 @@ TECH_SKILLS: dict[str, list[str]] = {
     "rust": ["rust"],
     "kotlin": ["kotlin"],
     "swift": ["swift"],
+    "ios": [
+        "ios",
+        "uikit",
+        "swiftui",
+        "objective-c",
+        "core data",
+        "ios sdk",
+        "xcode",
+        "cocoapods",
+        "arkit",
+        "combine framework",
+    ],
+    "android": ["android", "jetpack compose", "android sdk", "room database"],
     "postgresql": ["postgresql", "postgres", "pgvector"],
     "mysql": ["mysql"],
     "mongodb": ["mongodb", "mongo"],
@@ -55,6 +68,8 @@ RELATED_SKILLS: dict[str, set[str]] = {
     "kubernetes": {"docker", "aws", "azure", "gcp", "ci/cd"},
     "machine learning": {"python", "sql"},
     "system design": {"microservices", "rest", "sql", "docker", "kubernetes"},
+    "ios": {"swift"},
+    "android": {"kotlin", "java"},
 }
 
 QUALIFICATION_PATTERNS = [

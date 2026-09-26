@@ -114,3 +114,33 @@ def test_compare_skills_true_gap_when_unrelated():
     assert result["strong"] == []
     assert result["partial"] == []
     assert result["gaps"][0]["name"] == "rust"
+
+
+def test_extract_skills_detects_ios_and_android_ecosystem_terms():
+    # The catalog previously had no iOS/Android framework keywords at all - only the
+    # bare "swift"/"kotlin" language names - so a fully iOS-loaded job spec extracted
+    # just one required skill and any candidate who merely mentioned Swift scored 100%,
+    # regardless of having zero real iOS framework experience.
+    job_text = (
+        "iOS Software Engineer: strong experience with Swift, UIKit, SwiftUI, Core "
+        "Data, and the iOS SDK. Familiarity with Xcode is required."
+    )
+    skills = extract_skills(job_text)
+    assert "ios" in skills
+    assert "swift" in skills
+
+    android_text = "Android developer skilled in Kotlin, Jetpack Compose, and the Android SDK."
+    android_skills = extract_skills(android_text)
+    assert "android" in android_skills
+    assert "kotlin" in android_skills
+
+
+def test_compare_skills_credits_swift_as_partial_match_for_ios_gap():
+    # A candidate who only knows the Swift language (no iOS framework experience) should
+    # be a partial match for an "ios" requirement, not a full gap and not silently absent.
+    result = compare_skills(cv_skills=["swift"], job_skills=["ios", "swift"])
+    strong_names = {item["name"] for item in result["strong"]}
+    partial_names = {item["name"] for item in result["partial"]}
+    assert "swift" in strong_names
+    assert "ios" in partial_names
+    assert result["gaps"] == []
