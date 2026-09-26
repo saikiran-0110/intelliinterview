@@ -1,4 +1,7 @@
+import json
+
 from app.models import EmploymentType, WorkMode
+from app.services import job_drafting as job_drafting_module
 from app.services.job_drafting import (
     JobDraftingService,
     _as_int,
@@ -10,6 +13,17 @@ from app.services.job_drafting import (
     _guess_title,
     _guess_work_mode,
 )
+
+
+class _FakeResponse:
+    def __init__(self, content: dict):
+        self._content = content
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return {"choices": [{"message": {"content": json.dumps(self._content)}}]}
 
 
 def test_extract_salary_range_from_pounds_and_k_notation():
@@ -78,3 +92,57 @@ def test_as_int_extracts_first_integer():
 def test_as_int_none_and_unusable_return_fallback():
     assert _as_int(None, 3) == 3
     assert _as_int("unspecified", 3) == 3
+
+
+def test_openai_draft_uses_model_benefits_grounded_in_prompt(monkeypatch):
+    monkeypatch.setattr(job_drafting_module.settings, "openai_api_key", "test-key")
+    prompt = "Senior Engineer, London. Benefits: unlimited PTO and a 4-day work week."
+    baseline = job_drafting_module._baseline_draft(prompt)
+
+    model_benefits = "Unlimited paid time off and a 4-day working week."
+    fake_payload = {**baseline, "benefits": model_benefits}
+
+    monkeypatch.setattr(
+        job_drafting_module.httpx, "post", lambda *args, **kwargs: _FakeResponse(fake_payload)
+    )
+
+    result = job_drafting_module._openai_draft(prompt, baseline)
+    assert result["benefits"] == model_benefits
+    assert result["benefits"] != baseline["benefits"]
+
+
+def test_openai_draft_warns_when_model_copies_baseline_benefits_verbatim(monkeypatch, caplog):
+    monkeypatch.setattr(job_drafting_module.settings, "openai_api_key", "test-key")
+    prompt = "Senior Engineer, London."
+    baseline = job_drafting_module._baseline_draft(prompt)
+
+    # Simulate the exact regression: the model just echoes the baseline benefits text.
+    fake_payload = {**baseline}
+    monkeypatch.setattr(
+        job_drafting_module.httpx, "post", lambda *args, **kwargs: _FakeResponse(fake_payload)
+    )
+
+    with caplog.at_level("WARNING"):
+        result = job_drafting_module._openai_draft(prompt, baseline)
+
+    assert result["benefits"] == baseline["benefits"]
+    assert any("baseline benefits text verbatim" in message for message in caplog.messages)
+
+
+def test_openai_draft_prompt_instructs_against_copying_baseline_benefits(monkeypatch):
+    monkeypatch.setattr(job_drafting_module.settings, "openai_api_key", "test-key")
+    prompt = "Senior Engineer, London."
+    baseline = job_drafting_module._baseline_draft(prompt)
+
+    captured = {}
+
+    def fake_post(_url, json, **_kwargs):
+        captured["payload"] = json
+        return _FakeResponse(baseline)
+
+    monkeypatch.setattr(job_drafting_module.httpx, "post", fake_post)
+    job_drafting_module._openai_draft(prompt, baseline)
+
+    user_message = captured["payload"]["messages"][1]["content"]
+    assert "not something to copy" in user_message
+    assert "recruiter_prompt actually says" in user_message

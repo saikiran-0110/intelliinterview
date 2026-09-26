@@ -202,7 +202,14 @@ def _openai_draft(prompt: str, baseline: dict) -> dict | None:
                                 "baseline_draft": baseline,
                                 "instructions": (
                                     "Enhance the baseline into a ready-to-publish recruitment request. "
-                                    "Keep UK context and realistic salary bands in pounds."
+                                    "Keep UK context and realistic salary bands in pounds. "
+                                    "The baseline_draft's description and benefits are generic "
+                                    "placeholder text, not something to copy - write both yourself, "
+                                    "grounded in what the recruiter_prompt actually says. For benefits "
+                                    "specifically: if the recruiter's prompt mentions any benefits, "
+                                    "perks, or compensation details, reflect those specifically; "
+                                    "otherwise write a realistic, role-appropriate benefits line in "
+                                    "your own words. Do not reuse the baseline's benefits wording."
                                 ),
                             }
                         ),
@@ -225,6 +232,13 @@ def _openai_draft(prompt: str, baseline: dict) -> dict | None:
         if salary_min is not None and salary_max is not None and salary_min > salary_max:
             salary_min, salary_max = salary_max, salary_min
 
+        benefits = str(payload.get("benefits") or baseline["benefits"])
+        if benefits.strip().lower() == baseline["benefits"].strip().lower():
+            logger.warning(
+                "job_drafting: model returned the baseline benefits text verbatim instead of "
+                "writing its own"
+            )
+
         return {
             "title": str(payload.get("title") or baseline["title"])[:255],
             "description": str(payload.get("description") or baseline["description"]),
@@ -237,7 +251,7 @@ def _openai_draft(prompt: str, baseline: dict) -> dict | None:
             "years_experience_min": _as_int(
                 payload.get("years_experience_min"), baseline["years_experience_min"]
             ),
-            "benefits": str(payload.get("benefits") or baseline["benefits"]),
+            "benefits": benefits,
             "model_version": settings.openai_model,
         }
     except httpx.HTTPStatusError as exc:
