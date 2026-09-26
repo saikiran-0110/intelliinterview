@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { apiRequest, clearAuth, getStoredUser, getToken, setAuth } from '../../api/client'
 import type { AuthResponse } from '../../types/analysis'
 import { candidateNav } from '../../config/navigation'
+import { NotificationBell } from '../ui/NotificationBell'
 import { Sidebar } from '../ui/Sidebar'
 
 export function CandidateLayout() {
@@ -82,6 +83,7 @@ export function CandidateLayout() {
             <span className="rounded-full bg-sky-100 px-3 py-1.5 text-sm font-semibold text-sky-900 ring-1 ring-sky-300">
               {user?.email ?? 'candidate'}
             </span>
+            <NotificationBell />
             <button
               type="button"
               onClick={handleLogout}

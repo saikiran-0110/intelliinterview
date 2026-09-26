@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { apiRequest, clearAuth, getStoredUser, getToken, setAuth } from '../../api/client'
 import type { AuthResponse } from '../../types/analysis'
 import { recruiterNav } from '../../config/navigation'
+import { NotificationBell } from '../ui/NotificationBell'
 import { Sidebar } from '../ui/Sidebar'
 
 export function RecruiterLayout() {
@@ -80,7 +81,7 @@ export function RecruiterLayout() {
         subtitle="Hire end to end"
         items={recruiterNav}
         accent="teal"
-        homePath="/recruiter/jobs"
+        homePath="/recruiter/dashboard"
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex flex-col gap-3 border-b border-teal-200/70 bg-teal-50/70 px-4 py-4 pl-16 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-6 md:pl-6">
@@ -92,6 +93,7 @@ export function RecruiterLayout() {
             <span className="rounded-full bg-teal-100 px-3 py-1.5 text-sm font-semibold text-teal-900 ring-1 ring-teal-300">
               {user?.email ?? 'recruiter'}
             </span>
+            <NotificationBell />
             <button
               type="button"
               onClick={handleLogout}
