@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 import httpx
 
 from app.config import settings
 from app.models import InterviewQuestion, InterviewTurn
+from app.services.llm_json import as_str_list
+
+logger = logging.getLogger(__name__)
 
 
 def _word_count(text: str) -> int:
@@ -87,6 +91,7 @@ def _openai_evaluate(
     job_title: str,
 ) -> dict[str, Any] | None:
     if not settings.openai_api_key:
+        logger.info("interview_agent: no OpenAI API key configured, using deterministic baseline")
         return None
 
     history = [
@@ -117,7 +122,9 @@ def _openai_evaluate(
             "strengths (string array), weaknesses (string array), should_follow_up (bool), "
             "follow_up_question (string or null), advance_question (bool). "
             "Ask a follow-up only if the answer is incomplete and follow_up_count < follow_up_limit. "
-            "Ground observations in the answer text only."
+            "Ground observations in the answer text only. "
+            "Every array field MUST be a JSON array of strings, never a single concatenated "
+            "string or null."
         ),
     }
 
@@ -154,26 +161,39 @@ def _openai_evaluate(
                 f"using a concrete project example."
             )
 
-        evidence_quotes = payload.get("evidence_quotes") or []
-        if not evidence_quotes:
-            cleaned = " ".join(answer.split())
-            if cleaned:
-                evidence_quotes = [cleaned[:220] + ("..." if len(cleaned) > 220 else "")]
+        fallback_quote_cleaned = " ".join(answer.split())
+        fallback_quotes = (
+            [fallback_quote_cleaned[:220] + ("..." if len(fallback_quote_cleaned) > 220 else "")]
+            if fallback_quote_cleaned
+            else []
+        )
+        evidence_quotes = as_str_list(payload.get("evidence_quotes"), fallback_quotes)
 
         return {
             "technical_score": float(payload.get("technical_score", 5)),
             "communication_score": float(payload.get("communication_score", 5)),
-            "observations": payload.get("observations") or [],
+            "observations": as_str_list(payload.get("observations"), []),
             "evidence_quotes": evidence_quotes,
-            "strengths": payload.get("strengths") or [],
-            "weaknesses": payload.get("weaknesses") or [],
+            "strengths": as_str_list(payload.get("strengths"), []),
+            "weaknesses": as_str_list(payload.get("weaknesses"), []),
             "should_follow_up": should_follow_up,
             "follow_up_question": follow_up_question,
             "advance_question": not should_follow_up,
             "model_version": settings.openai_model,
             "raw_model_response": payload,
         }
-    except (httpx.HTTPError, KeyError, json.JSONDecodeError, IndexError, TypeError, ValueError):
+    except httpx.HTTPStatusError as exc:
+        logger.warning(
+            "interview_agent: OpenAI returned status %s: %s",
+            exc.response.status_code,
+            exc.response.text[:300],
+        )
+        return None
+    except httpx.HTTPError as exc:
+        logger.warning("interview_agent: OpenAI request failed: %s", exc)
+        return None
+    except (KeyError, json.JSONDecodeError, IndexError, TypeError, ValueError) as exc:
+        logger.warning("interview_agent: could not parse OpenAI response: %s", exc)
         return None
 
 
