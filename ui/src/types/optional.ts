@@ -142,6 +142,20 @@ export type AssistantResponse = {
   tools_used: string[]
 }
 
+export type NextActionItem = {
+  id: string
+  priority: number
+  title: string
+  detail: string
+  cta_label: string | null
+  cta_path: string | null
+}
+
+export type NextActionsResponse = {
+  items: NextActionItem[]
+  generated_from: string
+}
+
 export type OpenJob = {
   id: string
   title: string

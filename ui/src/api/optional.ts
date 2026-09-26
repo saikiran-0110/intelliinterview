@@ -6,6 +6,7 @@ import type {
   EmploymentType,
   JobRequisitionInput,
   MatchPreview,
+  NextActionsResponse,
   OpenJob,
   PipelineStage,
   PreparationPack,
@@ -156,6 +157,10 @@ export function queryAssistant(message: string) {
     method: 'POST',
     body: JSON.stringify({ message }),
   })
+}
+
+export function getNextActions() {
+  return apiRequest<NextActionsResponse>('/api/assistant/next-actions')
 }
 
 export function formatSalaryGbp(min?: number | null, max?: number | null) {
