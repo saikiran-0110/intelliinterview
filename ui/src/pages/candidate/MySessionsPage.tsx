@@ -209,7 +209,7 @@ export function MySessionsPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleConfirm(session.id, slot.id)}
-                                  className="rounded-lg bg-sky-600 px-3 py-1 text-xs font-semibold text-ink hover:bg-sky-500"
+                                  className="min-h-11 rounded-lg bg-sky-600 px-3 py-1 text-xs font-semibold text-ink hover:bg-sky-500 sm:min-h-0"
                                 >
                                   Confirm
                                 </button>
@@ -229,14 +229,14 @@ export function MySessionsPage() {
                           <button
                             type="button"
                             onClick={() => handleMessage(session.id)}
-                            className="text-xs font-semibold text-sky-700"
+                            className="min-h-11 text-xs font-semibold text-sky-700 sm:min-h-0"
                           >
                             Send message to recruiter
                           </button>
                           <button
                             type="button"
                             onClick={() => handleReschedule(session.id)}
-                            className="text-xs font-semibold text-amber-700"
+                            className="min-h-11 text-xs font-semibold text-amber-700 sm:min-h-0"
                           >
                             Request reschedule
                           </button>
@@ -248,7 +248,7 @@ export function MySessionsPage() {
                     {session.status === 'COMPLETED' && (
                       <Link
                         to="/candidate/feedback"
-                        className="rounded-xl border border-border px-4 py-2 text-center text-sm font-semibold text-sky-700"
+                        className="flex min-h-11 items-center justify-center rounded-xl border border-border px-4 py-2 text-center text-sm font-semibold text-sky-700"
                       >
                         View feedback
                       </Link>
@@ -256,7 +256,7 @@ export function MySessionsPage() {
                     {canOpenInterview ? (
                       <Link
                         to={`/candidate/interview/${session.id}`}
-                        className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-ink hover:bg-sky-500"
+                        className="flex min-h-11 items-center justify-center rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-ink hover:bg-sky-500"
                       >
                         {session.status === 'COMPLETED' ? 'View transcript' : 'Open interview'}
                       </Link>

@@ -178,7 +178,7 @@ export function ApplicationsPage() {
               className="block w-full text-sm text-slate-700"
               required
             />
-            <button type="submit" className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-ink">
+            <button type="submit" className="min-h-11 w-full rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-ink sm:w-auto">
               Upload resume
             </button>
           </form>
@@ -199,16 +199,16 @@ export function ApplicationsPage() {
             {cvs.map((cv) => (
               <div
                 key={cv.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-xs text-muted"
+                className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-xs text-muted"
               >
-                <span>
+                <span className="min-w-0 truncate">
                   {cv.original_filename}
                   {selectedCv === cv.id || (!selectedCv && cvs[0]?.id === cv.id) ? ' · selected' : ''}
                 </span>
                 <button
                   type="button"
                   onClick={() => handleDeleteCv(cv.id)}
-                  className="shrink-0 font-semibold text-rose-600"
+                  className="min-h-11 shrink-0 font-semibold text-rose-600"
                 >
                   Remove
                 </button>
@@ -244,7 +244,7 @@ export function ApplicationsPage() {
             <button
               type="button"
               onClick={handleMatch}
-              className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-sky-700"
+              className="min-h-11 w-full rounded-xl border border-border px-4 py-2 text-sm font-semibold text-sky-700 sm:w-auto"
             >
               Check match with my resume
             </button>
@@ -331,7 +331,7 @@ export function ApplicationsPage() {
             ) : (
               <button
                 type="submit"
-                className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-ink"
+                className="min-h-11 w-full rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-ink sm:w-auto"
               >
                 Submit application
               </button>

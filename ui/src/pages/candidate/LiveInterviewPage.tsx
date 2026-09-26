@@ -375,7 +375,7 @@ export function LiveInterviewPage() {
                     type="button"
                     onClick={handleSpeakLatest}
                     disabled={!ttsSupported || isSpeaking}
-                    className="rounded-xl border border-border px-3 py-2 text-xs font-semibold text-sky-700 hover:border-sky-300 disabled:opacity-50"
+                    className="min-h-11 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-sky-700 hover:border-sky-300 disabled:opacity-50"
                   >
                     {isSpeaking ? 'Speaking...' : 'Listen'}
                   </button>
@@ -383,7 +383,7 @@ export function LiveInterviewPage() {
                     type="button"
                     onClick={handleStopSpeaking}
                     disabled={!isSpeaking}
-                    className="rounded-xl border border-border px-3 py-2 text-xs font-semibold text-slate-700 hover:border-slate-400/40 disabled:opacity-50"
+                    className="min-h-11 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-slate-700 hover:border-slate-400/40 disabled:opacity-50"
                   >
                     Stop
                   </button>
@@ -435,7 +435,7 @@ export function LiveInterviewPage() {
         <div className="space-y-6">
           <Card>
             <h3 className="text-lg font-semibold text-ink">Voice settings</h3>
-            <label className="mt-3 flex items-center gap-3 text-sm text-slate-700">
+            <label className="mt-3 flex min-h-11 items-center gap-3 text-sm text-slate-700">
               <input
                 type="checkbox"
                 checked={ttsEnabled}
@@ -446,11 +446,11 @@ export function LiveInterviewPage() {
                   }
                 }}
                 disabled={!ttsSupported}
-                className="h-4 w-4 rounded border-border"
+                className="h-5 w-5 shrink-0 rounded border-border"
               />
               Read AI questions aloud (text-to-speech)
             </label>
-            <label className="mt-3 flex items-center gap-3 text-sm text-slate-700">
+            <label className="mt-3 flex min-h-11 items-center gap-3 text-sm text-slate-700">
               <input
                 type="checkbox"
                 checked={sttEnabled}
@@ -463,7 +463,7 @@ export function LiveInterviewPage() {
                   }
                 }}
                 disabled={!sttSupported}
-                className="h-4 w-4 rounded border-border"
+                className="h-5 w-5 shrink-0 rounded border-border"
               />
               Enable voice answers (speech-to-text)
             </label>
@@ -489,7 +489,7 @@ export function LiveInterviewPage() {
                 type="button"
                 onClick={handleStart}
                 disabled={loading}
-                className="mt-4 w-full rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-ink hover:bg-sky-500 disabled:opacity-50"
+                className="mt-4 min-h-11 w-full rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-ink hover:bg-sky-500 disabled:opacity-50"
               >
                 Start interview
               </button>
@@ -525,12 +525,12 @@ export function LiveInterviewPage() {
                   className="input-field"
                   required
                 />
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <button
                     type="button"
                     onClick={handleToggleListening}
                     disabled={!sttSupported || !sttEnabled || loading}
-                    className={`rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50 ${
+                    className={`min-h-11 rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50 ${
                       isListening
                         ? 'bg-rose-500 text-ink hover:bg-rose-400'
                         : 'border border-border text-sky-700 hover:border-sky-300'
@@ -541,7 +541,7 @@ export function LiveInterviewPage() {
                   <button
                     type="submit"
                     disabled={loading || !answer.trim()}
-                    className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-ink hover:bg-sky-500 disabled:opacity-50"
+                    className="min-h-11 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-ink hover:bg-sky-500 disabled:opacity-50"
                   >
                     {loading ? 'Submitting...' : 'Submit answer'}
                   </button>

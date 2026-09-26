@@ -131,15 +131,15 @@ export function ProfilePage() {
             {cvs.map((cv) => (
               <div
                 key={cv.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-teal-200 bg-teal-50/50 px-3 py-2 text-xs text-muted"
+                className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-teal-200 bg-teal-50/50 px-3 py-2 text-xs text-muted"
               >
-                <span>
+                <span className="min-w-0 truncate">
                   {cv.original_filename} · {new Date(cv.created_at).toLocaleString()}
                 </span>
                 <button
                   type="button"
                   onClick={() => handleDeleteCv(cv.id)}
-                  className="shrink-0 font-semibold text-rose-600"
+                  className="min-h-11 shrink-0 font-semibold text-rose-600"
                 >
                   Remove
                 </button>

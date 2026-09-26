@@ -73,21 +73,25 @@ export function CandidateLayout() {
         homePath="/candidate/applications"
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-sky-200/70 bg-sky-50/70 px-6 py-4 backdrop-blur">
+        <header className="flex flex-col gap-3 border-b border-sky-200/70 bg-sky-50/70 px-4 py-4 pl-16 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-6 md:pl-6">
           <div>
             <p className="text-sm text-muted">Logged in as</p>
             <p className="text-base font-bold text-ink">{user?.full_name ?? 'Candidate'}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full bg-sky-100 px-3 py-1.5 text-sm font-semibold text-sky-900 ring-1 ring-sky-300">
               {user?.email ?? 'candidate'}
             </span>
-            <button type="button" onClick={handleLogout} className="btn-secondary !px-3.5 !py-2 !text-sm">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="btn-secondary min-h-11 !px-3.5 !py-2 !text-sm"
+            >
               Log out
             </button>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto px-6 py-8 lg:px-10">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
           <Outlet />
         </main>
       </div>
