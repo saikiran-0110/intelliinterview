@@ -122,7 +122,7 @@ def test_oversized_upload_is_rejected(client, monkeypatch):
     candidate_token = _register_candidate(client, email="rec-candidate4@example.com")
     session_id = _create_session(client, recruiter_token, "rec-candidate4@example.com")
 
-    monkeypatch.setattr(config.settings, "upload_max_size_mb", 0)
+    monkeypatch.setattr(config.settings, "recording_max_size_mb", 0)
 
     response = client.post(
         f"/api/sessions/{session_id}/recording",
@@ -152,6 +152,14 @@ def test_get_recording_404_when_none_exists(client):
 
     response = client.get(f"/api/sessions/{session_id}/recording", headers=auth_headers(candidate_token))
     assert response.status_code == 404
+
+
+def test_recording_size_limit_covers_a_45_minute_interview():
+    from app.config import settings
+
+    # ~2.6 Mbps combined video+audio (typical MediaRecorder default bitrate) for 45
+    # minutes is roughly 877MB; the configured limit must comfortably cover that.
+    assert settings.recording_max_size_mb >= 900
 
 
 def test_candidate_can_delete_their_own_recording(client):

@@ -76,11 +76,11 @@ async def upload_recording(
         )
 
     file_bytes = await file.read()
-    max_bytes = settings.upload_max_size_mb * 1024 * 1024
+    max_bytes = settings.recording_max_size_mb * 1024 * 1024
     if len(file_bytes) > max_bytes:
         raise HTTPException(
             status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-            detail=f"Recording exceeds {settings.upload_max_size_mb}MB limit",
+            detail=f"Recording exceeds {settings.recording_max_size_mb}MB limit",
         )
 
     existing = (

@@ -15,6 +15,9 @@ class Settings:
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
     upload_max_size_mb: int = 10
+    # ~1GB headroom for a 45-minute webm interview recording (video+audio at typical
+    # MediaRecorder default bitrates run roughly 700MB-900MB for that length).
+    recording_max_size_mb: int = 1024
     frontend_base_url: str = "http://localhost:5173"
 
     # Gmail SMTP (App Password). OTP codes are always printed to the backend console as well.
