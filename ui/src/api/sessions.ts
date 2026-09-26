@@ -45,7 +45,3 @@ export function uploadRecording(sessionId: string, blob: Blob, durationSeconds?:
 export function getRecordingBlob(sessionId: string) {
   return apiRequest<Blob>(`/api/sessions/${sessionId}/recording`, { raw: true })
 }
-
-export function deleteRecording(sessionId: string) {
-  return apiRequest<void>(`/api/sessions/${sessionId}/recording`, { method: 'DELETE' })
-}

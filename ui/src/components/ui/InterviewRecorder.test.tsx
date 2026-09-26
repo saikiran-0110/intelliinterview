@@ -4,7 +4,6 @@ import { InterviewRecorder } from './InterviewRecorder'
 
 vi.mock('../../api/sessions', () => ({
   uploadRecording: vi.fn(),
-  deleteRecording: vi.fn(),
 }))
 
 describe('InterviewRecorder', () => {

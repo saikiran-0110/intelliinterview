@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { deleteRecording, uploadRecording } from '../../api/sessions'
+import { uploadRecording } from '../../api/sessions'
 
 type Props = {
   sessionId: string
@@ -124,16 +124,6 @@ export function InterviewRecorder({ sessionId, active, completed }: Props) {
 
   useEffect(() => stopStream, [])
 
-  async function handleDelete() {
-    try {
-      await deleteRecording(sessionId)
-      setUploadState('idle')
-      setUploadMessage('Recording deleted.')
-    } catch (err) {
-      setUploadMessage(err instanceof Error ? err.message : 'Failed to delete recording.')
-    }
-  }
-
   if (!supported) {
     return (
       <p className="text-xs text-amber-700">
@@ -171,15 +161,6 @@ export function InterviewRecorder({ sessionId, active, completed }: Props) {
         <p className={`text-xs ${uploadState === 'error' ? 'text-rose-600' : 'text-sky-700'}`}>
           {uploadMessage}
         </p>
-      )}
-      {uploadState === 'success' && (
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="min-h-11 text-xs font-semibold text-rose-600"
-        >
-          Delete my recording
-        </button>
       )}
     </div>
   )
