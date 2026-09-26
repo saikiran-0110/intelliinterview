@@ -56,6 +56,12 @@ class ScheduleItemResponse(BaseModel):
     slots: list[SlotSuggestionResponse]
 
 
+class CalendarLinksResponse(BaseModel):
+    google_url: str
+    outlook_url: str
+    ics_url: str
+
+
 class NotificationResponse(BaseModel):
     id: UUID
     title: str

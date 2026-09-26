@@ -1,8 +1,9 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user, require_role
 from app.models import (
@@ -15,6 +16,7 @@ from app.models import (
     UserRole,
 )
 from app.scheduling_schemas import (
+    CalendarLinksResponse,
     CandidateMessageRequest,
     ConfirmSlotRequest,
     NotificationResponse,
@@ -24,12 +26,24 @@ from app.scheduling_schemas import (
     ScheduleItemResponse,
     SlotSuggestionResponse,
 )
+from app.services import calendar_export
 from app.services.notifications import NotificationService
 from app.services.scheduling import SchedulingService
 
 router = APIRouter(prefix="/api/scheduling", tags=["scheduling"])
 scheduling = SchedulingService()
 notifications = NotificationService()
+
+
+def _get_accessible_session(db: Session, session_id: UUID, user: User) -> InterviewSession:
+    session = db.get(InterviewSession, session_id)
+    if session is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    if user.role == UserRole.RECRUITER and session.recruiter_id != user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    if user.role == UserRole.CANDIDATE and session.candidate_user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    return session
 
 
 def _slot_response(slot: InterviewSlotSuggestion) -> SlotSuggestionResponse:
@@ -191,6 +205,65 @@ def send_candidate_message(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return _schedule_item(db, session)
+
+
+@router.get("/sessions/{session_id}/calendar.ics")
+def download_calendar_ics(
+    session_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    session = _get_accessible_session(db, session_id, current_user)
+    if session.scheduled_at is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to export yet")
+
+    candidate = db.get(User, session.candidate_user_id)
+    recruiter = db.get(User, session.recruiter_id)
+    job = db.get(JobSpecification, session.job_spec_id)
+    portal_url = f"{settings.frontend_base_url}/candidate/interview/{session.id}"
+
+    ics = calendar_export.build_ics(
+        session_id=session.id,
+        scheduled_at=session.scheduled_at,
+        duration_minutes=session.duration_minutes,
+        job_title=job.title if job else "Interview",
+        candidate_name=candidate.full_name if candidate else "Candidate",
+        recruiter_email=recruiter.email if recruiter else "",
+        candidate_email=candidate.email if candidate else "",
+        portal_url=portal_url,
+    )
+    return Response(
+        content=ics,
+        media_type="text/calendar",
+        headers={"Content-Disposition": 'attachment; filename="interview.ics"'},
+    )
+
+
+@router.get("/sessions/{session_id}/calendar-links", response_model=CalendarLinksResponse)
+def get_calendar_links(
+    session_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> CalendarLinksResponse:
+    session = _get_accessible_session(db, session_id, current_user)
+    if session.scheduled_at is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to export yet")
+
+    candidate = db.get(User, session.candidate_user_id)
+    job = db.get(JobSpecification, session.job_spec_id)
+    job_title = job.title if job else "Interview"
+    candidate_name = candidate.full_name if candidate else "Candidate"
+    portal_url = f"{settings.frontend_base_url}/candidate/interview/{session.id}"
+
+    return CalendarLinksResponse(
+        google_url=calendar_export.google_calendar_url(
+            session.scheduled_at, session.duration_minutes, job_title, candidate_name, portal_url
+        ),
+        outlook_url=calendar_export.outlook_calendar_url(
+            session.scheduled_at, session.duration_minutes, job_title, candidate_name, portal_url
+        ),
+        ics_url=f"/api/scheduling/sessions/{session.id}/calendar.ics",
+    )
 
 
 @router.get("/notifications", response_model=list[NotificationResponse])
