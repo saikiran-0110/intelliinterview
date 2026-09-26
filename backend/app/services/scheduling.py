@@ -7,7 +7,6 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.config import settings
 from app.models import (
     InterviewSession,
     InterviewSlotSuggestion,
@@ -80,7 +79,6 @@ class SchedulingService:
     def notify_candidate_of_slots(self, db: Session, session: InterviewSession) -> None:
         job = db.get(JobSpecification, session.job_spec_id)
         role = job.title if job else "the role"
-        link = f"{settings.frontend_base_url}/candidate/sessions"
         self.notifications.notify(
             db,
             user_id=session.candidate_user_id,
@@ -89,7 +87,7 @@ class SchedulingService:
                 f"Your recruiter suggested interview slots for {role}. "
                 "Please confirm a slot or request a reschedule in your candidate portal."
             ),
-            link=link,
+            link="/candidate/sessions",
             related_session_id=session.id,
             send_email=True,
         )
@@ -145,7 +143,7 @@ class SchedulingService:
                 f"The candidate confirmed the slot starting at {slot.starts_at.isoformat()}. "
                 f"Note: {note}"
             ),
-            link=f"{settings.frontend_base_url}/recruiter/scheduling",
+            link="/recruiter/scheduling",
             related_session_id=session.id,
             send_email=True,
         )
@@ -175,7 +173,7 @@ class SchedulingService:
             user_id=session.recruiter_id,
             title=f"Reschedule requested for {role}",
             body=f"The candidate requested a new interview slot. Note: {note}",
-            link=f"{settings.frontend_base_url}/recruiter/scheduling",
+            link="/recruiter/scheduling",
             related_session_id=session.id,
             send_email=True,
         )
@@ -202,7 +200,7 @@ class SchedulingService:
             user_id=session.recruiter_id,
             title=f"Message from candidate about {role}",
             body=note,
-            link=f"{settings.frontend_base_url}/recruiter/scheduling",
+            link="/recruiter/scheduling",
             related_session_id=session.id,
             send_email=True,
         )
@@ -273,7 +271,7 @@ class SchedulingService:
                     f"Your recruiter set the interview time to {starts_at.isoformat()} "
                     f"({duration_minutes} minutes). No further confirmation is required."
                 ),
-                link=f"{settings.frontend_base_url}/candidate/sessions",
+                link="/candidate/sessions",
                 related_session_id=session.id,
                 send_email=True,
             )
