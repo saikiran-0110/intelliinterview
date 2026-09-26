@@ -80,6 +80,20 @@ def test_compare_skills_strong_partial_and_gap():
     assert gap_names == set()
 
 
+def test_extract_skills_does_not_match_short_aliases_inside_words():
+    text = "Data analyst who reports on KPIs and extracts insights from spreadsheets using SQL and HTML dashboards."
+    skills = extract_skills(text)
+    assert "typescript" not in skills
+    assert "machine learning" not in skills
+
+
+def test_extract_skills_javascript_does_not_imply_java():
+    text = "Five years of professional JavaScript development, mostly React and Node.js."
+    skills = extract_skills(text)
+    assert "javascript" in skills
+    assert "java" not in skills
+
+
 def test_compare_skills_true_gap_when_unrelated():
     result = compare_skills(cv_skills=["html"], job_skills=["rust"])
     assert result["strong"] == []
