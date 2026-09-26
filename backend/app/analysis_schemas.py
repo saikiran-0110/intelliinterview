@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
 from app.models import EmploymentType, WorkMode
+from app.services.llm_json import as_str_list
 
 
 class ParsedProfileResponse(BaseModel):
@@ -118,14 +119,7 @@ class ExperienceAnalysis(BaseModel):
     @field_validator("notes", mode="before")
     @classmethod
     def coerce_notes(cls, value: Any) -> list[str]:
-        if value is None:
-            return []
-        if isinstance(value, str):
-            stripped = value.strip()
-            return [stripped] if stripped else []
-        if isinstance(value, (list, tuple)):
-            return [str(item).strip() for item in value if str(item).strip()]
-        return [str(value).strip()]
+        return as_str_list(value, [])
 
 
 class QualificationsAnalysis(BaseModel):
@@ -135,19 +129,16 @@ class QualificationsAnalysis(BaseModel):
     additional_qualifications: list[str] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
 
-    @field_validator("matched_qualifications",
+    @field_validator(
+        "matched_qualifications",
         "missing_qualifications",
-        "additional_qualifications","notes", mode="before")
+        "additional_qualifications",
+        "notes",
+        mode="before",
+    )
     @classmethod
-    def coerce_notes(cls, value: Any) -> list[str]:
-        if value is None:
-            return []
-        if isinstance(value, str):
-            stripped = value.strip()
-            return [stripped] if stripped else []
-        if isinstance(value, (list, tuple)):
-            return [str(item).strip() for item in value if str(item).strip()]
-        return [str(value).strip()]
+    def coerce_lists(cls, value: Any) -> list[str]:
+        return as_str_list(value, [])
 
 
 class GapAnalysisRequest(BaseModel):
