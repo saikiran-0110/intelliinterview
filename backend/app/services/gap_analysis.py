@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 from uuid import UUID
 
@@ -11,12 +12,15 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models import CandidateCv, GapAnalysis, JobSpecification
+from app.services.llm_json import as_dict_list, as_text
 from app.services.skill_catalog import (
     compare_skills,
     extract_evidence_passage,
     parse_cv_profile,
     parse_job_requirements,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _build_experience_analysis(cv_profile: dict[str, Any], job_requirements: dict[str, Any]) -> dict[str, Any]:
@@ -169,6 +173,7 @@ def _enhance_with_openai(
     baseline: dict[str, Any],
 ) -> dict[str, Any] | None:
     if not settings.openai_api_key:
+        logger.info("gap_analysis: no OpenAI API key configured, using deterministic baseline")
         return None
 
     prompt = {
@@ -181,7 +186,9 @@ def _enhance_with_openai(
             "Return JSON with keys strong_matches, partial_matches, gaps (arrays of "
             "{name, rationale}), experience_analysis {alignment, notes}, "
             "qualifications_analysis {alignment, notes, matched_qualifications, missing_qualifications}, "
-            "narrative_summary (string). Ground every point in the provided documents only."
+            "narrative_summary (string). Ground every point in the provided documents only. "
+            "Every array field MUST be a JSON array of strings or objects as specified, never a "
+            "single concatenated string or null."
         ),
     }
 
@@ -206,7 +213,18 @@ def _enhance_with_openai(
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]
         return json.loads(content)
-    except (httpx.HTTPError, KeyError, json.JSONDecodeError, IndexError):
+    except httpx.HTTPStatusError as exc:
+        logger.warning(
+            "gap_analysis: OpenAI returned status %s: %s",
+            exc.response.status_code,
+            exc.response.text[:300],
+        )
+        return None
+    except httpx.HTTPError as exc:
+        logger.warning("gap_analysis: OpenAI request failed: %s", exc)
+        return None
+    except (KeyError, json.JSONDecodeError, IndexError, TypeError, ValueError) as exc:
+        logger.warning("gap_analysis: could not parse OpenAI response: %s", exc)
         return None
 
 
@@ -250,18 +268,20 @@ class GapAnalysisService:
 
         enhanced = _enhance_with_openai(cv.candidate_name, job_spec.title, cv_text, job_text, baseline)
         if enhanced:
-            matches["strong"] = enhanced.get("strong_matches", matches["strong"])
-            matches["partial"] = enhanced.get("partial_matches", matches["partial"])
-            matches["gaps"] = enhanced.get("gaps", matches["gaps"])
-            experience = enhanced.get("experience_analysis", experience)
-            qualifications = enhanced.get("qualifications_analysis", qualifications)
-            narrative = enhanced.get("narrative_summary", narrative)
-            match_score = _calculate_match_score(
-                len(matches["strong"]),
-                len(matches["partial"]),
-                len(matches["gaps"]),
-                experience.get("alignment", "unknown"),
-            )
+            # match_score is deliberately NOT recomputed here: it is the number a recruiter
+            # acts on, so it must stay derived only from the deterministic skill-catalogue
+            # classification computed above. The model may still reclassify the displayed
+            # skill lists and rewrite the narrative, but that must never change the score.
+            matches["strong"] = as_dict_list(enhanced.get("strong_matches"), matches["strong"])
+            matches["partial"] = as_dict_list(enhanced.get("partial_matches"), matches["partial"])
+            matches["gaps"] = as_dict_list(enhanced.get("gaps"), matches["gaps"])
+            enhanced_experience = enhanced.get("experience_analysis")
+            if isinstance(enhanced_experience, dict):
+                experience = enhanced_experience
+            enhanced_qualifications = enhanced.get("qualifications_analysis")
+            if isinstance(enhanced_qualifications, dict):
+                qualifications = enhanced_qualifications
+            narrative = as_text(enhanced.get("narrative_summary"), narrative)
 
         analysis = GapAnalysis(
             cv_id=cv.id,
