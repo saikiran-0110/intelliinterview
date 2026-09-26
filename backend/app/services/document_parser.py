@@ -1,8 +1,23 @@
+import logging
+import re
 from io import BytesIO
 from typing import Optional
 
 from docx import Document
 from pypdf import PdfReader
+
+logger = logging.getLogger(__name__)
+
+
+def _looks_mangled(text: str) -> bool:
+    """Detect glyph-spaced PDF extraction ("Do c k er" instead of "Docker"): a large
+    share of single-character alphabetic tokens signals the PDF's character positions
+    were extracted as separate words."""
+    tokens = [tok for tok in re.split(r"\s+", text) if tok.isalpha()]
+    if len(tokens) < 50:
+        return False
+    single_char = sum(1 for tok in tokens if len(tok) == 1)
+    return (single_char / len(tokens)) > 0.10
 
 
 class DocumentParserService:
@@ -27,6 +42,17 @@ class DocumentParserService:
         if extension == ".pdf":
             text = self._extract_pdf(file_bytes, errors)
             if text:
+                if _looks_mangled(text):
+                    logger.warning(
+                        "document_parser: pypdf output for %s looks glyph-mangled, trying Tika", filename
+                    )
+                    tika_text = self._extract_with_tika(file_bytes, errors)
+                    if tika_text and not _looks_mangled(tika_text):
+                        return tika_text
+                    logger.warning(
+                        "document_parser: Tika unavailable or also mangled for %s, keeping pypdf output",
+                        filename,
+                    )
                 return text
         elif extension == ".docx":
             text = self._extract_docx(file_bytes, errors)

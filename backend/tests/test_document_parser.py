@@ -2,7 +2,7 @@ from io import BytesIO
 
 from docx import Document
 
-from app.services.document_parser import DocumentParserService
+from app.services.document_parser import DocumentParserService, _looks_mangled
 
 
 def test_extract_plain_text():
@@ -59,6 +59,46 @@ def test_invalid_pdf_falls_through_to_error(monkeypatch):
         assert False, "Expected ValueError"
     except ValueError as exc:
         assert "No text could be extracted" in str(exc)
+
+
+def test_looks_mangled_detects_character_spaced_text():
+    mangled = " ".join(list("Docker Kubernetes PostgreSQL FastAPI React TypeScript " * 3))
+    assert _looks_mangled(mangled) is True
+
+
+def test_looks_mangled_accepts_clean_text():
+    clean = (
+        "Senior software engineer with experience in Docker Kubernetes PostgreSQL "
+        "FastAPI React and TypeScript across several production systems and teams "
+    ) * 3
+    assert _looks_mangled(clean) is False
+
+
+def test_looks_mangled_short_text_is_never_flagged():
+    assert _looks_mangled("a b c") is False
+
+
+def test_extract_pdf_falls_back_to_tika_when_mangled(monkeypatch):
+    parser = DocumentParserService()
+    mangled = " ".join(list("Docker Kubernetes PostgreSQL FastAPI React TypeScript " * 3))
+    clean = "Senior engineer skilled in Docker and Kubernetes production deployments."
+
+    monkeypatch.setattr(parser, "_extract_pdf", lambda *_args, **_kwargs: mangled)
+    monkeypatch.setattr(parser, "_extract_with_tika", lambda *_args, **_kwargs: clean)
+
+    text = parser.extract_text(b"pdf-bytes", "resume.pdf")
+    assert text == clean
+
+
+def test_extract_pdf_keeps_mangled_text_when_tika_unavailable(monkeypatch):
+    parser = DocumentParserService()
+    mangled = " ".join(list("Docker Kubernetes PostgreSQL FastAPI React TypeScript " * 3))
+
+    monkeypatch.setattr(parser, "_extract_pdf", lambda *_args, **_kwargs: mangled)
+    monkeypatch.setattr(parser, "_extract_with_tika", lambda *_args, **_kwargs: None)
+
+    text = parser.extract_text(b"pdf-bytes", "resume.pdf")
+    assert text == mangled
 
 
 def test_docx_includes_table_cells():
