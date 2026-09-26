@@ -8,14 +8,14 @@ from typing import Any
 TECH_SKILLS: dict[str, list[str]] = {
     "python": ["python", "django", "flask"],
     "fastapi": ["fastapi"],
-    "java": [" java ", " java,", " java.", "spring", "spring boot", "hibernate"],
+    "java": ["java", "spring", "spring boot", "hibernate"],
     "javascript": ["javascript", "js", "node.js", "nodejs", "express"],
-    "typescript": ["typescript", " ts ", " ts,", " ts."],
+    "typescript": ["typescript", "ts"],
     "react": ["react", "react.js", "reactjs", "next.js", "nextjs"],
     "angular": ["angular"],
     "vue": ["vue", "vue.js", "vuejs", "nuxt"],
     "csharp": ["c#", "csharp", ".net", "asp.net"],
-    "go": ["golang", " go ", " go,"],
+    "go": ["golang", "go"],
     "rust": ["rust"],
     "kotlin": ["kotlin"],
     "swift": ["swift"],
@@ -25,7 +25,7 @@ TECH_SKILLS: dict[str, list[str]] = {
     "redis": ["redis"],
     "docker": ["docker", "container"],
     "kubernetes": ["kubernetes", "k8s"],
-    "aws": [" aws ", " aws,", " aws.", "amazon web services", "ec2", "s3", "lambda"],
+    "aws": ["aws", "amazon web services", "ec2", "s3", "lambda"],
     "azure": ["azure", "microsoft azure"],
     "gcp": ["gcp", "google cloud"],
     "git": ["git", "github", "gitlab"],
@@ -35,7 +35,7 @@ TECH_SKILLS: dict[str, list[str]] = {
     "microservices": ["microservices", "microservice"],
     "agile": ["agile", "scrum", "kanban"],
     "testing": ["pytest", "junit", "unit test", "integration test", "tdd"],
-    "machine learning": ["machine learning", " ml ", " ml,", " ml.", "deep learning", "tensorflow", "pytorch"],
+    "machine learning": ["machine learning", "ml", "deep learning", "tensorflow", "pytorch"],
     "system design": ["system design", "architecture", "distributed systems"],
     "html": ["html", "html5"],
     "css": ["css", "css3", "tailwind", "bootstrap"],
@@ -83,11 +83,24 @@ def _normalize(text: str) -> str:
     return f" {text.lower()} "
 
 
+def _alias_matches(alias: str, normalized_text: str) -> bool:
+    """Whole-word match for plain alphanumeric aliases, so e.g. "ts" matches standalone
+    "TS" but not inside "tests" or "reports", regardless of whether it's next to a space,
+    a comma, a parenthesis, a slash, or a semicolon. Aliases containing other characters
+    (c#, .net, node.js, ci/cd, t-sql, "spring boot", ...) are already distinctive enough
+    and use a plain substring check, since word-boundary regex doesn't apply cleanly to
+    punctuation-bearing or multi-word tokens."""
+    if alias.isalnum():
+        pattern = rf"(?<![a-z0-9]){re.escape(alias)}(?![a-z0-9])"
+        return re.search(pattern, normalized_text) is not None
+    return alias in normalized_text
+
+
 def extract_skills(text: str) -> list[str]:
     normalized = _normalize(text)
     found: list[str] = []
     for skill, aliases in TECH_SKILLS.items():
-        if any(alias in normalized for alias in aliases):
+        if any(_alias_matches(alias, normalized) for alias in aliases):
             found.append(skill)
     return sorted(set(found))
 

@@ -94,6 +94,21 @@ def test_extract_skills_javascript_does_not_imply_java():
     assert "java" not in skills
 
 
+def test_extract_skills_matches_next_to_punctuation_not_just_spaces():
+    # A previous fix padded aliases like " aws " with a leading/trailing space, which
+    # missed real mentions sitting next to other punctuation (parens, semicolons,
+    # slashes) with no space on one side - e.g. "(AWS," has "(" immediately before it.
+    text = "Experience with cloud platforms (AWS, Azure, GCP) and containerization."
+    skills = extract_skills(text)
+    assert "aws" in skills
+
+    text2 = "Skills: AWS; Docker; Kubernetes"
+    assert "aws" in extract_skills(text2)
+
+    text3 = "Strong Java/Kotlin background."
+    assert "java" in extract_skills(text3)
+
+
 def test_compare_skills_true_gap_when_unrelated():
     result = compare_skills(cv_skills=["html"], job_skills=["rust"])
     assert result["strong"] == []
