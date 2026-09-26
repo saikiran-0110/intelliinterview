@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from uuid import UUID
 
 import httpx
@@ -10,6 +11,9 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models import CandidateFeedback, InterviewReport, InterviewSession, JobSpecification
+from app.services.llm_json import as_str_list, as_text
+
+logger = logging.getLogger(__name__)
 
 
 def _baseline_feedback(report: InterviewReport, job_title: str) -> dict:
@@ -40,6 +44,7 @@ def _baseline_feedback(report: InterviewReport, job_title: str) -> dict:
 
 def _openai_feedback(report: InterviewReport, job_title: str, baseline: dict) -> dict | None:
     if not settings.openai_api_key:
+        logger.info("candidate_feedback: no OpenAI API key configured, using deterministic baseline")
         return None
     prompt = {
         "job_title": job_title,
@@ -55,7 +60,9 @@ def _openai_feedback(report: InterviewReport, job_title: str, baseline: dict) ->
         "instructions": (
             "Write candidate-facing feedback. Do NOT include hiring recommendations. "
             "Return JSON with keys: summary (string), strong_answers (string array), "
-            "improvement_areas (string array), focus_tips (string array)."
+            "improvement_areas (string array), focus_tips (string array). "
+            "Every array field MUST be a JSON array of strings, never a single concatenated "
+            "string or null."
         ),
     }
     try:
@@ -80,13 +87,24 @@ def _openai_feedback(report: InterviewReport, job_title: str, baseline: dict) ->
         content = response.json()["choices"][0]["message"]["content"]
         payload = json.loads(content)
         return {
-            "summary": str(payload.get("summary") or baseline["summary"]),
-            "strong_answers": payload.get("strong_answers") or baseline["strong_answers"],
-            "improvement_areas": payload.get("improvement_areas") or baseline["improvement_areas"],
-            "focus_tips": payload.get("focus_tips") or baseline["focus_tips"],
+            "summary": as_text(payload.get("summary"), baseline["summary"]),
+            "strong_answers": as_str_list(payload.get("strong_answers"), baseline["strong_answers"]),
+            "improvement_areas": as_str_list(payload.get("improvement_areas"), baseline["improvement_areas"]),
+            "focus_tips": as_str_list(payload.get("focus_tips"), baseline["focus_tips"]),
             "model_version": settings.openai_model,
         }
-    except (httpx.HTTPError, KeyError, json.JSONDecodeError, IndexError, TypeError):
+    except httpx.HTTPStatusError as exc:
+        logger.warning(
+            "candidate_feedback: OpenAI returned status %s: %s",
+            exc.response.status_code,
+            exc.response.text[:300],
+        )
+        return None
+    except httpx.HTTPError as exc:
+        logger.warning("candidate_feedback: OpenAI request failed: %s", exc)
+        return None
+    except (KeyError, json.JSONDecodeError, IndexError, TypeError, ValueError) as exc:
+        logger.warning("candidate_feedback: could not parse OpenAI response: %s", exc)
         return None
 
 
