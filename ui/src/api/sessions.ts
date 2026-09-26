@@ -1,13 +1,14 @@
 import { apiRequest } from './client'
 import type { InterviewSession, SessionSummary } from '../types/sessions'
 
-export function createSession(questionPlanId: string, candidateEmail: string, followUpLimit = 1) {
+export function createSession(questionPlanId: string, candidateEmail: string, followUpLimit = 1, language?: string) {
   return apiRequest<InterviewSession>('/api/sessions', {
     method: 'POST',
     body: JSON.stringify({
       question_plan_id: questionPlanId,
       candidate_email: candidateEmail,
       follow_up_limit: followUpLimit,
+      ...(language ? { language } : {}),
     }),
   })
 }

@@ -6,6 +6,18 @@ export type ScheduleConfirmationStatus =
   | 'DECLINED'
 export type TurnRole = 'INTERVIEWER' | 'CANDIDATE'
 
+export type InterviewLanguage = 'en-GB' | 'en-US' | 'es-ES' | 'fr-FR' | 'de-DE' | 'hi-IN' | 'zh-CN'
+
+export const INTERVIEW_LANGUAGES: { value: InterviewLanguage; label: string }[] = [
+  { value: 'en-GB', label: 'English (UK)' },
+  { value: 'en-US', label: 'English (US)' },
+  { value: 'es-ES', label: 'Spanish' },
+  { value: 'fr-FR', label: 'French' },
+  { value: 'de-DE', label: 'German' },
+  { value: 'hi-IN', label: 'Hindi' },
+  { value: 'zh-CN', label: 'Chinese (Simplified)' },
+]
+
 export type TurnEvaluation = {
   technical_score: number | null
   communication_score: number | null
@@ -55,6 +67,7 @@ export type InterviewSession = {
   confirmation_status: ScheduleConfirmationStatus
   follow_up_limit: number
   duration_minutes?: number
+  language?: InterviewLanguage
   current_question_index: number
   current_follow_up_count: number
   current_plan_question_id: string | null
@@ -77,6 +90,7 @@ export type SessionSummary = {
   current_question_index: number
   total_questions: number
   duration_minutes?: number
+  language?: InterviewLanguage
   created_at: string
   started_at: string | null
   completed_at: string | null

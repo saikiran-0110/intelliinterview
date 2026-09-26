@@ -5,7 +5,7 @@ import { createSession, listSessions } from '../../api/sessions'
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
 import type { QuestionPlan } from '../../types/questions'
-import type { SessionSummary } from '../../types/sessions'
+import { INTERVIEW_LANGUAGES, type InterviewLanguage, type SessionSummary } from '../../types/sessions'
 
 export function NewSessionPage() {
   const navigate = useNavigate()
@@ -17,6 +17,7 @@ export function NewSessionPage() {
   const [planId, setPlanId] = useState(presetPlanId)
   const [candidateEmail, setCandidateEmail] = useState('')
   const [followUpLimit, setFollowUpLimit] = useState(1)
+  const [language, setLanguage] = useState<InterviewLanguage>('en-GB')
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -95,7 +96,7 @@ export function NewSessionPage() {
     setStatus('Creating interview session...')
 
     try {
-      await createSession(planId, candidateEmail.trim(), followUpLimit)
+      await createSession(planId, candidateEmail.trim(), followUpLimit, language)
       setStatus('Session created. Next: propose slots on Scheduling.')
       navigate('/recruiter/scheduling')
     } catch (err) {
@@ -207,6 +208,25 @@ export function NewSessionPage() {
               <option value={2}>2</option>
               <option value={3}>3</option>
             </select>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-slate-500">Interview language</label>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as InterviewLanguage)}
+              className="input-field"
+            >
+              {INTERVIEW_LANGUAGES.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-slate-500">
+              The AI conducts, evaluates and gives feedback in this language. Skill names and CV
+              quotes always stay in their original form.
+            </p>
           </div>
 
           {status && <p className="text-sm text-teal-700">{status}</p>}

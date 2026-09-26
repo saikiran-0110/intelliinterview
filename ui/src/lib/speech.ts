@@ -23,6 +23,7 @@ export function speakText(
   options?: {
     rate?: number
     pitch?: number
+    lang?: string
     onEnd?: () => void
     onError?: (message: string) => void
   },
@@ -42,6 +43,7 @@ export function speakText(
   const utterance = new SpeechSynthesisUtterance(cleaned)
   utterance.rate = options?.rate ?? 1
   utterance.pitch = options?.pitch ?? 1
+  utterance.lang = options?.lang ?? 'en-GB'
   utterance.onend = () => options?.onEnd?.()
   utterance.onerror = () => options?.onError?.('Text-to-speech playback failed.')
 

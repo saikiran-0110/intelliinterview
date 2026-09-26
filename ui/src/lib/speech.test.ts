@@ -11,6 +11,7 @@ class FakeUtterance {
   text: string
   rate = 1
   pitch = 1
+  lang = ''
   onend: (() => void) | null = null
   onerror: (() => void) | null = null
 
@@ -45,6 +46,18 @@ describe('speech helpers', () => {
     expect(onEnd).toHaveBeenCalled()
     stop()
     expect(cancel).toHaveBeenCalled()
+  })
+
+  it('applies the requested language to the utterance, defaulting to en-GB', () => {
+    const speak = vi.fn()
+    vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance)
+    vi.stubGlobal('speechSynthesis', { speak, cancel: vi.fn() })
+
+    speakText('Bonjour', { lang: 'fr-FR' })
+    expect((speak.mock.calls[0][0] as FakeUtterance).lang).toBe('fr-FR')
+
+    speakText('Hello', {})
+    expect((speak.mock.calls[1][0] as FakeUtterance).lang).toBe('en-GB')
   })
 
   it('calls onError when synthesis is unavailable', () => {
@@ -97,6 +110,27 @@ describe('speech helpers', () => {
       results: [{ 0: { transcript: '  Hello team ' }, isFinal: true }],
     })
     expect(onResult).toHaveBeenCalledWith('Hello team', true)
+  })
+
+  it('applies the requested language to speech recognition', () => {
+    const instances: FakeRecognition[] = []
+    class FakeRecognition {
+      continuous = false
+      interimResults = false
+      lang = ''
+      onresult: (() => void) | null = null
+      onerror: (() => void) | null = null
+      onend: (() => void) | null = null
+      start = vi.fn()
+      stop = vi.fn()
+      constructor() {
+        instances.push(this)
+      }
+    }
+    vi.stubGlobal('SpeechRecognition', FakeRecognition)
+    const controller = createSpeechRecognition({ onResult: vi.fn(), lang: 'es-ES' })
+    expect(controller.supported).toBe(true)
+    expect(instances[0].lang).toBe('es-ES')
   })
 })
 

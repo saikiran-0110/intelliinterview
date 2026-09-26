@@ -83,6 +83,8 @@ export function LiveInterviewPage() {
     return interviewerTurns.length > 0 ? interviewerTurns[interviewerTurns.length - 1] : null
   }, [session])
 
+  const language = session?.language || 'en-GB'
+
   useEffect(() => {
     if (!session || !ttsEnabled || !ttsSupported || !latestInterviewerTurn) return
     if (session.status !== 'IN_PROGRESS') return
@@ -91,18 +93,20 @@ export function LiveInterviewPage() {
     lastSpokenTurnId.current = latestInterviewerTurn.id
     setIsSpeaking(true)
     speakText(latestInterviewerTurn.content, {
+      lang: language,
       onEnd: () => setIsSpeaking(false),
       onError: (message) => {
         setIsSpeaking(false)
         setStatus(message)
       },
     })
-  }, [latestInterviewerTurn, session, ttsEnabled, ttsSupported])
+  }, [latestInterviewerTurn, session, ttsEnabled, ttsSupported, language])
 
   useEffect(() => {
     recognitionRef.current = createSpeechRecognition({
       continuous: true,
       interimResults: true,
+      lang: language,
       onResult: (transcript, isFinal) => {
         if (isFinal) {
           setAnswer((prev) => `${prev} ${transcript}`.trim())
@@ -125,13 +129,14 @@ export function LiveInterviewPage() {
       recognitionRef.current?.stop()
       stopSpeaking()
     }
-  }, [])
+  }, [language])
 
   function handleSpeakLatest() {
     if (!latestInterviewerTurn || !ttsSupported) return
     setIsSpeaking(true)
     lastSpokenTurnId.current = latestInterviewerTurn.id
     speakText(latestInterviewerTurn.content, {
+      lang: language,
       onEnd: () => setIsSpeaking(false),
       onError: (message) => {
         setIsSpeaking(false)
