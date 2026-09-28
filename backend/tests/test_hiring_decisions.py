@@ -35,26 +35,6 @@ def _apply_for_job(client, recruiter_token: str, candidate_token: str, email: st
     return applied.json()["id"], job_id
 
 
-def test_hire_decision_sends_offer_email(client):
-    recruiter = register_recruiter(client, email="hire-recruiter@example.com")
-    candidate = register_candidate(client, email="hire-candidate@example.com", full_name="Decision Candidate")
-    application_id, _ = _apply_for_job(client, recruiter, candidate, "hire-candidate@example.com")
-
-    staged = client.patch(
-        f"/api/applications/{application_id}/stage",
-        headers=auth_headers(recruiter),
-        json={"stage": "HIRED", "notes": "Start date is flexible."},
-    )
-    assert staged.status_code == 200
-    assert staged.json()["stage"] == "HIRED"
-
-    inbox = client.get("/api/scheduling/notifications", headers=auth_headers(candidate))
-    assert inbox.status_code == 200
-    decision = next(n for n in inbox.json() if "delighted to offer you" in n["body"])
-    assert "Offer" in decision["title"]
-    assert "Start date is flexible." in decision["body"]
-
-
 def test_reject_decision_sends_polite_email(client):
     recruiter = register_recruiter(client, email="reject-recruiter@example.com")
     candidate = register_candidate(client, email="reject-candidate@example.com", full_name="Decision Candidate")
@@ -84,7 +64,7 @@ def test_advance_to_next_stage_sends_selection_email(client):
     assert staged.status_code == 200
 
     inbox = client.get("/api/scheduling/notifications", headers=auth_headers(candidate))
-    decision = next(n for n in inbox.json() if "selected to move forward" in n["body"])
+    decision = next(n for n in inbox.json() if "passed the screening interview" in n["body"])
     assert "technical round with the CTO" in decision["body"]
 
 

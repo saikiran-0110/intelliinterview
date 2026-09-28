@@ -261,17 +261,9 @@ export function ReportDetailPage() {
               type="button"
               onClick={() => handleDecision('OFFER')}
               disabled={decisionPending !== null}
-              className="btn-secondary min-h-11 disabled:opacity-50"
-            >
-              Advance to next stage
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDecision('HIRED')}
-              disabled={decisionPending !== null}
               className="btn-primary min-h-11 disabled:opacity-50"
             >
-              Hire &amp; send offer
+              Advance to next stage
             </button>
             <button
               type="button"

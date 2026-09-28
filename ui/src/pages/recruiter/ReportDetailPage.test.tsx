@@ -97,9 +97,9 @@ describe('ReportDetailPage hiring decision', () => {
     mockedGetUserPhotoBlob.mockRejectedValue(new Error('no photo'))
   })
 
-  it('shows the current stage and lets a recruiter hire the candidate', async () => {
+  it('shows the current stage and lets a recruiter advance the candidate', async () => {
     const user = userEvent.setup()
-    mockedUpdateApplicationStage.mockResolvedValue({ ...sampleReport, stage: 'HIRED' } as never)
+    mockedUpdateApplicationStage.mockResolvedValue({ ...sampleReport, stage: 'OFFER' } as never)
     renderPage()
 
     expect(await screen.findByText('Hiring decision')).toBeInTheDocument()
@@ -108,11 +108,29 @@ describe('ReportDetailPage hiring decision', () => {
     const message = screen.getByPlaceholderText("Optional message to include in the candidate's email")
     await user.type(message, 'Great fit for the team')
 
-    const hireButton = screen.getByRole('button', { name: 'Hire & send offer' })
-    await user.click(hireButton)
+    const advanceButton = screen.getByRole('button', { name: 'Advance to next stage' })
+    await user.click(advanceButton)
 
-    expect(mockedUpdateApplicationStage).toHaveBeenCalledWith('application-1', 'HIRED', 'Great fit for the team')
-    expect(await screen.findByText(/Candidate notified by email: Hired\./)).toBeInTheDocument()
+    expect(mockedUpdateApplicationStage).toHaveBeenCalledWith('application-1', 'OFFER', 'Great fit for the team')
+    expect(await screen.findByText(/Candidate notified by email: Next stage\./)).toBeInTheDocument()
+  })
+
+  it('lets a recruiter reject the candidate', async () => {
+    const user = userEvent.setup()
+    mockedUpdateApplicationStage.mockResolvedValue({ ...sampleReport, stage: 'REJECTED' } as never)
+    renderPage()
+
+    const rejectButton = await screen.findByRole('button', { name: 'Reject' })
+    await user.click(rejectButton)
+
+    expect(mockedUpdateApplicationStage).toHaveBeenCalledWith('application-1', 'REJECTED', undefined)
+    expect(await screen.findByText(/Candidate notified by email: Rejected\./)).toBeInTheDocument()
+  })
+
+  it('does not offer a hire/offer action for this screening-only tool', async () => {
+    renderPage()
+    await screen.findByText('Hiring decision')
+    expect(screen.queryByRole('button', { name: /hire/i })).not.toBeInTheDocument()
   })
 
   it('does not render the hiring decision panel without a linked application', async () => {

@@ -227,11 +227,6 @@ def update_application_stage(
     job_title = job.title if job else "the role"
 
     decision_copy = {
-        PipelineStage.HIRED: (
-            f"Offer: {job_title}",
-            f"Congratulations! We are delighted to offer you the {job_title} position. "
-            "Your recruiter will follow up shortly with the full offer details.",
-        ),
         PipelineStage.REJECTED: (
             f"Application update: {job_title}",
             f"Thank you for taking the time to interview for {job_title}. After careful "
@@ -240,8 +235,9 @@ def update_application_stage(
         ),
         PipelineStage.OFFER: (
             f"You're moving forward: {job_title}",
-            f"Great news - you've been selected to move forward to the next stage for "
-            f"{job_title}. Your recruiter will be in touch with details shortly.",
+            f"Great news - you've passed the screening interview for {job_title} and "
+            "are moving forward to the next stage of the hiring process. Your recruiter "
+            "will be in touch with details shortly.",
         ),
     }
 
