@@ -2,9 +2,20 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getReport } from '../../api/reports'
 import { getRecordingBlob } from '../../api/sessions'
+import { getUserPhotoBlob, updateApplicationStage } from '../../api/optional'
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
-import type { InterviewReport } from '../../types/reports'
+import type { ApplicationStage, InterviewReport } from '../../types/reports'
+
+const STAGE_LABELS: Record<ApplicationStage, string> = {
+  APPLIED: 'Applied',
+  SCREENING: 'Screening',
+  SHORTLISTED: 'Shortlisted',
+  INTERVIEW: 'Interview',
+  OFFER: 'Next stage',
+  HIRED: 'Hired',
+  REJECTED: 'Rejected',
+}
 
 export function ReportDetailPage() {
   const { reportId } = useParams()
@@ -12,6 +23,11 @@ export function ReportDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [recordingUrl, setRecordingUrl] = useState<string | null>(null)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [decisionMessage, setDecisionMessage] = useState('')
+  const [decisionStatus, setDecisionStatus] = useState<string | null>(null)
+  const [decisionError, setDecisionError] = useState<string | null>(null)
+  const [decisionPending, setDecisionPending] = useState<ApplicationStage | null>(null)
 
   useEffect(() => {
     if (!reportId) return
@@ -41,6 +57,40 @@ export function ReportDetailPage() {
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
   }, [report])
+
+  useEffect(() => {
+    if (!report?.candidate_has_photo || !report.candidate_user_id) {
+      setPhotoUrl(null)
+      return
+    }
+    let objectUrl: string | null = null
+    getUserPhotoBlob(report.candidate_user_id)
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob)
+        setPhotoUrl(objectUrl)
+      })
+      .catch(() => setPhotoUrl(null))
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [report])
+
+  async function handleDecision(stage: ApplicationStage) {
+    if (!report?.application_id) return
+    setDecisionPending(stage)
+    setDecisionError(null)
+    setDecisionStatus(null)
+    try {
+      await updateApplicationStage(report.application_id, stage, decisionMessage.trim() || undefined)
+      setReport({ ...report, application_stage: stage })
+      setDecisionStatus(`Candidate notified by email: ${STAGE_LABELS[stage]}.`)
+      setDecisionMessage('')
+    } catch (err) {
+      setDecisionError(err instanceof Error ? err.message : 'Failed to record decision')
+    } finally {
+      setDecisionPending(null)
+    }
+  }
 
   if (!reportId) {
     return (
@@ -176,7 +226,62 @@ export function ReportDetailPage() {
           <p className="mt-1 text-xs text-muted">
             For human review only - not used in scoring or by the AI evaluation.
           </p>
-          <video controls className="mt-3 w-full rounded-xl" src={recordingUrl} />
+          <div className="mt-3 flex flex-col gap-4 sm:flex-row">
+            <video controls className="w-full min-w-0 flex-1 rounded-xl" src={recordingUrl} />
+            {photoUrl && (
+              <div className="shrink-0 text-center">
+                <img src={photoUrl} alt="Candidate profile" className="h-32 w-32 rounded-xl border border-border object-cover" />
+                <p className="mt-1 text-xs text-muted">Profile photo</p>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {report.application_id && (
+        <Card className="mt-6 print:hidden">
+          <h3 className="text-lg font-semibold text-ink">Hiring decision</h3>
+          <p className="mt-1 text-xs text-muted">
+            Current status:{' '}
+            <span className="font-semibold text-ink">
+              {report.application_stage ? STAGE_LABELS[report.application_stage] : 'Applied'}
+            </span>
+            . Any decision below emails the candidate automatically.
+          </p>
+          <textarea
+            value={decisionMessage}
+            onChange={(e) => setDecisionMessage(e.target.value)}
+            placeholder="Optional message to include in the candidate's email"
+            className="input-field mt-3 min-h-20 w-full"
+          />
+          {decisionError && <p className="mt-2 text-sm text-rose-600">{decisionError}</p>}
+          {decisionStatus && <p className="mt-2 text-sm text-teal-800">{decisionStatus}</p>}
+          <div className="mt-3 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => handleDecision('OFFER')}
+              disabled={decisionPending !== null}
+              className="btn-secondary min-h-11 disabled:opacity-50"
+            >
+              Advance to next stage
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDecision('HIRED')}
+              disabled={decisionPending !== null}
+              className="btn-primary min-h-11 disabled:opacity-50"
+            >
+              Hire &amp; send offer
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDecision('REJECTED')}
+              disabled={decisionPending !== null}
+              className="min-h-11 rounded-xl border border-rose-300 px-4 text-sm font-semibold text-rose-700 disabled:opacity-50"
+            >
+              Reject
+            </button>
+          </div>
         </Card>
       )}
 

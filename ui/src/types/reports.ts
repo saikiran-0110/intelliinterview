@@ -1,5 +1,14 @@
 export type HiringRecommendation = 'STRONG_HIRE' | 'HIRE' | 'HOLD' | 'NO_HIRE'
 
+export type ApplicationStage =
+  | 'APPLIED'
+  | 'SCREENING'
+  | 'SHORTLISTED'
+  | 'INTERVIEW'
+  | 'OFFER'
+  | 'HIRED'
+  | 'REJECTED'
+
 export type EvidenceItem = {
   turn_id: string
   question_text: string | null
@@ -46,4 +55,8 @@ export type InterviewReport = {
   model_version: string | null
   generated_at: string
   created_at: string
+  application_id: string | null
+  application_stage: ApplicationStage | null
+  candidate_user_id: string | null
+  candidate_has_photo: boolean
 }
