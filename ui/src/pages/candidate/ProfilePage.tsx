@@ -1,6 +1,14 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { getStoredUser, setAuth, type StoredUser } from '../../api/client'
-import { listMyCvs, updateProfile, uploadMyCv, deleteMyCv } from '../../api/optional'
+import {
+  deleteMyPhoto,
+  getUserPhotoBlob,
+  listMyCvs,
+  updateProfile,
+  uploadMyCv,
+  uploadMyPhoto,
+  deleteMyCv,
+} from '../../api/optional'
 import type { AuthResponse } from '../../types/analysis'
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -15,6 +23,8 @@ export function ProfilePage() {
   const [linkedin, setLinkedin] = useState(user?.linkedin_url || '')
   const [cvs, setCvs] = useState<CandidateCv[]>([])
   const [file, setFile] = useState<File | null>(null)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
 
@@ -31,6 +41,40 @@ export function ProfilePage() {
     load()
   }, [])
 
+  useEffect(() => {
+    if (!user?.has_profile_photo || !user.user_id) {
+      setPhotoUrl(null)
+      return
+    }
+    let objectUrl: string | null = null
+    getUserPhotoBlob(user.user_id)
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob)
+        setPhotoUrl(objectUrl)
+      })
+      .catch(() => setPhotoUrl(null))
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [user?.has_profile_photo, user?.user_id])
+
+  function applyAuthResponse(updated: AuthResponse) {
+    setAuth(updated.token, {
+      user_id: updated.user_id,
+      email: updated.email,
+      full_name: updated.full_name,
+      role: updated.role,
+      phone: updated.phone,
+      company: updated.company,
+      job_title: updated.job_title,
+      location: updated.location,
+      linkedin_url: updated.linkedin_url,
+      email_verified: updated.email_verified,
+      has_profile_photo: updated.has_profile_photo,
+    })
+    setUser(getStoredUser())
+  }
+
   async function handleProfile(event: FormEvent) {
     event.preventDefault()
     setError(null)
@@ -42,19 +86,7 @@ export function ProfilePage() {
         location: location || undefined,
         linkedin_url: linkedin || undefined,
       })) as AuthResponse
-      setAuth(updated.token, {
-        user_id: updated.user_id,
-        email: updated.email,
-        full_name: updated.full_name,
-        role: updated.role,
-        phone: updated.phone,
-        company: updated.company,
-        job_title: updated.job_title,
-        location: updated.location,
-        linkedin_url: updated.linkedin_url,
-        email_verified: updated.email_verified,
-      })
-      setUser(getStoredUser())
+      applyAuthResponse(updated)
       setStatus('Profile updated.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update profile')
@@ -87,6 +119,33 @@ export function ProfilePage() {
     }
   }
 
+  async function handlePhotoUpload(event: FormEvent) {
+    event.preventDefault()
+    if (!photoFile) return
+    setError(null)
+    setStatus(null)
+    try {
+      const updated = (await uploadMyPhoto(photoFile)) as AuthResponse
+      applyAuthResponse(updated)
+      setPhotoFile(null)
+      setStatus('Profile picture updated.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload profile picture')
+    }
+  }
+
+  async function handlePhotoDelete() {
+    setError(null)
+    setStatus(null)
+    try {
+      const updated = (await deleteMyPhoto()) as AuthResponse
+      applyAuthResponse(updated)
+      setStatus('Profile picture removed.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove profile picture')
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -97,6 +156,44 @@ export function ProfilePage() {
       {status && <p className="mb-4 text-sm text-teal-800">{status}</p>}
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="animate-fade-up">
+          <h3 className="text-lg font-semibold text-ink">Profile picture</h3>
+          <p className="mt-1 text-xs text-muted">
+            Used by recruiters to visually verify your identity against your interview recording.
+          </p>
+          <div className="mt-4 flex items-center gap-4">
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt="Profile"
+                className="h-20 w-20 shrink-0 rounded-full border border-border object-cover"
+              />
+            ) : (
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-xs text-muted">
+                No photo
+              </div>
+            )}
+            <form className="flex min-w-0 flex-1 flex-col gap-2" onSubmit={handlePhotoUpload}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                className="w-full text-sm text-muted"
+              />
+              <div className="flex gap-3">
+                <button type="submit" disabled={!photoFile} className="btn-primary disabled:opacity-50">
+                  Upload photo
+                </button>
+                {user?.has_profile_photo && (
+                  <button type="button" onClick={handlePhotoDelete} className="text-sm font-semibold text-rose-600">
+                    Remove
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        </Card>
+
         <Card className="animate-fade-up">
           <h3 className="text-lg font-semibold text-ink">Account details</h3>
           <form className="mt-4 space-y-3" onSubmit={handleProfile}>

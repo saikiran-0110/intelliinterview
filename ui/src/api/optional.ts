@@ -38,6 +38,20 @@ export function deleteMyCv(cvId: string) {
   return apiRequest<void>(`/api/cvs/${cvId}`, { method: 'DELETE' })
 }
 
+export function uploadMyPhoto(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return apiRequest('/api/auth/me/photo', { method: 'POST', body: formData })
+}
+
+export function deleteMyPhoto() {
+  return apiRequest('/api/auth/me/photo', { method: 'DELETE' })
+}
+
+export function getUserPhotoBlob(userId: string) {
+  return apiRequest<Blob>(`/api/auth/users/${userId}/photo`, { raw: true })
+}
+
 export function updateProfile(payload: {
   full_name: string
   phone?: string

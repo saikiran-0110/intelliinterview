@@ -12,6 +12,7 @@ export type StoredUser = {
   location?: string | null
   linkedin_url?: string | null
   email_verified?: boolean
+  has_profile_photo?: boolean
 }
 
 export function getToken(): string | null {
