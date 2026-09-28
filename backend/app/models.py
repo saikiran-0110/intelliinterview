@@ -94,6 +94,8 @@ class User(Base):
     location: Mapped[Optional[str]] = mapped_column(String(255))
     linkedin_url: Mapped[Optional[str]] = mapped_column(String(255))
     email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    profile_photo: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
+    profile_photo_content_type: Mapped[Optional[str]] = mapped_column(String(120))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

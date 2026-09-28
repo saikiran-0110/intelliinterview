@@ -130,6 +130,11 @@ USER_COLUMN_UPGRADES = [
         "email_verified",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE",
     ),
+    ("profile_photo", "ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo BYTEA"),
+    (
+        "profile_photo_content_type",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo_content_type VARCHAR(120)",
+    ),
 ]
 
 CV_COLUMN_UPGRADES = [

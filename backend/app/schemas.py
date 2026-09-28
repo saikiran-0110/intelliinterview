@@ -69,6 +69,7 @@ class AuthResponse(BaseModel):
     location: str | None = None
     linkedin_url: str | None = None
     email_verified: bool = False
+    has_profile_photo: bool = False
 
 
 class UpdateProfileRequest(BaseModel):

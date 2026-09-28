@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.models import OtpPurpose, User, UserRole
+from app.models import InterviewSession, JobApplication, OtpPurpose, User, UserRole
 from app.schemas import (
     AuthResponse,
     LoginRequest,
@@ -17,6 +20,8 @@ from app.schemas import (
 from app.services.email import EmailService
 from app.services.otp import OtpService
 from app.services.security import create_access_token, hash_password, verify_password
+
+PHOTO_MAX_BYTES = 5 * 1024 * 1024
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 otp_service = OtpService()
@@ -37,6 +42,7 @@ def _auth_response(user: User) -> AuthResponse:
         location=getattr(user, "location", None),
         linkedin_url=getattr(user, "linkedin_url", None),
         email_verified=bool(getattr(user, "email_verified", False)),
+        has_profile_photo=bool(getattr(user, "profile_photo", None)),
     )
 
 
@@ -211,3 +217,76 @@ def update_me(
     db.commit()
     db.refresh(current_user)
     return _auth_response(current_user)
+
+
+@router.post("/me/photo", response_model=AuthResponse)
+async def upload_my_photo(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AuthResponse:
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Profile picture must be an image")
+
+    file_bytes = await file.read()
+    if len(file_bytes) > PHOTO_MAX_BYTES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image exceeds 5MB limit")
+
+    current_user.profile_photo = file_bytes
+    current_user.profile_photo_content_type = file.content_type
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return _auth_response(current_user)
+
+
+@router.delete("/me/photo", response_model=AuthResponse)
+def delete_my_photo(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AuthResponse:
+    current_user.profile_photo = None
+    current_user.profile_photo_content_type = None
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return _auth_response(current_user)
+
+
+def _photo_accessible_user(db: Session, target_user_id: UUID, current_user: User) -> User:
+    if current_user.id == target_user_id:
+        return current_user
+    if current_user.role != UserRole.RECRUITER:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    linked = (
+        db.query(JobApplication)
+        .filter(
+            JobApplication.candidate_user_id == target_user_id,
+            JobApplication.recruiter_id == current_user.id,
+        )
+        .first()
+        or db.query(InterviewSession)
+        .filter(
+            InterviewSession.candidate_user_id == target_user_id,
+            InterviewSession.recruiter_id == current_user.id,
+        )
+        .first()
+    )
+    if linked is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    target = db.get(User, target_user_id)
+    if target is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    return target
+
+
+@router.get("/users/{user_id}/photo")
+def get_user_photo(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    target = _photo_accessible_user(db, user_id, current_user)
+    if not target.profile_photo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No profile picture uploaded")
+    return Response(content=target.profile_photo, media_type=target.profile_photo_content_type or "image/jpeg")
