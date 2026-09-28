@@ -74,7 +74,7 @@ export function CandidateLayout() {
         homePath="/candidate/applications"
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-col gap-3 border-b border-sky-200/70 bg-sky-50/70 px-4 py-4 pl-16 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-6 md:pl-6">
+        <header className="relative z-40 flex flex-col gap-3 border-b border-sky-200/70 bg-sky-50/70 px-4 py-4 pl-16 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-6 md:pl-6">
           <div>
             <p className="text-sm text-muted">Logged in as</p>
             <p className="text-base font-bold text-ink">{user?.full_name ?? 'Candidate'}</p>

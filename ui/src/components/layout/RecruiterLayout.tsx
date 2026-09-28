@@ -84,7 +84,7 @@ export function RecruiterLayout() {
         homePath="/recruiter/dashboard"
       />
       <div className="flex min-w-0 flex-1 flex-col print:block">
-        <header className="flex flex-col gap-3 border-b border-teal-200/70 bg-teal-50/70 px-4 py-4 pl-16 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-6 md:pl-6 print:hidden">
+        <header className="relative z-40 flex flex-col gap-3 border-b border-teal-200/70 bg-teal-50/70 px-4 py-4 pl-16 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-6 md:pl-6 print:hidden">
           <div>
             <p className="text-sm text-muted">Logged in as</p>
             <p className="text-base font-bold text-ink">{user?.full_name ?? 'Recruiter'}</p>
