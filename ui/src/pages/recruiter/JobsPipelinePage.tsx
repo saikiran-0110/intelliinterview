@@ -15,15 +15,7 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import type { JobSpecification } from '../../types/analysis'
 import type { ApplicationItem, EmploymentType, PipelineStage, WorkMode } from '../../types/optional'
 
-const stages: PipelineStage[] = [
-  'APPLIED',
-  'SCREENING',
-  'SHORTLISTED',
-  'INTERVIEW',
-  'OFFER',
-  'HIRED',
-  'REJECTED',
-]
+const stages: PipelineStage[] = ['APPLIED', 'SCREENING', 'SHORTLISTED', 'INTERVIEW', 'REJECTED']
 
 const emptyForm = {
   title: '',
@@ -499,7 +491,7 @@ export function JobsPipelinePage() {
                       onChange={(e) => handleStage(app.id, e.target.value as PipelineStage)}
                       className="rounded-lg border border-border bg-white px-2 py-1 text-xs text-ink"
                     >
-                      {stages.map((stage) => (
+                      {(stages.includes(app.stage) ? stages : [...stages, app.stage]).map((stage) => (
                         <option key={stage} value={stage}>
                           {stage}
                         </option>
