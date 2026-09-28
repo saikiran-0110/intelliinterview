@@ -1,4 +1,4 @@
-from tests.helpers import auth_headers, register_candidate, register_recruiter
+from tests.helpers import auth_headers, confirm_session_for_interview, register_candidate, register_recruiter
 from tests.sample_documents import SAMPLE_CV, SAMPLE_JOB_SPEC
 
 
@@ -86,3 +86,63 @@ def test_report_exposes_application_id_and_stage_for_hiring_decisions(client):
     assert report["application_id"] is None
     assert report["application_stage"] is None
     assert report["candidate_has_photo"] is False
+
+
+def test_application_flags_completed_interview_and_blocks_question_regeneration(client):
+    recruiter = register_recruiter(client, email="ranking-complete-recruiter@example.com")
+    candidate = register_candidate(
+        client, email="ranking-complete-candidate@example.com", full_name="Decision Candidate"
+    )
+    application_id, _job_id = _apply_for_job(
+        client, recruiter, candidate, "ranking-complete-candidate@example.com"
+    )
+
+    before = client.get("/api/applications", headers=auth_headers(recruiter)).json()
+    application = next(item for item in before if item["id"] == application_id)
+    assert application["has_completed_interview"] is False
+    gap_analysis_id = application["gap_analysis_id"]
+
+    plan = client.post(
+        "/api/questions/generate",
+        headers=auth_headers(recruiter),
+        json={"gap_analysis_id": gap_analysis_id},
+    ).json()
+
+    session_id = client.post(
+        "/api/sessions",
+        headers=auth_headers(recruiter),
+        json={
+            "question_plan_id": plan["id"],
+            "candidate_email": "ranking-complete-candidate@example.com",
+            "follow_up_limit": 0,
+        },
+    ).json()["id"]
+    confirm_session_for_interview(client, recruiter, session_id)
+    assert client.post(f"/api/sessions/{session_id}/start", headers=auth_headers(candidate)).status_code == 200
+
+    detailed_answer = (
+        "In my last role I led API design with FastAPI and PostgreSQL, measured latency "
+        "improvements with Prometheus, and documented trade-offs for the engineering team."
+    )
+    for _ in range(40):
+        response = client.post(
+            f"/api/sessions/{session_id}/answer",
+            headers=auth_headers(candidate),
+            json={"answer": detailed_answer},
+        )
+        assert response.status_code == 200
+        if response.json()["status"] == "COMPLETED":
+            break
+    else:
+        raise AssertionError("Session did not complete after answering all questions")
+
+    after = client.get("/api/applications", headers=auth_headers(recruiter)).json()
+    updated = next(item for item in after if item["id"] == application_id)
+    assert updated["has_completed_interview"] is True
+
+    regenerate = client.post(
+        "/api/questions/generate",
+        headers=auth_headers(recruiter),
+        json={"gap_analysis_id": gap_analysis_id},
+    )
+    assert regenerate.status_code == 409

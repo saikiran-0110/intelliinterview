@@ -63,6 +63,7 @@ class ApplicationResponse(BaseModel):
     expected_salary_gbp: float | None = None
     right_to_work_uk: bool | None = None
     cover_note: str | None = None
+    has_completed_interview: bool = False
     created_at: datetime
     updated_at: datetime
 

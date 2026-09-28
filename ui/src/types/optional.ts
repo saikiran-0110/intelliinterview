@@ -57,6 +57,7 @@ export type ApplicationItem = {
   expected_salary_gbp?: number | null
   right_to_work_uk?: boolean | null
   cover_note?: string | null
+  has_completed_interview?: boolean
   created_at: string
   updated_at: string
 }

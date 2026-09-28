@@ -96,7 +96,10 @@ def generate_questions(
     if cv is None or job_spec is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Linked documents not found")
 
-    plan, _questions = question_service.generate_plan(db, analysis, cv, job_spec, current_user.id)
+    try:
+        plan, _questions = question_service.generate_plan(db, analysis, cv, job_spec, current_user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     return _plan_with_context(db, plan)
 
 

@@ -5,7 +5,17 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import require_role
-from app.models import CandidateCv, GapAnalysis, JobApplication, JobSpecification, PipelineStage, User, UserRole
+from app.models import (
+    CandidateCv,
+    GapAnalysis,
+    InterviewSession,
+    InterviewSessionStatus,
+    JobApplication,
+    JobSpecification,
+    PipelineStage,
+    User,
+    UserRole,
+)
 from app.optional_schemas import (
     ApplicationCreateRequest,
     ApplicationResponse,
@@ -25,6 +35,16 @@ notifications = NotificationService()
 def _to_response(db: Session, app: JobApplication) -> ApplicationResponse:
     job = db.get(JobSpecification, app.job_spec_id)
     candidate = db.get(User, app.candidate_user_id)
+    completed_session = (
+        db.query(InterviewSession)
+        .filter(
+            InterviewSession.job_spec_id == app.job_spec_id,
+            InterviewSession.candidate_user_id == app.candidate_user_id,
+            InterviewSession.recruiter_id == app.recruiter_id,
+            InterviewSession.status == InterviewSessionStatus.COMPLETED,
+        )
+        .first()
+    )
     return ApplicationResponse(
         id=app.id,
         job_spec_id=app.job_spec_id,
@@ -46,6 +66,7 @@ def _to_response(db: Session, app: JobApplication) -> ApplicationResponse:
         expected_salary_gbp=app.expected_salary_gbp,
         right_to_work_uk=app.right_to_work_uk,
         cover_note=app.cover_note,
+        has_completed_interview=completed_session is not None,
         created_at=app.created_at,
         updated_at=app.updated_at,
     )

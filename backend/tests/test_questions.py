@@ -1,4 +1,4 @@
-from tests.helpers import auth_headers, register_recruiter
+from tests.helpers import auth_headers, register_candidate, register_recruiter
 from tests.sample_documents import SAMPLE_CV, SAMPLE_JOB_SPEC
 
 
@@ -100,3 +100,40 @@ def test_question_generation_requires_auth(client):
         json={"gap_analysis_id": "00000000-0000-0000-0000-000000000001"},
     )
     assert response.status_code == 401
+
+
+def test_cannot_regenerate_questions_once_a_session_exists(client):
+    token = register_recruiter(client, email="regenerate-questions@example.com")
+    register_candidate(client, email="regenerate-questions-candidate@example.com")
+    analysis_id = _create_gap_analysis(client, token)
+
+    plan = client.post(
+        "/api/questions/generate",
+        headers=auth_headers(token),
+        json={"gap_analysis_id": analysis_id},
+    ).json()
+
+    session_response = client.post(
+        "/api/sessions",
+        headers=auth_headers(token),
+        json={
+            "question_plan_id": plan["id"],
+            "candidate_email": "regenerate-questions-candidate@example.com",
+            "follow_up_limit": 0,
+        },
+    )
+    assert session_response.status_code == 201
+
+    regenerate = client.post(
+        "/api/questions/generate",
+        headers=auth_headers(token),
+        json={"gap_analysis_id": analysis_id},
+    )
+    assert regenerate.status_code == 409
+
+    # The original plan (and its session's link to it) must survive untouched.
+    still_there = client.get(
+        f"/api/questions/plans/{plan['id']}",
+        headers=auth_headers(token),
+    )
+    assert still_there.status_code == 200

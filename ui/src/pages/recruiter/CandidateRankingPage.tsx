@@ -167,22 +167,33 @@ export function CandidateRankingPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Link
-                    to={
-                      item.gap_analysis_id
-                        ? `/recruiter/questions?analysisId=${item.gap_analysis_id}`
-                        : '/recruiter/questions'
-                    }
-                    className="rounded-xl border border-border px-3 py-2 text-xs font-semibold text-sky-800"
-                  >
-                    Plan questions
-                  </Link>
-                  <Link
-                    to="/recruiter/sessions/new"
-                    className="rounded-lg bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800"
-                  >
-                    Create session
-                  </Link>
+                  {item.has_completed_interview ? (
+                    <Link
+                      to="/recruiter/reports"
+                      className="rounded-lg bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800"
+                    >
+                      Interview completed · View report
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        to={
+                          item.gap_analysis_id
+                            ? `/recruiter/questions?analysisId=${item.gap_analysis_id}`
+                            : '/recruiter/questions'
+                        }
+                        className="rounded-xl border border-border px-3 py-2 text-xs font-semibold text-sky-800"
+                      >
+                        Plan questions
+                      </Link>
+                      <Link
+                        to="/recruiter/sessions/new"
+                        className="rounded-lg bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800"
+                      >
+                        Create session
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </Card>

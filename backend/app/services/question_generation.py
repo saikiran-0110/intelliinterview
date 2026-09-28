@@ -15,6 +15,7 @@ from app.models import (
     CandidateCv,
     GapAnalysis,
     InterviewQuestion,
+    InterviewSession,
     JobSpecification,
     QuestionPlan,
     QuestionSource,
@@ -334,6 +335,18 @@ class QuestionGenerationService:
             .filter(QuestionPlan.gap_analysis_id == analysis.id, QuestionPlan.created_by == recruiter_id)
             .all()
         )
+        existing_plan_ids = [existing.id for existing in existing_plans]
+        if existing_plan_ids:
+            session_in_progress = (
+                db.query(InterviewSession)
+                .filter(InterviewSession.question_plan_id.in_(existing_plan_ids))
+                .first()
+            )
+            if session_in_progress is not None:
+                raise ValueError(
+                    "An interview session already exists for this candidate, so the "
+                    "question plan can no longer be regenerated."
+                )
         for plan in existing_plans:
             db.query(InterviewQuestion).filter(InterviewQuestion.plan_id == plan.id).delete()
             db.delete(plan)
