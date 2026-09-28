@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.models import HiringRecommendation
+from app.models import HiringRecommendation, PipelineStage
 
 
 class EvidenceItem(BaseModel):
@@ -53,3 +53,7 @@ class InterviewReportResponse(BaseModel):
     model_version: str | None
     generated_at: datetime
     created_at: datetime
+    application_id: UUID | None = None
+    application_stage: PipelineStage | None = None
+    candidate_user_id: UUID | None = None
+    candidate_has_photo: bool = False

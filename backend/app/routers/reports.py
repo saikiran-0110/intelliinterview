@@ -5,7 +5,16 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import require_role
-from app.models import InterviewReport, InterviewSession, InterviewSessionStatus, JobSpecification, QuestionPlan, User, UserRole
+from app.models import (
+    InterviewReport,
+    InterviewSession,
+    InterviewSessionStatus,
+    JobApplication,
+    JobSpecification,
+    QuestionPlan,
+    User,
+    UserRole,
+)
 from app.report_schemas import EvidenceItem, InterviewReportResponse, InterviewReportSummary
 from app.services.report_generation import ReportGenerationService
 
@@ -23,6 +32,16 @@ def _to_response(db: Session, report: InterviewReport) -> InterviewReportRespons
     for item in report.evidence_items or []:
         if isinstance(item, dict):
             evidence.append(EvidenceItem(**item))
+
+    application = (
+        db.query(JobApplication)
+        .filter(
+            JobApplication.job_spec_id == report.job_spec_id,
+            JobApplication.candidate_user_id == report.candidate_user_id,
+            JobApplication.recruiter_id == report.recruiter_id,
+        )
+        .first()
+    )
 
     return InterviewReportResponse(
         id=report.id,
@@ -45,6 +64,10 @@ def _to_response(db: Session, report: InterviewReport) -> InterviewReportRespons
         model_version=report.model_version,
         generated_at=report.generated_at,
         created_at=report.created_at,
+        application_id=application.id if application else None,
+        application_stage=application.stage if application else None,
+        candidate_user_id=report.candidate_user_id,
+        candidate_has_photo=bool(candidate and getattr(candidate, "profile_photo", None)),
     )
 
 

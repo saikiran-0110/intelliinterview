@@ -225,16 +225,43 @@ def update_application_stage(
 
     job = db.get(JobSpecification, application.job_spec_id)
     job_title = job.title if job else "the role"
-    body = (
-        f"Your application for {job_title} moved to {request.stage.value.replace('_', ' ').title()}."
-        + (f" Note: {request.notes}" if request.notes else "")
-    )
-    if request.stage == PipelineStage.SHORTLISTED:
-        body += " Your recruiter will prepare interview questions and propose a time slot next."
+
+    decision_copy = {
+        PipelineStage.HIRED: (
+            f"Offer: {job_title}",
+            f"Congratulations! We are delighted to offer you the {job_title} position. "
+            "Your recruiter will follow up shortly with the full offer details.",
+        ),
+        PipelineStage.REJECTED: (
+            f"Application update: {job_title}",
+            f"Thank you for taking the time to interview for {job_title}. After careful "
+            "consideration we will not be moving forward with your application on this "
+            "occasion. We appreciate the time you invested and wish you every success.",
+        ),
+        PipelineStage.OFFER: (
+            f"You're moving forward: {job_title}",
+            f"Great news - you've been selected to move forward to the next stage for "
+            f"{job_title}. Your recruiter will be in touch with details shortly.",
+        ),
+    }
+
+    if request.stage in decision_copy:
+        title, body = decision_copy[request.stage]
+        if request.notes:
+            body += f"\n\nMessage from the recruiter: {request.notes}"
+    else:
+        title = f"Application update: {job_title}"
+        body = (
+            f"Your application for {job_title} moved to {request.stage.value.replace('_', ' ').title()}."
+            + (f" Note: {request.notes}" if request.notes else "")
+        )
+        if request.stage == PipelineStage.SHORTLISTED:
+            body += " Your recruiter will prepare interview questions and propose a time slot next."
+
     notifications.notify(
         db,
         user_id=application.candidate_user_id,
-        title=f"Application update: {job_title}",
+        title=title,
         body=body,
         link="/candidate/applications",
     )
