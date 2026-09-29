@@ -62,3 +62,9 @@ class NotificationService:
         db.commit()
         db.refresh(notification)
         return notification
+
+    def mark_all_read(self, db: Session, user_id: UUID) -> None:
+        db.query(Notification).filter(
+            Notification.user_id == user_id, Notification.is_read.is_(False)
+        ).update({"is_read": True}, synchronize_session=False)
+        db.commit()

@@ -79,6 +79,12 @@ export function markNotificationRead(notificationId: string) {
   })
 }
 
+export function markAllNotificationsRead() {
+  return apiRequest<AppNotification[]>('/api/scheduling/notifications/read-all', {
+    method: 'POST',
+  })
+}
+
 export function getAnalyticsOverview() {
   return apiRequest<AnalyticsOverview>('/api/analytics/overview')
 }

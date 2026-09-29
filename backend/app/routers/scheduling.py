@@ -275,6 +275,16 @@ def list_notifications(
     return [_notification_response(item) for item in items]
 
 
+@router.post("/notifications/read-all", response_model=list[NotificationResponse])
+def mark_all_notifications_read(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[NotificationResponse]:
+    notifications.mark_all_read(db, current_user.id)
+    items = notifications.list_for_user(db, current_user.id)
+    return [_notification_response(item) for item in items]
+
+
 @router.post("/notifications/{notification_id}/read", response_model=NotificationResponse)
 def mark_notification_read(
     notification_id: UUID,

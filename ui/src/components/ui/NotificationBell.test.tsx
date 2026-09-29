@@ -7,17 +7,20 @@ import { NotificationBell } from './NotificationBell'
 vi.mock('../../api/desirable', () => ({
   listNotifications: vi.fn(),
   markNotificationRead: vi.fn(),
+  markAllNotificationsRead: vi.fn(),
 }))
 
-import { listNotifications, markNotificationRead } from '../../api/desirable'
+import { listNotifications, markAllNotificationsRead, markNotificationRead } from '../../api/desirable'
 
 const mockedList = vi.mocked(listNotifications)
 const mockedMarkRead = vi.mocked(markNotificationRead)
+const mockedMarkAllRead = vi.mocked(markAllNotificationsRead)
 
 describe('NotificationBell', () => {
   beforeEach(() => {
     mockedList.mockReset()
     mockedMarkRead.mockReset()
+    mockedMarkAllRead.mockReset()
   })
 
   it('shows an unread count badge and no crash when the response is not an array', async () => {
@@ -99,5 +102,50 @@ describe('NotificationBell', () => {
     await user.click(await screen.findByText('Interview slots available'))
 
     expect(await screen.findByText('Sessions page')).toBeInTheDocument()
+  })
+
+  it('clears the unread badge when Mark all as read is clicked', async () => {
+    mockedList.mockResolvedValue([
+      {
+        id: 'n3',
+        title: 'New application: Platform Engineer',
+        body: 'A candidate applied.',
+        link: null,
+        channel: 'IN_APP',
+        is_read: false,
+        email_sent: false,
+        related_session_id: null,
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'n4',
+        title: 'Another update',
+        body: 'Something else happened.',
+        link: null,
+        channel: 'IN_APP',
+        is_read: false,
+        email_sent: false,
+        related_session_id: null,
+        created_at: new Date().toISOString(),
+      },
+    ])
+    mockedMarkAllRead.mockResolvedValue([])
+
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <NotificationBell />
+      </MemoryRouter>,
+    )
+
+    const bellButton = await screen.findByRole('button', { name: /2 unread notifications/i })
+    await user.click(bellButton)
+
+    const markAllButton = await screen.findByRole('button', { name: 'Mark all as read' })
+    await user.click(markAllButton)
+
+    expect(mockedMarkAllRead).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Mark all as read' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/unread notification/i)).not.toBeInTheDocument()
   })
 })

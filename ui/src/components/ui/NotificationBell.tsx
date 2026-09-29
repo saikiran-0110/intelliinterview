@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { listNotifications, markNotificationRead } from '../../api/desirable'
+import { listNotifications, markAllNotificationsRead, markNotificationRead } from '../../api/desirable'
 import type { AppNotification } from '../../types/desirable'
 
 const POLL_INTERVAL_MS = 30000
@@ -76,6 +76,15 @@ export function NotificationBell() {
     }
   }
 
+  async function handleMarkAllRead() {
+    setItems((current) => current.map((n) => ({ ...n, is_read: true })))
+    try {
+      await markAllNotificationsRead()
+    } catch {
+      // Non-critical; the next poll will reconcile state either way.
+    }
+  }
+
   return (
     <div className="relative" ref={containerRef}>
       <button
@@ -94,8 +103,17 @@ export function NotificationBell() {
 
       {open && (
         <div className="absolute right-0 top-full z-50 mt-2 w-80 max-w-[90vw] rounded-2xl border border-border bg-surface-raised shadow-lg">
-          <div className="border-b border-border px-4 py-3">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-semibold text-ink">Notifications</p>
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={handleMarkAllRead}
+                className="text-xs font-semibold text-teal-700 hover:text-teal-800"
+              >
+                Mark all as read
+              </button>
+            )}
           </div>
           <div className="max-h-96 overflow-y-auto">
             {recent.length === 0 ? (
