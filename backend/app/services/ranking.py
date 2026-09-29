@@ -66,7 +66,15 @@ class RankingService:
             if application.gap_analysis_id:
                 analysis = db.get(GapAnalysis, application.gap_analysis_id)
             if analysis is None:
+                analysis = (
+                    db.query(GapAnalysis)
+                    .filter(GapAnalysis.cv_id == cv.id, GapAnalysis.job_spec_id == job_spec.id)
+                    .order_by(GapAnalysis.created_at.desc())
+                    .first()
+                )
+            if analysis is None:
                 analysis = self.gap_service.analyse(db, cv, job_spec, recruiter_id)
+            if application.gap_analysis_id != analysis.id:
                 application.gap_analysis_id = analysis.id
                 application.match_score = analysis.match_score
                 db.add(application)

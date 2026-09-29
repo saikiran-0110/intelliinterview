@@ -24,11 +24,19 @@ def list_gap_analyses(
         .order_by(GapAnalysis.created_at.desc())
         .all()
     )
+    # Re-running a match preview, applying, and ranking can each independently
+    # produce a GapAnalysis for the same CV/job pair. Only the most recent one
+    # (the first we see, since the query above is newest-first) is relevant.
+    seen_pairs: set[tuple[UUID, UUID]] = set()
     results: list[GapAnalysisResponse] = []
     for analysis in analyses:
+        pair = (analysis.cv_id, analysis.job_spec_id)
+        if pair in seen_pairs:
+            continue
         cv = db.get(CandidateCv, analysis.cv_id)
         job_spec = db.get(JobSpecification, analysis.job_spec_id)
         if cv and job_spec:
+            seen_pairs.add(pair)
             results.append(to_gap_analysis_response(analysis, cv, job_spec))
     return results
 

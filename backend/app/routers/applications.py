@@ -181,7 +181,14 @@ def apply_for_job(
     if job.created_by is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job has no owning recruiter")
 
-    analysis = gap_service.analyse(db, cv, job, job.created_by)
+    analysis = (
+        db.query(GapAnalysis)
+        .filter(GapAnalysis.cv_id == cv.id, GapAnalysis.job_spec_id == job.id)
+        .order_by(GapAnalysis.created_at.desc())
+        .first()
+    )
+    if analysis is None:
+        analysis = gap_service.analyse(db, cv, job, job.created_by)
     application = JobApplication(
         job_spec_id=job.id,
         candidate_user_id=current_user.id,
