@@ -11,5 +11,6 @@ tika==2.6.0
 pypdf==5.4.0
 python-docx==1.1.2
 httpx==0.28.1
+numpy==2.5.3
 pytest==8.3.4
 pytest-cov==6.0.0

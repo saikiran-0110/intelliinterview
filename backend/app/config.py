@@ -14,6 +14,12 @@ class Settings:
     cors_origins: str = "http://localhost:5173"
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
+    # Pinned so the same text always embeds to the same vector - this feeds the
+    # deterministic match score, unlike chat completions which vary between runs.
+    openai_embedding_model: str = "text-embedding-3-small"
+    # Starting guess for text-embedding-3-small; see scripts/calibrate_semantic_threshold.py
+    # to recompute from real CV/job data before trusting this in production.
+    semantic_match_threshold: float = 0.45
     upload_max_size_mb: int = 10
     # ~1GB headroom for a 45-minute webm interview recording (video+audio at typical
     # MediaRecorder default bitrates run roughly 700MB-900MB for that length).
