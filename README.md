@@ -77,3 +77,21 @@ npm test
 ```
 
 Frontend tests run with Vitest and React Testing Library.
+
+## Semantic retrieval threshold calibration
+
+Gap analysis rescues lexical gaps using CV-chunk embeddings (`app/services/embeddings.py`)
+when `settings.semantic_match_threshold` (default `0.45`) is cleared by cosine similarity
+against a canonical skill phrase. That default is a starting guess, not a calibrated value.
+To recompute it from real CV/job data:
+
+```bash
+cd backend
+.venv\Scripts\activate
+python scripts/calibrate_semantic_threshold.py path/to/cv.txt path/to/job_spec.txt
+```
+
+This prints every lexical gap skill against its best-matching CV passage with the
+similarity score, and a suggested threshold at the midpoint of the largest gap between
+consecutive scores. Requires a real `openai_api_key` in `app/config.py` - it calls the
+OpenAI embeddings endpoint directly and makes no database calls.
