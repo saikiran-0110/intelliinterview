@@ -22,6 +22,18 @@ def _skill_names(items: list) -> list[str]:
     return names
 
 
+def _semantic_skill_names(items: list) -> list[str]:
+    """Names of skills whose match came from the semantic layer, not the lexical
+    catalogue - used to badge those matches in the ranking view."""
+    names: list[str] = []
+    for item in items or []:
+        if isinstance(item, dict) and item.get("match_source") == "semantic":
+            name = str(item.get("name", "")).strip()
+            if name:
+                names.append(name)
+    return names
+
+
 def _plain_language(score: float, strong: list[str], gaps: list[str]) -> str:
     if score >= 75:
         level = "strong overall match"
@@ -84,6 +96,9 @@ class RankingService:
             strong = _skill_names(analysis.strong_matches)
             partial = _skill_names(analysis.partial_matches)
             gaps = _skill_names(analysis.gaps)
+            semantic_names = _semantic_skill_names(analysis.strong_matches) + _semantic_skill_names(
+                analysis.partial_matches
+            )
             score = float(analysis.match_score or 0)
             ranked.append(
                 {
@@ -98,6 +113,7 @@ class RankingService:
                     "strong_matches": strong,
                     "partial_matches": partial,
                     "gaps": gaps,
+                    "semantic_skill_names": semantic_names,
                     "narrative_summary": analysis.narrative_summary or "",
                     "plain_language_breakdown": _plain_language(score, strong, gaps),
                 }

@@ -86,6 +86,7 @@ export type RankedCandidate = {
   strong_matches: string[]
   partial_matches: string[]
   gaps: string[]
+  semantic_skill_names?: string[]
   narrative_summary: string
   plain_language_breakdown: string
 }

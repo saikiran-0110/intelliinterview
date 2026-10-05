@@ -100,6 +100,8 @@ class SkillMatchItem(BaseModel):
     category: str = "skill"
     related_cv_skill: str | None = None
     rationale: str | None = None
+    match_source: str | None = None
+    similarity: float | None = None
 
 
 class EvidencePassage(BaseModel):

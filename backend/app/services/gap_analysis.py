@@ -12,12 +12,14 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models import CandidateCv, GapAnalysis, JobSpecification
+from app.services.embeddings import build_embedded_chunks, cosine_similarity, get_skill_phrase_embedding
 from app.services.llm_json import as_dict_list, as_text
 from app.services.skill_catalog import (
     compare_skills,
     extract_evidence_passage,
     parse_cv_profile,
     parse_job_requirements,
+    skill_phrase,
 )
 
 logger = logging.getLogger(__name__)
@@ -125,6 +127,88 @@ def _build_evidence_passages(cv_text: str, matches: dict[str, list[dict[str, Any
     return passages[:12]
 
 
+def _best_chunk_match(skill: str, cv_chunks: list[dict[str, Any]]) -> tuple[str, float] | None:
+    """Best-scoring CV chunk for a canonical skill's descriptive phrase, or None when
+    the skill phrase or the CV has no embedding available."""
+    phrase_vector = get_skill_phrase_embedding(skill, skill_phrase(skill))
+    if phrase_vector is None:
+        return None
+
+    best_chunk: str | None = None
+    best_score = -1.0
+    for chunk in cv_chunks:
+        vector = chunk.get("vector")
+        text = chunk.get("text")
+        if not vector or not text:
+            continue
+        score = cosine_similarity(phrase_vector, vector)
+        if score > best_score:
+            best_score = score
+            best_chunk = text
+    if best_chunk is None:
+        return None
+    return best_chunk, best_score
+
+
+def _apply_semantic_layer(
+    cv: CandidateCv, matches: dict[str, list[dict[str, Any]]]
+) -> list[dict[str, Any]]:
+    """Rescue gap skills using CV-chunk embeddings, and collect grounding passages
+    for every strong/partial/semantic match. Mutates `matches` in place, moving
+    rescued skills from gaps to partial. A no-op (empty passages) when the CV has
+    no stored chunks - no key configured, or embedding failed at upload/backfill time.
+
+    Scores computed with a key present may therefore differ from scores computed
+    without one - that is a documented MODE difference, not nondeterminism: within
+    either mode, the same CV and role always produce the same score, because the
+    embedding model is pinned and returns the same vector for the same text every time.
+    """
+    cv_chunks = cv.embedded_chunks or []
+    if not cv_chunks:
+        for group in (matches["strong"], matches["partial"], matches["gaps"]):
+            for item in group:
+                item.setdefault("match_source", "catalogue")
+        return []
+
+    still_gaps: list[dict[str, Any]] = []
+    for item in matches["gaps"]:
+        skill = item["name"]
+        best = _best_chunk_match(skill, cv_chunks)
+        if best is not None and best[1] >= settings.semantic_match_threshold:
+            chunk_text, score = best
+            item["match_source"] = "semantic"
+            item["similarity"] = round(score, 3)
+            item["rationale"] = f"Semantically matched to CV passage (similarity {score:.2f})."
+            matches["partial"].append(item)
+        else:
+            item.setdefault("match_source", "catalogue")
+            still_gaps.append(item)
+    matches["gaps"] = still_gaps
+
+    for item in matches["strong"]:
+        item.setdefault("match_source", "catalogue")
+    for item in matches["partial"]:
+        item.setdefault("match_source", "catalogue")
+
+    retrieved_passages: list[dict[str, Any]] = []
+    for group in (matches["strong"], matches["partial"]):
+        for item in group:
+            skill = item["name"]
+            best = _best_chunk_match(skill, cv_chunks)
+            if best is None:
+                continue
+            chunk_text, score = best
+            retrieved_passages.append(
+                {
+                    "skill": skill,
+                    "match_type": item.get("match_source", "catalogue"),
+                    "passage": chunk_text,
+                    "similarity": round(score, 3),
+                }
+            )
+    return retrieved_passages
+
+
 def _calculate_match_score(
     strong_count: int, partial_count: int, gap_count: int, experience_alignment: str
 ) -> float:
@@ -171,6 +255,7 @@ def _enhance_with_openai(
     cv_text: str,
     job_text: str,
     baseline: dict[str, Any],
+    retrieved_passages: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any] | None:
     if not settings.openai_api_key:
         logger.info("gap_analysis: no OpenAI API key configured, using deterministic baseline")
@@ -182,11 +267,16 @@ def _enhance_with_openai(
         "cv_excerpt": cv_text[:6000],
         "job_excerpt": job_text[:6000],
         "baseline_analysis": baseline,
+        "retrieved_passages": retrieved_passages or [],
         "instructions": (
             "Return JSON with keys strong_matches, partial_matches, gaps (arrays of "
             "{name, rationale}), experience_analysis {alignment, notes}, "
             "qualifications_analysis {alignment, notes, matched_qualifications, missing_qualifications}, "
             "narrative_summary (string). Ground every point in the provided documents only. "
+            "retrieved_passages are CV passages retrieved for specific skills via semantic "
+            "similarity - every claim you make must be supported by one of these passages or by "
+            "the CV/job excerpts above. When you quote a retrieved passage or the CV excerpt, "
+            "quote it EXACTLY, character for character - never correct its spelling or spacing. "
             "Every array field MUST be a JSON array of strings or objects as specified, never a "
             "single concatenated string or null."
         ),
@@ -228,6 +318,19 @@ def _enhance_with_openai(
         return None
 
 
+def _ensure_embedded_chunks(cv: CandidateCv) -> None:
+    """Lazy backfill for CVs uploaded before Part D, or uploaded while no key was
+    configured. A no-op once a CV has chunks, or when no key is available now
+    either - existing demo CVs must keep working without a re-upload."""
+    if cv.embedded_chunks:
+        return
+    if not settings.openai_api_key:
+        return
+    # A8's mangled-PDF detection already ran at upload time, so chunking here
+    # inherits whatever text quality the extractor produced - no re-extraction.
+    cv.embedded_chunks = build_embedded_chunks(cv.extracted_text or "")
+
+
 class GapAnalysisService:
     def analyse(
         self,
@@ -244,11 +347,22 @@ class GapAnalysisService:
 
         cv.parsed_profile = cv_profile
         job_spec.parsed_requirements = job_requirements
+        _ensure_embedded_chunks(cv)
 
         matches = compare_skills(cv_profile.get("skills", []), job_requirements.get("required_skills", []))
+        retrieved_passages = _apply_semantic_layer(cv, matches)
         experience = _build_experience_analysis(cv_profile, job_requirements)
         qualifications = _build_qualifications_analysis(cv_profile, job_requirements)
-        evidence = _build_evidence_passages(cv_text, matches)
+        # Retrieval-grounded passages replace the keyword-window extraction whenever
+        # the semantic layer is active (same {skill, match_type, passage} shape, so
+        # the frontend needs no changes); otherwise fall back to the original extraction.
+        if retrieved_passages:
+            evidence = [
+                {"skill": p["skill"], "match_type": p["match_type"], "passage": p["passage"]}
+                for p in retrieved_passages[:12]
+            ]
+        else:
+            evidence = _build_evidence_passages(cv_text, matches)
         narrative = _build_narrative_summary(cv.candidate_name, job_spec.title, matches, experience, qualifications)
         match_score = _calculate_match_score(
             len(matches["strong"]),
@@ -266,7 +380,19 @@ class GapAnalysisService:
             "narrative_summary": narrative,
         }
 
-        enhanced = _enhance_with_openai(cv.candidate_name, job_spec.title, cv_text, job_text, baseline)
+        # The OpenAI enhancement step below replaces these arrays with the model's own
+        # {name, rationale} dicts, which never carry match_source/similarity - snapshot
+        # them here so semantic-layer provenance survives enhancement by name lookup,
+        # rather than depending on the model to echo fields it was never asked for.
+        provenance_by_skill = {
+            item["name"]: (item.get("match_source"), item.get("similarity"))
+            for group in matches.values()
+            for item in group
+        }
+
+        enhanced = _enhance_with_openai(
+            cv.candidate_name, job_spec.title, cv_text, job_text, baseline, retrieved_passages
+        )
         if enhanced:
             # match_score is deliberately NOT recomputed here: it is the number a recruiter
             # acts on, so it must stay derived only from the deterministic skill-catalogue
@@ -275,6 +401,15 @@ class GapAnalysisService:
             matches["strong"] = as_dict_list(enhanced.get("strong_matches"), matches["strong"])
             matches["partial"] = as_dict_list(enhanced.get("partial_matches"), matches["partial"])
             matches["gaps"] = as_dict_list(enhanced.get("gaps"), matches["gaps"])
+            for group in matches.values():
+                for item in group:
+                    if "match_source" in item:
+                        continue
+                    source, similarity = provenance_by_skill.get(item.get("name"), (None, None))
+                    if source is not None:
+                        item["match_source"] = source
+                        if similarity is not None:
+                            item["similarity"] = similarity
             enhanced_experience = enhanced.get("experience_analysis")
             if isinstance(enhanced_experience, dict):
                 experience = enhanced_experience

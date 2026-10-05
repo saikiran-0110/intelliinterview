@@ -166,6 +166,10 @@ class CandidateCv(Base):
     parsed_profile: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
     file_data: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
     content_type: Mapped[Optional[str]] = mapped_column(String(120))
+    # [{"text": "...", "vector": [...]}, ...] - chunked CV text with cached embeddings
+    # for semantic skill retrieval. Null/empty when no OpenAI key was configured at
+    # upload time (see gap_analysis.py's lazy backfill for demo CVs predating this).
+    embedded_chunks: Mapped[Optional[list[Any]]] = mapped_column(JSON)
     uploaded_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

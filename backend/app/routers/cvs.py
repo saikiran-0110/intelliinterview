@@ -21,6 +21,7 @@ from app.models import (
     UserRole,
 )
 from app.services.document_parser import DocumentParserService
+from app.services.embeddings import build_embedded_chunks
 from app.services.skill_catalog import parse_cv_profile
 
 router = APIRouter(prefix="/api/cvs", tags=["cvs"])
@@ -169,6 +170,9 @@ async def upload_cv(
 
     name = (candidate_name or current_user.full_name).strip()
     parsed_profile = parse_cv_profile(extracted_text)
+    # Never fail the upload because embeddings were unavailable - this is a pure
+    # enhancement on top of the lexical skill catalogue, not a requirement.
+    embedded_chunks = build_embedded_chunks(extracted_text)
     cv = CandidateCv(
         candidate_name=name,
         original_filename=file.filename,
@@ -176,6 +180,7 @@ async def upload_cv(
         parsed_profile=parsed_profile,
         file_data=file_bytes,
         content_type=file.content_type,
+        embedded_chunks=embedded_chunks,
         uploaded_by=current_user.id,
     )
     db.add(cv)

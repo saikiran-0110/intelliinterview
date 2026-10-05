@@ -33,6 +33,18 @@ function MatchList({
               className={`rounded-xl border px-3 py-2 text-sm ${toneClasses[tone]}`}
             >
               <span className="font-medium capitalize">{item.name}</span>
+              {item.match_source === 'semantic' && (
+                <span
+                  className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700"
+                  title={
+                    item.similarity != null
+                      ? `Matched by passage similarity (${item.similarity.toFixed(2)}), not the keyword catalogue`
+                      : 'Matched by passage similarity, not the keyword catalogue'
+                  }
+                >
+                  semantic
+                </span>
+              )}
               {item.related_cv_skill && (
                 <span className="mt-1 block text-xs opacity-80">
                   Related CV skill: {item.related_cv_skill}

@@ -45,6 +45,8 @@ export type SkillMatchItem = {
   category?: string
   related_cv_skill?: string | null
   rationale?: string | null
+  match_source?: 'catalogue' | 'semantic' | null
+  similarity?: number | null
 }
 
 export type EvidencePassage = {

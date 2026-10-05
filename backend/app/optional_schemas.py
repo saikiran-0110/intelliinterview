@@ -80,6 +80,7 @@ class RankedCandidate(BaseModel):
     strong_matches: list[str] = Field(default_factory=list)
     partial_matches: list[str] = Field(default_factory=list)
     gaps: list[str] = Field(default_factory=list)
+    semantic_skill_names: list[str] = Field(default_factory=list)
     narrative_summary: str
     plain_language_breakdown: str
 

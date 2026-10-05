@@ -192,12 +192,21 @@ def _enhance_with_openai(
         logger.info("question_generation: no OpenAI API key configured, using deterministic baseline")
         return None
 
+    # Part D5: ground each coverage target in the actual retrieved CV passage for
+    # that skill (when gap_analysis.py's semantic layer produced one) rather than
+    # just the bare skill name, so generated questions reference real CV text.
+    passage_by_skill = {
+        item.get("skill"): item.get("passage")
+        for item in (analysis.evidence_passages or [])
+        if isinstance(item, dict) and item.get("skill")
+    }
     coverage_targets = [
         {
             "skill_ref": item.get("skill_ref"),
             "topic": item.get("topic"),
             "question_type": item.get("question_type"),
             "why": item.get("rationale"),
+            "retrieved_passage": passage_by_skill.get(item.get("skill_ref")),
         }
         for item in baseline
     ]
@@ -232,7 +241,11 @@ def _enhance_with_openai(
             "could not have been asked of a different candidate. "
             "For gap skills, ask how the candidate's nearest actual experience would transfer, "
             "naming that experience. "
-            "Quote the CV exactly when you quote it; never correct its spelling or spacing. "
+            "Each coverage_target may carry a retrieved_passage - an actual CV passage "
+            "retrieved for that skill. Prefer grounding the question in that passage over "
+            "the bare skill name when one is present. "
+            "Quote the CV or a retrieved_passage exactly when you quote it, character for "
+            "character; never correct its spelling or spacing. "
             "Return JSON with key 'questions': each item has text, topic, question_type "
             "(gap_probe|partial_probe|depth|experience|scenario|evidence|qualifications), "
             "skill_ref (nullable), and rationale."

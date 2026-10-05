@@ -146,6 +146,10 @@ CV_COLUMN_UPGRADES = [
         "content_type",
         "ALTER TABLE candidate_cvs ADD COLUMN IF NOT EXISTS content_type VARCHAR(120)",
     ),
+    (
+        "embedded_chunks",
+        "ALTER TABLE candidate_cvs ADD COLUMN IF NOT EXISTS embedded_chunks JSON",
+    ),
 ]
 
 PREPARATION_COLUMN_UPGRADES = [
