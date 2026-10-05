@@ -1,4 +1,5 @@
 from app.services.skill_catalog import (
+    chunk_document,
     compare_skills,
     extract_evidence_passage,
     extract_qualifications,
@@ -185,3 +186,63 @@ def test_extract_skills_mobile_frameworks():
     skills = extract_skills(text)
     assert "flutter" in skills
     assert "react" in skills
+
+
+def test_chunk_document_groups_sentences_with_expected_overlap():
+    # 20 five-word sentences; target=20 words (4 sentences/chunk), overlap=10 words
+    # (2 sentences) - both counts are exact multiples so the result is predictable.
+    sentences = [f"Sentence number {i} has words." for i in range(20)]
+    text = " ".join(sentences)
+
+    chunks = chunk_document(text, target_words=20, overlap_words=10)
+
+    assert len(chunks) == 9
+    first_words = chunks[0].split()
+    second_words = chunks[1].split()
+    assert len(first_words) == 20
+    # The last 10 words of chunk 0 should be the first 10 words of chunk 1 (the overlap).
+    assert first_words[-10:] == second_words[:10]
+
+
+def test_chunk_document_caps_chunk_size_near_target():
+    sentences = [f"This sentence number {i} describes some work done on a notable project." for i in range(40)]
+    text = " ".join(sentences)
+
+    chunks = chunk_document(text, target_words=50, overlap_words=10)
+
+    for chunk in chunks:
+        assert len(chunk.split()) <= 50 * 1.5
+
+
+def test_chunk_document_short_text_yields_one_chunk():
+    text = "Built a small internal tool used by the whole engineering team daily."
+    chunks = chunk_document(text)
+    assert len(chunks) == 1
+
+
+def test_chunk_document_empty_text_yields_no_chunks():
+    assert chunk_document("") == []
+    assert chunk_document("   \n  ") == []
+
+
+def test_chunk_document_drops_short_trailing_fragment():
+    text = "This is a reasonably long first sentence with plenty of words in it. Short one."
+    chunks = chunk_document(text, target_words=100, overlap_words=10)
+    assert all(len(chunk.split()) >= 8 for chunk in chunks)
+
+
+def test_chunk_document_treats_bullet_lines_as_sentence_boundaries():
+    text = (
+        "Built APIs with FastAPI and PostgreSQL for the platform team\n"
+        "Led migration to Kubernetes across all production services company wide"
+    )
+    chunks = chunk_document(text, target_words=20, overlap_words=2)
+    assert len(chunks) >= 1
+    assert any("kubernetes" in chunk.lower() for chunk in chunks)
+
+
+def test_chunk_document_caps_total_chunks_at_sixty():
+    sentences = [f"Line {i} describes a unique short responsibility handled by the candidate." for i in range(500)]
+    text = " ".join(sentences)
+    chunks = chunk_document(text, target_words=20, overlap_words=5)
+    assert len(chunks) <= 60

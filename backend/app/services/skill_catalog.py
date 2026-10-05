@@ -70,6 +70,74 @@ TECH_SKILLS: dict[str, list[str]] = {
     "security": ["owasp", "jwt", "oauth", "security"],
 }
 
+SKILL_PHRASES: dict[str, str] = {
+    "python": "Python software development, scripting and backend programming",
+    "fastapi": "FastAPI web framework for building Python REST APIs",
+    "java": "Java application development, Spring and Hibernate backend services",
+    "javascript": "JavaScript programming for web applications and Node.js backends",
+    "typescript": "TypeScript typed JavaScript development",
+    "react": "React.js frontend development, components, hooks and state management",
+    "angular": "Angular frontend framework development with TypeScript",
+    "vue": "Vue.js frontend framework development and single page applications",
+    "flutter": "Flutter cross-platform mobile app development with Dart",
+    "csharp": "C# and .NET application development",
+    "go": "Go (Golang) backend and systems programming",
+    "rust": "Rust systems programming for performance and memory safety",
+    "php": "PHP web development with Laravel or Symfony",
+    "ruby": "Ruby on Rails web application development",
+    "scala": "Scala programming for backend and data systems",
+    "kotlin": "Kotlin programming for Android or backend development",
+    "swift": "Swift programming for Apple platform development",
+    "ios": "iOS mobile application development with UIKit, SwiftUI and Xcode",
+    "android": "Android mobile application development with Jetpack Compose",
+    "postgresql": "PostgreSQL relational database design, queries and administration",
+    "mysql": "MySQL relational database design and administration",
+    "mongodb": "MongoDB NoSQL document database development",
+    "redis": "Redis in-memory caching and data store",
+    "sqlite": "SQLite embedded relational database",
+    "dynamodb": "Amazon DynamoDB NoSQL database",
+    "elasticsearch": "Elasticsearch search and analytics engine",
+    "docker": "Docker containerisation and building container images",
+    "kubernetes": (
+        "Kubernetes container orchestration, pod scheduling, cluster management, "
+        "deployments and scaling of containerised services"
+    ),
+    "terraform": "Terraform infrastructure as code for provisioning cloud resources",
+    "ansible": "Ansible configuration management and automation",
+    "aws": "Amazon Web Services cloud infrastructure including EC2, S3 and Lambda",
+    "azure": "Microsoft Azure cloud infrastructure and services",
+    "gcp": "Google Cloud Platform infrastructure and services",
+    "git": "Git version control and collaborative code hosting on GitHub or GitLab",
+    "ci/cd": (
+        "continuous integration and continuous deployment pipelines, automated build and "
+        "release, deployment automation"
+    ),
+    "rest": "designing and consuming RESTful HTTP APIs",
+    "graphql": "GraphQL API design and querying",
+    "microservices": "designing and operating microservice architectures",
+    "message queues": "asynchronous messaging with Kafka, RabbitMQ or SQS queues",
+    "monitoring": "observability, metrics and monitoring with Prometheus, Grafana or Datadog",
+    "agile": "Agile, Scrum or Kanban software delivery practices",
+    "testing": "automated software testing, unit tests, integration tests and test-driven development",
+    "machine learning": "machine learning and deep learning model development with TensorFlow or PyTorch",
+    "data engineering": "data engineering, ETL pipelines and distributed data processing with Spark or Airflow",
+    "system design": "distributed systems and software architecture design at scale",
+    "html": "HTML markup for building web page structure",
+    "css": "CSS styling, layout and responsive design for the web",
+    "state management": "frontend state management with Redux, Vuex or MobX",
+    "sql": "writing and optimising SQL queries against relational databases",
+    "linux": "Linux and Unix system administration and shell scripting",
+    "security": "application security practices including OWASP, JWT and OAuth",
+}
+
+
+def skill_phrase(skill: str) -> str:
+    """Descriptive phrase for embedding a canonical skill. Bare skill names embed
+    poorly on their own, so every canonical skill should have a WORK-describing
+    phrase here; skills without one fall back to a generic engineering framing."""
+    return SKILL_PHRASES.get(skill, f"{skill} software engineering")
+
+
 RELATED_SKILLS: dict[str, set[str]] = {
     "react": {"javascript", "typescript", "html", "css", "rest"},
     "angular": {"typescript", "javascript", "html", "css", "rest"},
@@ -215,6 +283,68 @@ def _is_partial_match(cv_skill: str, job_skill: str) -> bool:
     related_to_job = RELATED_SKILLS.get(job_skill, set())
     related_to_cv = RELATED_SKILLS.get(cv_skill, set())
     return job_skill in related_to_cv or cv_skill in related_to_job
+
+
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+_MIN_CHUNK_WORDS = 8
+_MAX_CHUNKS = 60
+
+
+def _split_sentences(text: str) -> list[str]:
+    """Split into sentence-like units, treating a newline-separated bullet as its own
+    boundary too so bullet-heavy CVs don't get merged into one giant "sentence"."""
+    sentences: list[str] = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        for piece in _SENTENCE_SPLIT_RE.split(line):
+            piece = piece.strip()
+            if piece:
+                sentences.append(piece)
+    return sentences
+
+
+def chunk_document(text: str, target_words: int = 50, overlap_words: int = 10) -> list[str]:
+    """Group sentences into ~target_words chunks with overlap, so a skill mentioned
+    across a sentence boundary is not lost to either chunk. Drops short trailing
+    fragments and caps the total to bound embedding cost on long documents."""
+    sentences = _split_sentences(text)
+    if not sentences:
+        return []
+
+    sentence_words = [sentence.split() for sentence in sentences]
+
+    chunks: list[str] = []
+    start = 0
+    n = len(sentences)
+    while start < n:
+        words_in_chunk = 0
+        end = start
+        while end < n and (words_in_chunk == 0 or words_in_chunk < target_words):
+            words_in_chunk += len(sentence_words[end])
+            end += 1
+
+        chunk_text = " ".join(sentences[start:end])
+        if len(chunk_text.split()) >= _MIN_CHUNK_WORDS:
+            chunks.append(chunk_text)
+
+        if end >= n:
+            break
+
+        # Step back roughly overlap_words worth of sentences so the next chunk
+        # overlaps this one instead of starting cold right after it.
+        overlap_count = 0
+        back = end
+        while back > start and overlap_count < overlap_words:
+            back -= 1
+            overlap_count += len(sentence_words[back])
+        start = max(back, start + 1)
+
+        if len(chunks) >= _MAX_CHUNKS:
+            break
+
+    return chunks[:_MAX_CHUNKS]
 
 
 def compare_skills(cv_skills: list[str], job_skills: list[str]) -> dict[str, list[dict[str, Any]]]:
