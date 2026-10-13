@@ -315,7 +315,7 @@ export function LiveInterviewPage() {
           </p>
           <Link
             to="/candidate/sessions"
-            className="mt-3 inline-block rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-ink"
+            className="mt-3 inline-block rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white"
           >
             Go to My Sessions
           </Link>
@@ -506,7 +506,7 @@ export function LiveInterviewPage() {
                 type="button"
                 onClick={handleStart}
                 disabled={loading}
-                className="mt-4 min-h-11 w-full rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-ink hover:bg-sky-500 disabled:opacity-50"
+                className="mt-4 min-h-11 w-full rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
               >
                 Start interview
               </button>
@@ -549,7 +549,7 @@ export function LiveInterviewPage() {
                     disabled={!sttSupported || !sttEnabled || loading}
                     className={`min-h-11 rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50 ${
                       isListening
-                        ? 'bg-rose-500 text-ink hover:bg-rose-400'
+                        ? 'bg-rose-600 text-white hover:bg-rose-500'
                         : 'border border-border text-sky-700 hover:border-sky-300'
                     }`}
                   >
@@ -558,7 +558,7 @@ export function LiveInterviewPage() {
                   <button
                     type="submit"
                     disabled={loading || !answer.trim()}
-                    className="min-h-11 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-ink hover:bg-sky-500 disabled:opacity-50"
+                    className="min-h-11 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
                   >
                     {loading ? 'Submitting...' : 'Submit answer'}
                   </button>

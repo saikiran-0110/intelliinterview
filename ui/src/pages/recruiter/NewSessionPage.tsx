@@ -122,7 +122,7 @@ export function NewSessionPage() {
           </p>
           <Link
             to="/recruiter/questions"
-            className="mt-3 inline-block rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-ink"
+            className="mt-3 inline-block rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white"
           >
             Go to Question Planning
           </Link>

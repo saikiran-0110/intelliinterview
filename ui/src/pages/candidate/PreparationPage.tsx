@@ -141,7 +141,7 @@ export function PreparationPage() {
           type="button"
           onClick={handleGenerate}
           disabled={!selectedJobId || !selectedCvId || generating}
-          className="mt-4 min-h-11 w-full rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-ink disabled:opacity-50 sm:w-auto"
+          className="mt-4 min-h-11 w-full rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 sm:w-auto"
         >
           {generating ? 'Generating advanced pack…' : 'Generate advanced practice pack'}
         </button>

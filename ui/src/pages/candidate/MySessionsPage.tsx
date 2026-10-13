@@ -219,7 +219,7 @@ export function MySessionsPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleConfirm(session.id, slot.id)}
-                                  className="min-h-11 rounded-lg bg-sky-600 px-3 py-1 text-xs font-semibold text-ink hover:bg-sky-500 sm:min-h-0"
+                                  className="min-h-11 rounded-lg bg-sky-600 px-3 py-1 text-xs font-semibold text-white hover:bg-sky-500 sm:min-h-0"
                                 >
                                   Confirm
                                 </button>
@@ -266,7 +266,7 @@ export function MySessionsPage() {
                     {canOpenInterview ? (
                       <Link
                         to={`/candidate/interview/${session.id}`}
-                        className="flex min-h-11 items-center justify-center rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-ink hover:bg-sky-500"
+                        className="flex min-h-11 items-center justify-center rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500"
                       >
                         {session.status === 'COMPLETED' ? 'View transcript' : 'Open interview'}
                       </Link>

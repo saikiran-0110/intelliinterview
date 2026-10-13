@@ -103,7 +103,7 @@ export function CandidateDashboard() {
             </p>
             <Link
               to={`/candidate/interview/${nextReady.id}`}
-              className="mt-4 inline-block rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-ink hover:bg-sky-500"
+              className="mt-4 inline-block rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500"
             >
               Open interview
             </Link>
@@ -121,7 +121,7 @@ export function CandidateDashboard() {
             </p>
             <Link
               to="/candidate/sessions"
-              className="mt-4 inline-block rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-ink hover:bg-sky-500"
+              className="mt-4 inline-block rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500"
             >
               {nextPending.confirmation_status !== 'CONFIRMED'
                 ? 'Confirm slot on My Sessions'

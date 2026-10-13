@@ -185,10 +185,10 @@ export function ApplicationsPage() {
               type="file"
               accept=".pdf,.doc,.docx,.txt"
               onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
-              className="block w-full text-sm text-slate-700"
+              className="block w-full text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-sky-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-sky-500"
               required
             />
-            <button type="submit" className="min-h-11 w-full rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-ink sm:w-auto">
+            <button type="submit" className="min-h-11 w-full rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white sm:w-auto">
               Upload resume
             </button>
           </form>
@@ -341,7 +341,7 @@ export function ApplicationsPage() {
             ) : (
               <button
                 type="submit"
-                className="min-h-11 w-full rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-ink sm:w-auto"
+                className="min-h-11 w-full rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white sm:w-auto"
               >
                 Submit application
               </button>

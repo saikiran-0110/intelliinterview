@@ -285,7 +285,7 @@ Requirements:
                   type="file"
                   accept=".pdf,.doc,.docx,.txt"
                   onChange={(e) => setJobFile(e.target.files?.[0] ?? null)}
-                  className="w-full text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-ink"
+                  className="w-full text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
                 />
               )}
               <button
