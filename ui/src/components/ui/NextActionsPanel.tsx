@@ -36,8 +36,8 @@ export function NextActionsPanel() {
             <div>
               <div className="flex items-center gap-2">
                 {item.priority === 0 && (
-                  <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700">
-                    Blocked
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                    Needs action
                   </span>
                 )}
                 <p className="text-sm font-semibold text-ink">{item.title}</p>

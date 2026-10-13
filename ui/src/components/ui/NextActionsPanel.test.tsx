@@ -38,7 +38,7 @@ describe('NextActionsPanel', () => {
     )
 
     expect(await screen.findByText('2 scheduled interviews awaiting confirmation')).toBeInTheDocument()
-    expect(screen.getByText('Blocked')).toBeInTheDocument()
+    expect(screen.getByText('Needs action')).toBeInTheDocument()
     expect(screen.getByText('Open scheduling')).toBeInTheDocument()
   })
 
