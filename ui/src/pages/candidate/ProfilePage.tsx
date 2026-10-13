@@ -178,10 +178,14 @@ export function ProfilePage() {
                 type="file"
                 accept="image/*"
                 onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                className="w-full text-sm text-muted"
+                className="w-full text-sm text-muted file:mr-4 file:rounded-lg file:border-0 file:bg-sky-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-sky-500"
               />
               <div className="flex gap-3">
-                <button type="submit" disabled={!photoFile} className="btn-primary disabled:opacity-50">
+                <button
+                  type="submit"
+                  disabled={!photoFile}
+                  className="min-h-11 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
+                >
                   Upload photo
                 </button>
                 {user?.has_profile_photo && (
@@ -198,12 +202,46 @@ export function ProfilePage() {
           <h3 className="text-lg font-semibold text-ink">Account details</h3>
           <form className="mt-4 space-y-3" onSubmit={handleProfile}>
             <p className="text-sm text-muted">{user?.email}</p>
-            <input value={fullName} onChange={(e) => setFullName(e.target.value)} className="input-field" required placeholder="Full name" />
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} className="input-field" placeholder="Phone" />
-            <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className="input-field" placeholder="Target role / title" />
-            <input value={location} onChange={(e) => setLocation(e.target.value)} className="input-field" placeholder="Location" />
-            <input value={linkedin} onChange={(e) => setLinkedin(e.target.value)} className="input-field" placeholder="LinkedIn URL" />
-            <button type="submit" className="btn-primary">
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-medium text-slate-500">Full name</span>
+              <input
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="input-field"
+                required
+                autoComplete="name"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-medium text-slate-500">Phone</span>
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="input-field"
+                autoComplete="tel"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-medium text-slate-500">Target role / title</span>
+              <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className="input-field" />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-medium text-slate-500">Location</span>
+              <input
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="input-field"
+                autoComplete="address-level2"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-medium text-slate-500">LinkedIn URL</span>
+              <input value={linkedin} onChange={(e) => setLinkedin(e.target.value)} className="input-field" />
+            </label>
+            <button
+              type="submit"
+              className="min-h-11 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-500"
+            >
               Save profile
             </button>
           </form>

@@ -49,13 +49,13 @@ describe('LoginPage', () => {
     )
 
     expect(screen.getByText('Recruiter access')).toBeInTheDocument()
-    await user.type(screen.getByPlaceholderText(/dummy emails/i), 'recruiter@example.com')
+    await user.type(screen.getByLabelText('Email address'), 'recruiter@example.com')
     await user.click(screen.getByRole('button', { name: 'Send login OTP' }))
 
-    await screen.findByPlaceholderText('6-digit OTP')
+    await screen.findByLabelText('6-digit code')
     expect(mockedStartLogin).toHaveBeenCalledWith('recruiter@example.com')
 
-    await user.type(screen.getByPlaceholderText('6-digit OTP'), '123456')
+    await user.type(screen.getByLabelText('6-digit code'), '123456')
     await user.click(screen.getByRole('button', { name: 'Verify & continue' }))
 
     await waitFor(() => {
@@ -80,15 +80,15 @@ describe('LoginPage', () => {
     )
 
     await user.click(screen.getByRole('button', { name: /Need an account/i }))
-    expect(screen.getByPlaceholderText('Company')).toBeInTheDocument()
-    await user.type(screen.getByPlaceholderText('Full name'), 'New Recruiter')
-    await user.type(screen.getByPlaceholderText('Phone'), '+447700900111')
-    await user.type(screen.getByPlaceholderText('Company'), 'Acme')
-    await user.type(screen.getByPlaceholderText(/Password/), 'password123')
-    await user.type(screen.getByPlaceholderText(/dummy emails/i), 'new@example.com')
+    expect(screen.getByLabelText('Company')).toBeInTheDocument()
+    await user.type(screen.getByLabelText('Full name'), 'New Recruiter')
+    await user.type(screen.getByLabelText('Phone number'), '+447700900111')
+    await user.type(screen.getByLabelText('Company'), 'Acme')
+    await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Email address'), 'new@example.com')
     await user.click(screen.getByRole('button', { name: 'Send registration OTP' }))
 
-    await screen.findByPlaceholderText('6-digit OTP')
+    await screen.findByLabelText('6-digit code')
     expect(mockedStartRegister).toHaveBeenCalled()
   })
 
@@ -102,7 +102,7 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     )
 
-    await user.type(screen.getByPlaceholderText(/dummy emails/i), 'missing@example.com')
+    await user.type(screen.getByLabelText('Email address'), 'missing@example.com')
     await user.click(screen.getByRole('button', { name: 'Send login OTP' }))
     expect(await screen.findByText('No account found for this email')).toBeInTheDocument()
   })
