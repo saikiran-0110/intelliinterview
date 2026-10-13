@@ -425,7 +425,12 @@ export function JobsPipelinePage() {
                   </button>
                   <button
                     type="button"
-                    className="text-xs text-teal-700"
+                    title="Click to toggle role visibility"
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      (job.is_open ?? true)
+                        ? 'bg-teal-50 text-teal-700'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
                     onClick={async () => {
                       await setJobVisibility(job.id, !(job.is_open ?? true))
                       await load(selectedJobId || undefined)
