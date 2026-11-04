@@ -1,13 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import { uploadRecording } from '../../api/sessions'
+import { checkProctoringFrame, uploadRecording } from '../../api/sessions'
+import type { ProctoringCheckResponse } from '../../types/sessions'
 
 type Props = {
   sessionId: string
   /** Interview is actively in progress: recording should be capturing while this is true. */
   active: boolean
-  /** Interview has finished: stop capture and upload. */
+  /** Interview has finished (completed or disqualified): stop capture and upload. */
   completed: boolean
+  /** Called after each proctoring frame check, violation or not, so the parent can show
+   * warnings and react to disqualification. */
+  onProctoringEvent?: (result: ProctoringCheckResponse) => void
 }
+
+const PROCTORING_CHECK_INTERVAL_MS = 10_000
 
 function isRecordingSupported(): boolean {
   return (
@@ -27,13 +33,17 @@ function pickMimeType(): string | undefined {
 
 /**
  * Compulsory, candidate-side interview recording: capture starts automatically once the
- * interview is in progress, with no opt-out toggle. The recording is for human review
+ * interview is in progress, with no opt-out toggle. The full recording is for human review
  * only - it is never sent to any model, and the AI evaluation reads typed/transcribed
- * answers only. A browser that cannot support capture, or a denied camera/microphone
- * permission, still cannot be forced open - that failure is surfaced clearly so the
- * candidate can tell the recruiter, but it does not block the interview itself.
+ * answers only. Separately, this component also samples still frames from the same stream
+ * at an interval and sends each one to the proctoring-check endpoint (see
+ * api/sessions.ts: checkProctoringFrame) for live cheating detection - that is a distinct,
+ * much smaller data flow from the recording itself. A browser that cannot support capture,
+ * or a denied camera/microphone permission, still cannot be forced open - that failure is
+ * surfaced clearly so the candidate can tell the recruiter, but it does not block the
+ * interview itself (and proctoring simply cannot run without a camera).
  */
-export function InterviewRecorder({ sessionId, active, completed }: Props) {
+export function InterviewRecorder({ sessionId, active, completed, onProctoringEvent }: Props) {
   const supported = useRef(isRecordingSupported()).current
   const [permissionDenied, setPermissionDenied] = useState(false)
   const [recording, setRecording] = useState(false)
@@ -46,11 +56,42 @@ export function InterviewRecorder({ sessionId, active, completed }: Props) {
   const chunksRef = useRef<Blob[]>([])
   const startedAtRef = useRef<number | null>(null)
   const uploadedRef = useRef(false)
+  const proctoringTimerRef = useRef<number | null>(null)
 
   function stopStream() {
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null
     if (videoRef.current) videoRef.current.srcObject = null
+    if (proctoringTimerRef.current != null) {
+      window.clearInterval(proctoringTimerRef.current)
+      proctoringTimerRef.current = null
+    }
+  }
+
+  function captureAndCheckFrame() {
+    const video = videoRef.current
+    if (!video || video.readyState < 2 || video.videoWidth === 0) return
+
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return
+        checkProctoringFrame(sessionId, blob)
+          .then((result) => onProctoringEvent?.(result))
+          .catch(() => {
+            // Proctoring checks already fail open server-side; a network failure here
+            // is skipped rather than surfaced as a candidate-facing error.
+          })
+      },
+      'image/jpeg',
+      0.7,
+    )
   }
 
   async function startCapture() {
@@ -74,6 +115,7 @@ export function InterviewRecorder({ sessionId, active, completed }: Props) {
       recorder.start()
       setRecording(true)
       setPermissionDenied(false)
+      proctoringTimerRef.current = window.setInterval(captureAndCheckFrame, PROCTORING_CHECK_INTERVAL_MS)
     } catch {
       setPermissionDenied(true)
       stopStream()
@@ -138,9 +180,12 @@ export function InterviewRecorder({ sessionId, active, completed }: Props) {
       <p className="text-sm font-semibold text-ink">This interview is recorded.</p>
       <p className="text-xs text-muted">
         Recording is required for this interview and cannot be turned off. Your camera and
-        microphone are captured for the length of the interview and shared with your recruiter for
-        human review only - it is not used in scoring, and the AI evaluation reads your typed or
-        transcribed answers only. A visible indicator shows whenever capture is active.
+        microphone are captured for the length of the interview and the full recording is shared
+        with your recruiter for human review only - the AI evaluation reads your typed or
+        transcribed answers, never the recording. Separately, periodic still frames from your
+        camera are checked automatically for interview-integrity issues (such as looking away from
+        the camera for a sustained period, or a phone or other device in view); repeated violations
+        end the interview. A visible indicator shows whenever capture is active.
       </p>
       {permissionDenied && (
         <p className="text-xs text-rose-600">
@@ -154,7 +199,16 @@ export function InterviewRecorder({ sessionId, active, completed }: Props) {
             <span className="h-2 w-2 animate-pulse rounded-full bg-rose-600" />
             Recording
           </span>
-          <video ref={videoRef} autoPlay muted playsInline className="h-16 w-24 rounded-lg bg-black object-cover" />
+          <video
+            ref={(el) => {
+              videoRef.current = el
+              if (el && streamRef.current) el.srcObject = streamRef.current
+            }}
+            autoPlay
+            muted
+            playsInline
+            className="h-16 w-24 rounded-lg bg-black object-cover"
+          />
         </div>
       )}
       {uploadMessage && (

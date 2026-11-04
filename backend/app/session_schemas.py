@@ -81,6 +81,7 @@ class InterviewSessionResponse(BaseModel):
     follow_up_limit: int
     duration_minutes: int = 45
     language: str = DEFAULT_INTERVIEW_LANGUAGE
+    proctoring_warning_count: int = 0
     current_question_index: int
     current_follow_up_count: int
     current_plan_question_id: UUID | None

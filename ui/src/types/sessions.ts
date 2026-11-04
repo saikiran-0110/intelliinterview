@@ -1,4 +1,25 @@
-export type InterviewSessionStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
+export type InterviewSessionStatus =
+  | 'SCHEDULED'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'DISQUALIFIED'
+
+export type ProctoringEventKind =
+  | 'LOOKING_AWAY'
+  | 'PROHIBITED_OBJECT'
+  | 'NO_FACE_DETECTED'
+  | 'MULTIPLE_PEOPLE'
+
+export type ProctoringCheckResponse = {
+  violation: boolean
+  kind: ProctoringEventKind | null
+  detail: string
+  warning_count: number
+  warning_limit: number
+  disqualified: boolean
+  session_status: InterviewSessionStatus
+}
 export type ScheduleConfirmationStatus =
   | 'PENDING'
   | 'CONFIRMED'
@@ -68,6 +89,7 @@ export type InterviewSession = {
   follow_up_limit: number
   duration_minutes?: number
   language?: InterviewLanguage
+  proctoring_warning_count: number
   current_question_index: number
   current_follow_up_count: number
   current_plan_question_id: string | null

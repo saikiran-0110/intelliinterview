@@ -12,7 +12,7 @@ import {
   stopSpeaking,
   type SpeechRecognitionController,
 } from '../../lib/speech'
-import type { InterviewSession, SessionSummary } from '../../types/sessions'
+import type { InterviewSession, ProctoringCheckResponse, SessionSummary } from '../../types/sessions'
 
 export function LiveInterviewPage() {
   const { sessionId: routeSessionId } = useParams()
@@ -32,6 +32,9 @@ export function LiveInterviewPage() {
   const [sttEnabled, setSttEnabled] = useState(true)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [proctoringWarning, setProctoringWarning] = useState<{ detail: string; count: number; limit: number } | null>(
+    null,
+  )
   const [nowMs, setNowMs] = useState(() => Date.now())
   const lastSpokenTurnId = useRef<string | null>(null)
   const recognitionRef = useRef<SpeechRecognitionController | null>(null)
@@ -167,6 +170,20 @@ export function LiveInterviewPage() {
     setIsListening(true)
     setStatus('Listening... speak your answer. You can edit the transcript before submit.')
     recognitionRef.current?.start()
+  }
+
+  function handleProctoringEvent(result: ProctoringCheckResponse) {
+    if (!result.violation) return
+    setProctoringWarning({ detail: result.detail, count: result.warning_count, limit: result.warning_limit })
+
+    if (result.disqualified && sessionId) {
+      getSession(sessionId)
+        .then(setSession)
+        .catch(() => {
+          // The closing turn/status already came back on this check's own response via
+          // session_status; a failed refresh here just means the turn list is stale.
+        })
+    }
   }
 
   async function handleStart() {
@@ -491,7 +508,8 @@ export function LiveInterviewPage() {
               <InterviewRecorder
                 sessionId={session.id}
                 active={session.status === 'IN_PROGRESS'}
-                completed={session.status === 'COMPLETED'}
+                completed={session.status === 'COMPLETED' || session.status === 'DISQUALIFIED'}
+                onProctoringEvent={handleProctoringEvent}
               />
             </div>
           </Card>
@@ -580,11 +598,37 @@ export function LiveInterviewPage() {
             </Card>
           )}
 
+          {proctoringWarning && session.status === 'IN_PROGRESS' && (
+            <Card className="border-amber-300 bg-amber-50">
+              <p className="text-sm font-semibold text-amber-900">
+                Warning {proctoringWarning.count} of {proctoringWarning.limit}
+              </p>
+              <p className="mt-2 text-sm text-amber-800">{proctoringWarning.detail}</p>
+              <p className="mt-2 text-xs text-amber-700">
+                Face the camera directly and keep phones, tablets, and notes out of view. Reaching{' '}
+                {proctoringWarning.limit} warnings ends the interview and disqualifies the session.
+              </p>
+            </Card>
+          )}
+
           {session.status === 'COMPLETED' && (
             <Card>
               <h3 className="text-lg font-semibold text-ink">Interview complete</h3>
               <p className="mt-2 text-sm text-muted">
                 Your answers and evaluation evidence have been saved for the recruiter report.
+              </p>
+              <Link to="/candidate/sessions" className="mt-4 inline-block text-sm font-semibold text-sky-700">
+                Back to my sessions
+              </Link>
+            </Card>
+          )}
+
+          {session.status === 'DISQUALIFIED' && (
+            <Card className="border-rose-300 bg-rose-50">
+              <h3 className="text-lg font-semibold text-rose-900">Interview ended - disqualified</h3>
+              <p className="mt-2 text-sm text-rose-800">
+                This session was ended automatically after {session.proctoring_warning_count} proctoring
+                warnings. If you believe this was flagged in error, contact your recruiter.
               </p>
               <Link to="/candidate/sessions" className="mt-4 inline-block text-sm font-semibold text-sky-700">
                 Back to my sessions

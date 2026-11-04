@@ -110,6 +110,128 @@ def test_live_interview_flow_with_follow_up_and_evidence(client):
     assert len(recruiter_view.json()["turns"]) >= 3
 
 
+def test_proctoring_check_with_no_violation_leaves_session_running(client, monkeypatch):
+    from app.routers import sessions as sessions_module
+
+    monkeypatch.setattr(
+        sessions_module.proctoring,
+        "check_frame",
+        lambda *args, **kwargs: {"violation": False, "kind": None, "detail": ""},
+    )
+
+    recruiter_token = register_recruiter(client, email="proctor-ok-recruiter@example.com")
+    candidate_token = _register_candidate(client, email="proctor-ok-candidate@example.com")
+    plan_id = _create_plan(client, recruiter_token)
+    session_id = client.post(
+        "/api/sessions",
+        headers=auth_headers(recruiter_token),
+        json={"question_plan_id": plan_id, "candidate_email": "proctor-ok-candidate@example.com"},
+    ).json()["id"]
+    confirm_session_for_interview(client, recruiter_token, session_id)
+    client.post(f"/api/sessions/{session_id}/start", headers=auth_headers(candidate_token))
+
+    response = client.post(
+        f"/api/sessions/{session_id}/proctoring-check",
+        headers=auth_headers(candidate_token),
+        files={"frame": ("frame.jpg", b"fake-jpeg-bytes", "image/jpeg")},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["violation"] is False
+    assert body["warning_count"] == 0
+    assert body["disqualified"] is False
+    assert body["session_status"] == "IN_PROGRESS"
+
+
+def test_proctoring_three_violations_disqualifies_and_generates_report(client, monkeypatch):
+    from app.routers import sessions as sessions_module
+
+    monkeypatch.setattr(
+        sessions_module.proctoring,
+        "check_frame",
+        lambda *args, **kwargs: {
+            "violation": True,
+            "kind": "PROHIBITED_OBJECT",
+            "detail": "A phone is visible.",
+        },
+    )
+
+    recruiter_token = register_recruiter(client, email="proctor-fail-recruiter@example.com")
+    candidate_token = _register_candidate(client, email="proctor-fail-candidate@example.com")
+    plan_id = _create_plan(client, recruiter_token)
+    session_id = client.post(
+        "/api/sessions",
+        headers=auth_headers(recruiter_token),
+        json={"question_plan_id": plan_id, "candidate_email": "proctor-fail-candidate@example.com"},
+    ).json()["id"]
+    confirm_session_for_interview(client, recruiter_token, session_id)
+    client.post(f"/api/sessions/{session_id}/start", headers=auth_headers(candidate_token))
+
+    def send_frame():
+        return client.post(
+            f"/api/sessions/{session_id}/proctoring-check",
+            headers=auth_headers(candidate_token),
+            files={"frame": ("frame.jpg", b"fake-jpeg-bytes", "image/jpeg")},
+        )
+
+    first = send_frame()
+    assert first.status_code == 200
+    assert first.json()["warning_count"] == 1
+    assert first.json()["disqualified"] is False
+
+    second = send_frame()
+    assert second.json()["warning_count"] == 2
+    assert second.json()["disqualified"] is False
+
+    third = send_frame()
+    assert third.status_code == 200
+    body = third.json()
+    assert body["warning_count"] == 3
+    assert body["disqualified"] is True
+    assert body["session_status"] == "DISQUALIFIED"
+
+    # Further answers are rejected once disqualified.
+    rejected = client.post(
+        f"/api/sessions/{session_id}/answer",
+        headers=auth_headers(candidate_token),
+        json={"answer": "Still trying to answer."},
+    )
+    assert rejected.status_code == 400
+
+    session_view = client.get(f"/api/sessions/{session_id}", headers=auth_headers(candidate_token))
+    assert session_view.json()["status"] == "DISQUALIFIED"
+    assert session_view.json()["proctoring_warning_count"] == 3
+
+    report = client.get(
+        f"/api/reports/by-session/{session_id}",
+        headers=auth_headers(recruiter_token),
+    )
+    assert report.status_code == 200
+    report_body = report.json()
+    assert report_body["recommendation"] == "NO_HIRE"
+    assert len(report_body["evidence_items"]) == 3
+
+
+def test_proctoring_check_rejected_when_not_in_progress(client):
+    recruiter_token = register_recruiter(client, email="proctor-notstarted-recruiter@example.com")
+    candidate_token = _register_candidate(client, email="proctor-notstarted-candidate@example.com")
+    plan_id = _create_plan(client, recruiter_token)
+    session_id = client.post(
+        "/api/sessions",
+        headers=auth_headers(recruiter_token),
+        json={"question_plan_id": plan_id, "candidate_email": "proctor-notstarted-candidate@example.com"},
+    ).json()["id"]
+
+    response = client.post(
+        f"/api/sessions/{session_id}/proctoring-check",
+        headers=auth_headers(candidate_token),
+        files={"frame": ("frame.jpg", b"fake-jpeg-bytes", "image/jpeg")},
+    )
+
+    assert response.status_code == 400
+
+
 def test_candidate_cannot_start_other_session(client):
     recruiter_token = register_recruiter(client, email="owner-recruiter@example.com")
     _register_candidate(client, email="assigned@example.com")

@@ -1,5 +1,5 @@
 import { apiRequest } from './client'
-import type { InterviewSession, SessionSummary } from '../types/sessions'
+import type { InterviewSession, ProctoringCheckResponse, SessionSummary } from '../types/sessions'
 
 export function createSession(questionPlanId: string, candidateEmail: string, followUpLimit = 1, language?: string) {
   return apiRequest<InterviewSession>('/api/sessions', {
@@ -44,4 +44,13 @@ export function uploadRecording(sessionId: string, blob: Blob, durationSeconds?:
 
 export function getRecordingBlob(sessionId: string) {
   return apiRequest<Blob>(`/api/sessions/${sessionId}/recording`, { raw: true })
+}
+
+export function checkProctoringFrame(sessionId: string, blob: Blob) {
+  const formData = new FormData()
+  formData.append('frame', blob, 'frame.jpg')
+  return apiRequest<ProctoringCheckResponse>(`/api/sessions/${sessionId}/proctoring-check`, {
+    method: 'POST',
+    body: formData,
+  })
 }

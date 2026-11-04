@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user, require_role
 from app.models import (
@@ -14,12 +15,14 @@ from app.models import (
     InterviewTurn,
     InterviewTurnEvaluation,
     JobSpecification,
+    ProctoringEvent,
     QuestionPlan,
     ScheduleConfirmationStatus,
     TurnRole,
     User,
     UserRole,
 )
+from app.proctoring_schemas import ProctoringCheckResponse
 from app.session_schemas import (
     InterviewSessionResponse,
     InterviewTurnResponse,
@@ -29,6 +32,7 @@ from app.session_schemas import (
     SubmitAnswerRequest,
     TurnEvaluationResponse,
 )
+from app.services import proctoring
 from app.services.candidate_feedback import CandidateFeedbackService
 from app.services.interview_agent import InterviewAgentService
 from app.services.report_generation import ReportGenerationService
@@ -176,6 +180,7 @@ def _session_response(db: Session, session: InterviewSession) -> InterviewSessio
         confirmation_status=session.confirmation_status,
         follow_up_limit=session.follow_up_limit,
         duration_minutes=session.duration_minutes,
+        proctoring_warning_count=session.proctoring_warning_count,
         current_question_index=session.current_question_index,
         current_follow_up_count=session.current_follow_up_count,
         current_plan_question_id=session.current_plan_question_id,
@@ -525,3 +530,76 @@ def submit_answer(
         feedback_service.generate_for_report(db, report)
 
     return _session_response(db, session)
+
+
+PROCTORING_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+
+@router.post("/{session_id}/proctoring-check", response_model=ProctoringCheckResponse)
+async def proctoring_check(
+    session_id: UUID,
+    frame: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.CANDIDATE)),
+) -> ProctoringCheckResponse:
+    session = _get_accessible_session(db, session_id, current_user)
+    if session.status != InterviewSessionStatus.IN_PROGRESS:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Session is not in progress")
+
+    content_type = (frame.content_type or "").split(";")[0].strip().lower()
+    if content_type not in PROCTORING_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported frame content type: {content_type or 'unknown'}",
+        )
+    image_bytes = await frame.read()
+
+    result = proctoring.check_frame(image_bytes, content_type)
+    disqualified = False
+
+    if result["violation"]:
+        session.proctoring_warning_count += 1
+        event = ProctoringEvent(
+            session_id=session.id,
+            kind=result["kind"],
+            detail=result["detail"],
+            warning_number=session.proctoring_warning_count,
+        )
+        db.add(event)
+
+        if session.proctoring_warning_count >= settings.proctoring_warning_limit:
+            disqualified = True
+            session.status = InterviewSessionStatus.DISQUALIFIED
+            session.completed_at = datetime.now(timezone.utc)
+            closing = InterviewTurn(
+                session_id=session.id,
+                sequence=_next_sequence(db, session.id),
+                role=TurnRole.INTERVIEWER,
+                content=(
+                    "This interview has been ended after repeated proctoring warnings "
+                    f"({session.proctoring_warning_count}/{settings.proctoring_warning_limit}). "
+                    "The session is disqualified and will be reported to the recruiter."
+                ),
+                plan_question_id=None,
+                is_follow_up=False,
+                follow_up_index=0,
+            )
+            db.add(closing)
+
+        db.add(session)
+        db.commit()
+        db.refresh(session)
+
+        if disqualified:
+            report = report_service.generate_for_session(db, session)
+            feedback_service.generate_for_report(db, report)
+
+    return ProctoringCheckResponse(
+        violation=result["violation"],
+        kind=result["kind"],
+        detail=result["detail"],
+        warning_count=session.proctoring_warning_count,
+        warning_limit=settings.proctoring_warning_limit,
+        disqualified=disqualified,
+        session_status=session.status,
+    )

@@ -17,9 +17,11 @@ from app.models import (
     InterviewQuestion,
     InterviewReport,
     InterviewSession,
+    InterviewSessionStatus,
     InterviewTurn,
     InterviewTurnEvaluation,
     JobSpecification,
+    ProctoringEvent,
     TurnRole,
     User,
 )
@@ -158,6 +160,9 @@ class ReportGenerationService:
             .filter(InterviewReport.session_id == session.id)
             .first()
         )
+
+        if session.status == InterviewSessionStatus.DISQUALIFIED:
+            return self._generate_disqualified_report(db, session, existing)
 
         evaluations = (
             db.query(InterviewTurnEvaluation)
@@ -303,6 +308,78 @@ class ReportGenerationService:
         report.evidence_items = evidence_items
         report.dimension_notes = dimension_notes
         report.model_version = settings.openai_model if settings.openai_api_key else "baseline"
+
+        db.commit()
+        db.refresh(report)
+        return report
+
+    def _generate_disqualified_report(
+        self, db: Session, session: InterviewSession, existing: InterviewReport | None
+    ) -> InterviewReport:
+        """A disqualified session skips score aggregation entirely - there is nothing to
+        score, only a reason to record. The evidence trail is the proctoring events, not
+        turn evaluations."""
+        events = (
+            db.query(ProctoringEvent)
+            .filter(ProctoringEvent.session_id == session.id)
+            .order_by(ProctoringEvent.warning_number.asc())
+            .all()
+        )
+        candidate = db.get(User, session.candidate_user_id)
+        job_spec = db.get(JobSpecification, session.job_spec_id)
+        candidate_name = candidate.full_name if candidate else "Candidate"
+        job_title = job_spec.title if job_spec else "the role"
+
+        # Reuses the existing EvidenceItem shape (built for turn evaluations) rather than
+        # widening the schema: turn_id is a real, unique id (just not a turn), topic carries
+        # the human-readable label the recruiter UI already renders in that slot, and
+        # answer_excerpt carries the violation detail. Scores are genuinely inapplicable (None).
+        evidence_items = [
+            {
+                "turn_id": f"proctoring-{event.id}",
+                "question_text": None,
+                "topic": f"Proctoring warning {event.warning_number}/{settings.proctoring_warning_limit}: "
+                f"{event.kind.value.replace('_', ' ').title()}",
+                "answer_excerpt": event.detail,
+                "observations": [],
+                "evidence_quotes": [],
+                "technical_score": None,
+                "communication_score": None,
+            }
+            for event in events
+        ]
+        reasons = _unique_keep_order([event.kind.value.replace("_", " ").title() for event in events])
+        summary = (
+            f"{candidate_name}'s interview for {job_title} was ended automatically and the "
+            f"candidate disqualified after {len(events)} proctoring warning(s): "
+            f"{', '.join(reasons) if reasons else 'repeated violations'}. "
+            "No technical evaluation was completed because the interview did not run to completion."
+        )
+
+        if existing:
+            report = existing
+        else:
+            report = InterviewReport(
+                session_id=session.id,
+                recruiter_id=session.recruiter_id,
+                candidate_user_id=session.candidate_user_id,
+                cv_id=session.cv_id,
+                job_spec_id=session.job_spec_id,
+            )
+            db.add(report)
+
+        report.technical_fit_score = 0.0
+        report.communication_score = 0.0
+        report.problem_solving_score = 0.0
+        report.role_alignment_score = 0.0
+        report.overall_score = 0.0
+        report.recommendation = HiringRecommendation.NO_HIRE
+        report.recommendation_summary = summary
+        report.strengths = []
+        report.weaknesses = ["Interview disqualified for proctoring violations - see evidence items."]
+        report.evidence_items = evidence_items
+        report.dimension_notes = {"disqualified": "Scores are not meaningful; interview did not complete."}
+        report.model_version = "proctoring-disqualification"
 
         db.commit()
         db.refresh(report)

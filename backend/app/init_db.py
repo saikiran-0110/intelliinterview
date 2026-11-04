@@ -37,6 +37,11 @@ SESSION_COLUMN_UPGRADES = [
         "ALTER TABLE interview_sessions "
         "ADD COLUMN IF NOT EXISTS language VARCHAR(10) NOT NULL DEFAULT 'en-GB'",
     ),
+    (
+        "proctoring_warning_count",
+        "ALTER TABLE interview_sessions "
+        "ADD COLUMN IF NOT EXISTS proctoring_warning_count INTEGER NOT NULL DEFAULT 0",
+    ),
 ]
 
 JOB_SPEC_COLUMN_UPGRADES = [
@@ -180,8 +185,34 @@ def _add_missing_columns(table_name: str, upgrades: list[tuple[str, str]]) -> No
                 print(f"Added column {table_name}.{column_name}")
 
 
+def _widen_varchar_columns(table_name: str, upgrades: list[tuple[str, int, str]]) -> None:
+    """A SQLAlchemy Enum(..., native_enum=False) column is sized to the longest enum member
+    AT TABLE-CREATION TIME, not re-checked later. Adding a longer enum value (e.g. a new
+    status) needs the existing column widened, which _add_missing_columns cannot do - it
+    only adds columns that don't exist yet, never alters an existing one's type."""
+    inspector = inspect(engine)
+    if table_name not in inspector.get_table_names():
+        return
+    columns = {col["name"]: col for col in inspector.get_columns(table_name)}
+    with engine.begin() as conn:
+        for column_name, min_length, ddl in upgrades:
+            column = columns.get(column_name)
+            current_length = getattr(column["type"], "length", None) if column else None
+            if current_length is not None and current_length < min_length:
+                conn.execute(text(ddl))
+                print(f"Widened column {table_name}.{column_name} to VARCHAR({min_length})")
+
+
+SESSION_STATUS_WIDEN = [
+    # "DISQUALIFIED" (12 chars) is longer than "IN_PROGRESS" (11), which sized this
+    # column when the table was first created.
+    ("status", 20, "ALTER TABLE interview_sessions ALTER COLUMN status TYPE VARCHAR(20)"),
+]
+
+
 def _upgrade_existing_tables() -> None:
     _add_missing_columns("interview_sessions", SESSION_COLUMN_UPGRADES)
+    _widen_varchar_columns("interview_sessions", SESSION_STATUS_WIDEN)
     _add_missing_columns("job_specifications", JOB_SPEC_COLUMN_UPGRADES)
     _add_missing_columns("candidate_cvs", CV_COLUMN_UPGRADES)
     _add_missing_columns("job_applications", APPLICATION_COLUMN_UPGRADES)

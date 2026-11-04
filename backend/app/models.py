@@ -20,6 +20,14 @@ class InterviewSessionStatus(str, enum.Enum):
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
+    DISQUALIFIED = "DISQUALIFIED"
+
+
+class ProctoringEventKind(str, enum.Enum):
+    LOOKING_AWAY = "LOOKING_AWAY"
+    PROHIBITED_OBJECT = "PROHIBITED_OBJECT"
+    NO_FACE_DETECTED = "NO_FACE_DETECTED"
+    MULTIPLE_PEOPLE = "MULTIPLE_PEOPLE"
 
 
 class QuestionSource(str, enum.Enum):
@@ -262,6 +270,7 @@ class InterviewSession(Base):
     current_plan_question_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("interview_questions.id")
     )
+    proctoring_warning_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     scheduled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
@@ -428,6 +437,25 @@ class InterviewTurnEvaluation(Base):
     advance_question: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     model_version: Mapped[Optional[str]] = mapped_column(String(60))
     raw_model_response: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ProctoringEvent(Base):
+    """One recorded anti-cheating violation during a live interview (a snapshot frame flagged
+    looking-away, a prohibited object, no face, or multiple people). Gives the recruiter an
+    evidence trail for why a session was disqualified."""
+
+    __tablename__ = "proctoring_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_sessions.id"), nullable=False, index=True
+    )
+    kind: Mapped[ProctoringEventKind] = mapped_column(
+        Enum(ProctoringEventKind, name="proctoring_event_kind", native_enum=False), nullable=False
+    )
+    detail: Mapped[str] = mapped_column(Text, nullable=False)
+    warning_number: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
